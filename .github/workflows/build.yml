@@ -2,11 +2,8 @@ name: Build Container Image
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
-      - develop
     tags:
-      - "*"
+      - "v*"
 jobs:
   build:
     name: Build
@@ -36,7 +33,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-          
+
       # Build from this repo and ref so the image contains the code being built
       - name: Set build context (APPS_JSON, FRAPPE_BRANCH, IMAGE_TAG)
         run: |
