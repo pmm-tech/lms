@@ -61,6 +61,8 @@ services:
     <<: *backend_defaults
     platform: linux/amd64
     entrypoint: ["bash", "-c"]
+    # Keep container running (exec tail) so Podman/podman-compose dependency graph
+    # stays valid; otherwise one-shot exit breaks "depends_on" in podman-compose.
     command:
       - |
         ls -1 apps > sites/apps.txt
@@ -70,6 +72,7 @@ services:
         bench set-config -g redis_queue "redis://$$REDIS_QUEUE"
         bench set-config -g redis_socketio "redis://$$REDIS_QUEUE"
         bench set-config -gp socketio_port $$SOCKETIO_PORT
+        exec tail -f /dev/null
     environment:
       DB_HOST: ${DB_HOST:-database}
       DB_PORT: ${DB_PORT:-3306}

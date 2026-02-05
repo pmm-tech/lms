@@ -42,7 +42,9 @@ $ docker-compose up
 
 Use the production compose stack when you want to run Frappe LMS on a server with MariaDB, Redis, and all app services (backend, frontend, workers, scheduler) in containers. The image used by default is `ghcr.io/frappe/lms:stable`. You can override it with your own built image (e.g. from the [Build workflow](.github/workflows/build.yml)).
 
-**Prerequisites:** Docker and Docker Compose v2 on the server.
+**Prerequisites:** Docker and Docker Compose v2 on the server (or Podman with Compose support).
+
+**Using Podman:** You can run the same stack with Podman: `podman compose -f docker-compose.production.yml --env-file .env up -d`. Prefer the native **podman compose** (Compose V2) when available. If you use the legacy Python **podman-compose**, the configurator container is kept running so dependency ordering works correctly.
 
 **Step 1:** Clone the repo and go to the `docker` directory
 
