@@ -1,30 +1,22 @@
-# Progress: Frappe LMS
+# Progress
 
-## What Works
+## Done
+- 2026-03-18: Mapped the repo layout across backend, frontend, docs, Docker, Cypress, and GitHub workflows.
+- 2026-03-18: Confirmed the project is a mature Frappe LMS with course delivery, batches, live classes, assessments, certificates, programs, jobs, and payments.
+- 2026-03-18: Confirmed the frontend is a Vue 3 SPA with Pinia, Vue Router, Frappe UI, and PWA support.
+- 2026-03-18: Confirmed the backend relies on Frappe hooks, DocTypes, whitelisted APIs, scheduled jobs, and an endpoint-allowlist auth gate.
+- 2026-03-18: Initialized the memory bank in the required six-file layout with repo-specific content.
 
-- **Core learning flow**: Courses (chapters, lessons), batches, enrollments, lesson progress, markdown lessons with macros (Exercise, Quiz, Video, Assignment, etc.).
-- **Assessments**: Quizzes (single/multiple choice, open-ended), quiz submissions and results; assignments and assignment submissions; programming exercises with test cases.
-- **Live classes**: Zoom integration; live class creation per batch; reminders and attendance updates.
-- **Certification**: Certificate requests, evaluations (with evaluator slots and schedule), certificate generation and templates.
-- **Payments**: Razorpay; coupons; payment reminders (daily job).
-- **Programs**: Program definition, program courses, program members.
-- **Jobs**: Job opportunities and job applications (Job module).
-- **Profile & roles**: User profile (about, certificates, roles, evaluator slots); Course Creator, Moderator, Batch Evaluator, LMS Student.
-- **Frontend**: Vue 3 SPA with full route set (courses, batches, lessons, quizzes, assignments, programs, statistics, job-openings, profile, etc.); Frappe UI components; PWA option.
-- **Backend**: DocTypes, API whitelist, auth hook, scheduled tasks, doc events, SCORM page renderer, SQLite search index (background).
-- **DevOps**: Docker setup; CI (GitHub Actions: build, linters, Cypress); semantic release; Crowdin for translations.
+## In Progress
+- No feature implementation is active in this turn.
+- Memory-bank initialization is being verified for consistency against the analyzed source files.
 
-## What’s Left / Optional
+## Todo
+- Keep the memory bank current as future feature work, fixes, and design decisions land.
+- Add deeper historical notes when specific subsystems are modified or reviewed in detail.
+- Validate targeted commands and tests during future implementation tasks rather than relying only on structural analysis.
 
-- No single “in progress” feature list; the codebase is mature. New work is typically feature requests or bug fixes tracked in issues/PRs.
-- Potential areas (from structure): more lesson macro types, additional payment gateways, richer analytics, mobile app (if ever desired).
-
-## Current Status
-
-- **Memory Bank**: Initialized. All six core files present and filled from repo analysis.
-- **Codebase**: Develop branch; no uncommitted feature context beyond this initialization.
-- **Known issues**: None specified here; see GitHub Issues and SECURITY.md for reporting.
-
-## Summary
-
-Frappe LMS is a feature-complete open-source LMS. The Memory Bank is ready for use: read it at the start of each task and update **activeContext.md** and **progress.md** as work progresses.
+## Risks
+- The API and DocType surface area is large, so changes can have non-obvious cross-feature effects.
+- Route, auth, and guest-access behavior can regress if server rules and SPA assumptions diverge.
+- Existing memory bank content can go stale quickly unless updated after each substantial task.

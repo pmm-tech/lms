@@ -47,13 +47,13 @@ class CourseLesson(Document):
 			frappe.throw(_("Invalid Quiz ID"))
 
 		if self.content:
-			self.save_lesson_details_in_quiz(self.content)
+			self.save_lesson_assessment_details(self.content)
 
 		if self.instructor_content:
-			self.save_lesson_details_in_quiz(self.instructor_content)
+			self.save_lesson_assessment_details(self.instructor_content)
 
-	def save_lesson_details_in_quiz(self, content):
-		content = json.loads(self.content)
+	def save_lesson_assessment_details(self, content):
+		content = json.loads(content)
 		for block in content.get("blocks"):
 			if block.get("type") == "quiz":
 				quiz = block.get("data").get("quiz")
@@ -62,6 +62,18 @@ class CourseLesson(Document):
 				frappe.db.set_value(
 					"LMS Quiz",
 					quiz,
+					{
+						"course": self.course,
+						"lesson": self.name,
+					},
+				)
+			if block.get("type") == "dragDrop":
+				activity = block.get("data").get("activity")
+				if not frappe.db.exists("LMS Drag Drop Activity", activity):
+					frappe.throw(_("Invalid Drag and Drop Activity ID in content"))
+				frappe.db.set_value(
+					"LMS Drag Drop Activity",
+					activity,
 					{
 						"course": self.course,
 						"lesson": self.name,
@@ -88,12 +100,19 @@ def save_progress(lesson: str, course: str, scorm_details: dict = None):
 	)
 
 	quiz_completed = get_quiz_progress(lesson)
+	drag_drop_completed = get_drag_drop_progress(lesson)
 	assignment_completed = get_assignment_progress(lesson)
 
 	if scorm_details:
 		scorm_details = frappe._dict(**scorm_details)
 
-	if not progress_already_exists and quiz_completed and assignment_completed and not scorm_details:
+	if (
+		not progress_already_exists
+		and quiz_completed
+		and drag_drop_completed
+		and assignment_completed
+		and not scorm_details
+	):
 		frappe.get_doc(
 			{
 				"doctype": "LMS Course Progress",
@@ -172,6 +191,37 @@ def get_quiz_progress(lesson):
 			"LMS Quiz Submission",
 			{
 				"quiz": quiz,
+				"member": frappe.session.user,
+				"percentage": [">=", passing_percentage],
+			},
+		):
+			return False
+	return True
+
+
+def get_drag_drop_progress(lesson):
+	lesson_details = frappe.db.get_value("Course Lesson", lesson, ["body", "content"], as_dict=1)
+	activities = []
+
+	if lesson_details.content:
+		content = json.loads(lesson_details.content)
+
+		for block in content.get("blocks"):
+			if block.get("type") == "dragDrop":
+				activities.append(block.get("data").get("activity"))
+
+	elif lesson_details.body:
+		macros = find_macros(lesson_details.body)
+		activities = [value for name, value in macros if name == "DragDrop"]
+
+	for activity in activities:
+		passing_percentage = frappe.db.get_value(
+			"LMS Drag Drop Activity", activity, "passing_percentage"
+		)
+		if not frappe.db.exists(
+			"LMS Drag Drop Submission",
+			{
+				"activity": activity,
 				"member": frappe.session.user,
 				"percentage": [">=", passing_percentage],
 			},

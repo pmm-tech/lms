@@ -151,9 +151,26 @@ const routes = [
 		props: true,
 	},
 	{
+		path: '/drag-drop-activities',
+		name: 'DragDropActivities',
+		component: () => import('@/pages/DragDrop/DragDropActivities.vue'),
+	},
+	{
+		path: '/drag-drop-activities/:activityID',
+		name: 'DragDropForm',
+		component: () => import('@/pages/DragDrop/DragDropForm.vue'),
+		props: true,
+	},
+	{
 		path: '/quiz/:quizID',
 		name: 'QuizPage',
 		component: () => import('@/pages/QuizPage.vue'),
+		props: true,
+	},
+	{
+		path: '/drag-drop/:activityID',
+		name: 'DragDropPage',
+		component: () => import('@/pages/DragDrop/DragDropPage.vue'),
 		props: true,
 	},
 	{
@@ -163,9 +180,21 @@ const routes = [
 		props: true,
 	},
 	{
+		path: '/drag-drop-submissions/:activityID',
+		name: 'DragDropSubmissionList',
+		component: () => import('@/pages/DragDrop/DragDropSubmissionList.vue'),
+		props: true,
+	},
+	{
 		path: '/quiz-submission/:submission',
 		name: 'QuizSubmission',
 		component: () => import('@/pages/QuizSubmission.vue'),
+		props: true,
+	},
+	{
+		path: '/drag-drop-submission/:submission',
+		name: 'DragDropSubmission',
+		component: () => import('@/pages/DragDrop/DragDropSubmission.vue'),
 		props: true,
 	},
 	{
