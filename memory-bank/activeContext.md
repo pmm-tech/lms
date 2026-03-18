@@ -1,27 +1,19 @@
-# Active Context: Frappe LMS
+# Active Context
 
 ## Current Focus
-
-- **Initial memory bank setup**: All core Memory Bank files have been created and populated from a first-pass analysis of the repository. No specific feature or bug is in progress unless stated by the user.
+- 2026-03-18: Complete a comprehensive repo analysis and refresh the project memory bank to match the current codebase.
+- 2026-03-18: Establish a reliable baseline for future feature work by documenting architecture, stack, constraints, and risks.
 
 ## Recent Changes
+- 2026-03-18: Reviewed repository docs, packaging files, hooks, auth layer, SPA router, frontend bootstrap, and test/CI surface.
+- 2026-03-18: Rewrote all six memory-bank files into concise bullet-based records aligned with the memory-bank skill contract.
+- 2026-03-18: Preserved the existing `memory-bank/` directory and treated this task as a refresh rather than creating empty starter files.
 
-- Created `memory-bank/` with:
-  - `projectbrief.md` — scope, goals, requirements
-  - `productContext.md` — why the product exists, problems, UX goals
-  - `techContext.md` — stack, setup, paths, dependencies
-  - `systemPatterns.md` — architecture, DocTypes, frontend/backend patterns
-  - `activeContext.md` — this file
-  - `progress.md` — what works, what’s left, status
+## Next Actions
+- Use the memory bank as the starting context for the next implementation or review task in this repo.
+- Refresh `activeContext.md` and `progress.md` after concrete code changes land.
+- Expand system notes when future work touches under-documented areas like payments, search indexing, or SCORM delivery.
 
-## Next Steps
-
-- Use the Memory Bank at the start of each task (read relevant files).
-- When starting a concrete task: update **Current Focus** and **Next Steps** here; when finishing, update **progress.md** and optionally **Recent Changes**.
-- If the user requests **update memory bank**: review all memory bank files and refresh them to current state.
-
-## Active Decisions & Considerations
-
-- **Base path**: LMS app is served under a configurable path (`lms_path` in site config or default `"lms"`); redirects and frontend base path must respect this.
-- **Frappe version**: App targets Frappe 15–17; avoid relying on APIs outside that range.
-- **Contributions**: Semantic commit messages; run tests and lint before PR (see Contribution.md and GitHub workflows).
+## Blockers
+- No immediate blocker for initialization work.
+- Deeper product or operational history still depends on external issues, PRs, and deployment context not stored in this repo.

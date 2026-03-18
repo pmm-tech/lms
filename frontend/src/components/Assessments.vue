@@ -190,6 +190,13 @@ const getRowRoute = (row) => {
 				},
 			}
 		}
+	} else if (row.assessment_type == 'LMS Drag Drop Activity') {
+		return {
+			name: 'DragDropPage',
+			params: {
+				activityID: row.assessment_name,
+			},
+		}
 	} else {
 		return {
 			name: 'QuizPage',
@@ -245,6 +252,8 @@ const getAssessmentTypeLabel = (type) => {
 		return __('Assignment')
 	} else if (type == 'LMS Quiz') {
 		return __('Quiz')
+	} else if (type == 'LMS Drag Drop Activity') {
+		return __('Drag & Drop')
 	} else if (type == 'LMS Programming Exercise') {
 		return __('Programming Exercise')
 	}

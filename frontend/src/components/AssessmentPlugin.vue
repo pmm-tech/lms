@@ -5,6 +5,8 @@
 			title:
 				type == 'quiz'
 					? __('Add a quiz to your lesson')
+					: type == 'dragDrop'
+						? __('Add a drag and drop activity to your lesson')
 					: __('Add an assignment to your lesson'),
 			size: 'xl',
 			actions: [
@@ -26,6 +28,14 @@
 						v-model="quiz"
 						doctype="LMS Quiz"
 						:label="__('Select a quiz')"
+						placeholder=" "
+						:onCreate="(value, close) => redirectToForm()"
+					/>
+					<Link
+						v-else-if="type == 'dragDrop'"
+						v-model="dragDrop"
+						doctype="LMS Drag Drop Activity"
+						:label="__('Select an Activity')"
 						placeholder=" "
 						:onCreate="(value, close) => redirectToForm()"
 					/>
@@ -69,6 +79,7 @@ import { getLmsRoute } from '@/utils/basePath'
 
 const show = ref(false)
 const quiz = ref(null)
+const dragDrop = ref(null)
 const assignment = ref(null)
 const filterAssignmentsByCourse = ref(false)
 const route = useRoute()
@@ -90,13 +101,21 @@ onMounted(async () => {
 })
 
 const addAssessment = () => {
-	props.onAddition(props.type == 'quiz' ? quiz.value : assignment.value)
+	props.onAddition(
+		props.type == 'quiz'
+			? quiz.value
+			: props.type == 'dragDrop'
+				? dragDrop.value
+				: assignment.value
+	)
 	show.value = false
 }
 
 const redirectToForm = () => {
 	if (props.type == 'quiz') {
 		window.open(getLmsRoute('quizzes?new=true'), '_blank')
+	} else if (props.type == 'dragDrop') {
+		window.open(getLmsRoute('drag-drop-activities?new=true'), '_blank')
 	} else {
 		window.open(getLmsRoute('assignments?new=true'), '_blank')
 	}

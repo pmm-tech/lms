@@ -225,6 +225,21 @@ def assignment_renderer(detail):
 	)
 
 
+def drag_drop_renderer(activity_name):
+	if frappe.session.user == "Guest":
+		return " <div class='alert alert-info'>" + _(
+			"Drag and drop activity is not available to Guest users. Please login to continue."
+		) + "</div>"
+
+	activity = frappe.db.get_value(
+		"LMS Drag Drop Activity",
+		activity_name,
+		["name", "title", "max_attempts", "show_answers", "show_submission_history", "passing_percentage"],
+		as_dict=True,
+	)
+	return f"<div class='my-4 rounded border p-4'>{frappe.bold(activity.title)}</div>"
+
+
 def show_custom_signup():
 	settings = frappe.get_single("LMS Settings")
 	if settings.custom_signup_content or settings.user_category:

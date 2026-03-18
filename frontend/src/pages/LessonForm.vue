@@ -300,6 +300,14 @@ const convertToJSON = (lessonData) => {
 					quiz: quiz,
 				},
 			})
+		} else if (block.includes('{{ DragDrop')) {
+			let activity = block.match(/\(["']([^"']+?)["']\)/)[1]
+			blocks.push({
+				type: 'dragDrop',
+				data: {
+					activity: activity,
+				},
+			})
 		} else if (block.includes('{{ Video')) {
 			let video = block.match(/\(["']([^"']+?)["']\)/)[1]
 			blocks.push({

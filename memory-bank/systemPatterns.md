@@ -1,43 +1,27 @@
-# System Patterns: Frappe LMS
+# System Patterns
 
-## Architecture Overview
+## Architecture Snapshot
+- Monolithic Frappe app with Python backend under `lms/` and a Vue 3 SPA under `frontend/`.
+- Website requests under `/{lms_path}` route to `_lms`, then the Vue router takes over client-side navigation.
+- Persistent business entities are modeled as Frappe DocTypes under `lms/lms/doctype/` and `lms/job/doctype/`.
+- Shared runtime behavior is centralized through Frappe hooks for install, routing, schedulers, doc events, Jinja helpers, and boot augmentation.
 
-- **Monolith**: Single Frappe app; backend (Python/Frappe) + frontend (Vue SPA) in one repo.
-- **Request flow**: Browser → Frappe site → `/{lms_path}` or `/{lms_path}/<path>` → `_lms` view → Jinja renders HTML with boot data → Vue app mounts; subsequent navigation is client-side; data via Frappe `call()` (whitelisted methods).
-- **DocTypes**: Core entities (LMS Course, LMS Batch, Course Chapter, Course Lesson, LMS Enrollment, LMS Quiz, LMS Certificate, etc.) in `lms/lms/doctype/`. Job module: `lms/job/doctype/` (Job Opportunity, LMS Job Application, etc.).
+## Boundaries
+- `lms/hooks.py` defines app wiring, website routing, scheduled jobs, doc events, and rendering extensions.
+- `lms/lms/api.py` and `lms/lms/utils.py` hold a large portion of whitelisted LMS-facing server methods.
+- `frontend/src/router.js` is the route map for the SPA and mirrors the product surface area.
+- `lms/auth.py` adds request gating when `block_endpoints` is enabled for non-system users.
+- `lms/plugins.py` and related renderers extend lesson content with markdown macros and specialized page rendering.
 
-## Key Design Decisions
+## Shared Patterns
+- DocType-first design: business logic typically lives alongside the owning DocType in `.py`, `.js`, `.json`, and tests.
+- SPA-in-shell pattern: Frappe serves bootstrapped HTML while Vue handles route transitions and most interaction state.
+- Role-aware behavior: user capabilities are inferred from Frappe roles and surfaced to the frontend via boot data and `get_user_info`.
+- Scheduled automation pattern: reminders, attendance updates, statistics refresh, and evaluation scheduling run through Frappe scheduler hooks.
+- Content extensibility pattern: lessons support embedded exercises, quizzes, videos, assignments, audio, PDF, and SCORM-related flows.
 
-1. **SPA under Frappe**: All LMS UI lives under a configurable base path (`lms_path`); one HTML shell, one Vue app; routes in `frontend/src/router.js`.
-2. **Whitelisted API**: Backend exposes `@frappe.whitelist()` methods (e.g. in `lms/lms/api.py`); frontend uses `call("lms.lms.api.method_name", { ... })` or Frappe client APIs.
-3. **DocType-centric**: All persistent data is Frappe DocTypes; no separate ORM. Business logic in doctype `.py` files and shared utils (`lms/lms/utils.py`).
-4. **Hooks**: Install/roles in `install.py`; doc_events, scheduler_events, website_route_rules, page_renderer (SCORM), jinja methods, extend_bootinfo in `hooks.py`.
-5. **Markdown macros**: Lesson content supports macros (Exercise, Quiz, YouTube, Video, Assignment, Embed, Audio, PDF) via `lms_markdown_macro_renderers`; implemented in `lms/plugins.py`.
-
-## Component Relationships
-
-- **Course** → Course Chapter → Course Lesson; Course Instructor; LMS Course Progress; LMS Enrollment (batch-level).
-- **LMS Batch** → Batch Course; LMS Batch Enrollment; LMS Batch Timetable; LMS Live Class (Zoom).
-- **LMS Certificate Request** → LMS Certificate Evaluation → LMS Certificate.
-- **LMS Quiz** → LMS Question (with LMS Option); LMS Quiz Submission / LMS Quiz Result.
-- **LMS Assignment** → LMS Assignment Submission.
-- **LMS Program** → LMS Program Course; LMS Program Member.
-- **Job** → Job Opportunity; LMS Job Application (separate module).
-
-## Frontend Structure
-
-- **Router**: `router.js` — routes for Home, Courses, CourseDetail, Lesson, Batches, Batch/BatchDetail, Profile (and children), Jobs, Quizzes, Assignments, Programs, Certifications, Statistics, etc.; base path from `getLmsBasePath()`.
-- **Stores**: Pinia (e.g. session, user, settings); data often via `createResource` or `call` from frappe-ui.
-- **Pages**: `frontend/src/pages/` — one (or more) Vue component per route; reusable components in `components/`.
-- **Auth**: Login/guest handled by Frappe; frontend checks user/roles from boot or `get_user_info`.
-
-## Backend Patterns
-
-- **Permissions**: Role-based (Course Creator, Moderator, Batch Evaluator); `has_website_permission` for certificates; `can_modify_course` / `can_modify_batch` helpers.
-- **Scheduled tasks**: Hourly (evals, course stats, live class attendance); daily (payment/batch/live class reminders, published course notifications); SQLite search index (all).
-- **Document events**: e.g. badge processing on any doc change; discussion reply notifications; user validation; notification log publish.
-
-## Security
-
-- **Auth hook**: `lms.auth.authenticate` — when `block_endpoints` is set, only allowed paths and `/api/method/lms.*` (and server script/custom app) are permitted.
-- **Guest access**: Controlled by LMS Settings; guest-only APIs use `@frappe.whitelist(allow_guest=True)` where appropriate.
+## Decisions
+- 2026-03-18: Keep LMS delivery inside a single Frappe app. Rationale: the repo couples routing, DocTypes, permissions, scheduled jobs, and frontend bootstrapping tightly. Impact: changes usually span hooks, DocTypes, and SPA routes instead of service boundaries.
+- 2026-03-18: Use a Vue SPA mounted at a configurable `lms_path`. Rationale: one routed client app gives a modern UX while preserving Frappe website entry points. Impact: server routes and frontend base-path logic must stay aligned.
+- 2026-03-18: Treat DocTypes as the primary domain boundary. Rationale: Frappe permissions, schema, forms, and tests all center on DocTypes. Impact: new features should usually start with schema and permission design, not standalone tables.
+- 2026-03-18: Allow selective public access through whitelisted methods and route rules. Rationale: browsing courses and other public LMS surfaces must coexist with protected authoring and learner actions. Impact: API additions need explicit guest/auth decisions.

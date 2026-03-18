@@ -1,38 +1,27 @@
-# Tech Context: Frappe LMS
+# Tech Context
 
-## Technologies
+## Stack
+- Backend: Python 3.10+, Frappe Framework with declared compatibility from v15 through v17 dev.
+- Frontend: Vue 3, Vue Router 4, Pinia, Vite 5, Frappe UI, Tailwind CSS, Chart.js/ApexCharts, CodeMirror, Editor.js.
+- Integrations: Razorpay for payments, Zoom-related live class workflows, Crowdin translation pipeline, Cypress dashboard badge in README.
+- Packaging and build: Flit for Python packaging, Yarn for frontend dependencies, Vite build output copied into Frappe-served assets and `_lms.html`.
 
-| Layer | Stack |
-|-------|--------|
-| Backend | Python 3.10+, Frappe Framework (15–17) |
-| Frontend | Vue 3, Vite 5, Frappe UI, Pinia, Vue Router, Tailwind CSS |
-| DB | MariaDB (production); SQLite supported (search index) |
-| Build | flit (Python); yarn (frontend); Vite build → `/assets/lms/frontend/` |
-| Linting/Format | Ruff, isort (Python); ESLint, Prettier (frontend); pre-commit |
-| E2E | Cypress |
-
-## Development Setup
-
-- **Prerequisites**: bench (Frappe), Node/yarn, Python 3.10+.
-- **Local**: `bench get-app`, `install-app lms`; `bench start`; frontend: `yarn dev` (from repo root or `frontend/`).
-- **Docker**: `docker/docker-compose.yml` + `docker/init.sh`; site at `http://lms.localhost:8000/lms`.
-- **Production**: Easy-install script or Frappe Cloud; image `ghcr.io/frappe/lms`.
-
-## Key Paths
-
-- **App root**: `lms/` (Python package; `app_name = "frappe_lms"`).
-- **Modules**: `LMS`, `Job` (in `lms/modules.txt`). LMS doctypes live under `lms/lms/doctype/`.
-- **Frontend**: `frontend/` — Vue SPA; entry served via `lms/www/_lms.html`; base path configurable (`lms_path`).
-- **Website routes**: All `/{lms_path}/<path:app_path>` → `_lms` (see `hooks.py` `website_route_rules`).
-- **API**: Whitelisted methods in `lms/lms/api.py` and doctype modules; auth allowlist in `lms/auth.py`.
-
-## Dependencies (Notable)
-
-- **Backend**: websocket_client, markdown, beautifulsoup4, lxml, cairocffi, razorpay, fuzzywuzzy; Frappe 15–17.
-- **Frontend**: frappe-ui, vue, vue-router, pinia, codemirror, editorjs, apexcharts, socket.io-client, etc.
+## Setup
+- Local Frappe workflow uses Bench: create a site, install the app, and run `bench start`.
+- Docker workflow uses [`docker/docker-compose.yml`](/Users/purwaren/Projects/frappe/lms/docker/docker-compose.yml) and [`docker/init.sh`](/Users/purwaren/Projects/frappe/lms/docker/init.sh).
+- Root `package.json` delegates frontend development and build commands into the `frontend/` workspace-like folder.
+- Frontend dev server uses Vite with a local `frappe-ui` checkout when available, otherwise the npm package fallback.
 
 ## Constraints
+- The repo mixes Python, Frappe metadata, Vue, Cypress, and generated assets, so changes often need cross-layer validation.
+- Route handling depends on a configurable `lms_path`; hardcoded `/lms` assumptions can regress custom deployments.
+- Endpoint blocking in [`lms/auth.py`](/Users/purwaren/Projects/frappe/lms/lms/auth.py) can reject non-allowlisted API calls for non-system users.
+- The backend surface is large, with many whitelisted methods in [`lms/lms/api.py`](/Users/purwaren/Projects/frappe/lms/lms/lms/api.py) and [`lms/lms/utils.py`](/Users/purwaren/Projects/frappe/lms/lms/lms/utils.py), so behavioral changes can have wide reach.
 
-- Frappe version bound: `>=15.0.0,<=17.0.0-dev` (pyproject.toml).
-- Frontend is a SPA; server renders `_lms` with boot context (csrf, site, lms_path); rest is client-side routing.
-- Custom auth hook restricts non-LMS API paths when `block_endpoints` is set (auth.authenticate).
+## Key Commands
+- `bench start`
+- `bench --site <site> install-app lms`
+- `yarn dev`
+- `yarn build`
+- `yarn test-local`
+- `ruff check .`

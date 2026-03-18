@@ -4,7 +4,7 @@
 frappe.ui.form.on("LMS Batch", {
 	onload: function (frm) {
 		frm.set_query("reference_doctype", "timetable", function () {
-			let doctypes = ["Course Lesson", "LMS Quiz", "LMS Assignment"];
+			let doctypes = ["Course Lesson", "LMS Quiz", "LMS Assignment", "LMS Drag Drop Activity"];
 			return {
 				filters: {
 					name: ["in", doctypes],
@@ -13,7 +13,7 @@ frappe.ui.form.on("LMS Batch", {
 		});
 
 		frm.set_query("assessment_type", "assessment", function () {
-			let doctypes = ["LMS Quiz", "LMS Assignment"];
+			let doctypes = ["LMS Quiz", "LMS Assignment", "LMS Drag Drop Activity"];
 			return {
 				filters: {
 					name: ["in", doctypes],
@@ -22,7 +22,7 @@ frappe.ui.form.on("LMS Batch", {
 		});
 
 		frm.set_query("reference_doctype", "timetable_legends", function () {
-			let doctypes = ["Course Lesson", "LMS Quiz", "LMS Assignment"];
+			let doctypes = ["Course Lesson", "LMS Quiz", "LMS Assignment", "LMS Drag Drop Activity"];
 			return {
 				filters: {
 					name: ["in", doctypes],
@@ -153,6 +153,11 @@ const set_default_legends = (frm) => {
 			reference_doctype: "LMS Assignment",
 			label: "LMS Assignment",
 			color: "#ECAD4B",
+		},
+		{
+			reference_doctype: "LMS Drag Drop Activity",
+			label: "LMS Drag Drop Activity",
+			color: "#F97316",
 		},
 		{
 			reference_doctype: "LMS Live Class",

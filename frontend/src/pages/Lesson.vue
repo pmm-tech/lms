@@ -501,7 +501,8 @@ const setupLesson = (data) => {
 const checkQuiz = () => {
 	if (!editor.value && lesson.body) {
 		const quizRegex = /\{\{ Quiz\(".*"\) \}\}/
-		hasQuiz.value = quizRegex.test(lesson.body)
+		const dragDropRegex = /\{\{ DragDrop\(".*"\) \}\}/
+		hasQuiz.value = quizRegex.test(lesson.body) || dragDropRegex.test(lesson.body)
 		if (!hasQuiz.value && !zenModeEnabled) {
 			allowDiscussions.value = true
 		} else {
@@ -752,6 +753,9 @@ const checkIfDiscussionsAllowed = () => {
 	hasQuiz.value = false
 	JSON.parse(lesson.data?.content)?.blocks?.forEach((block) => {
 		if (block.type === 'quiz') {
+			hasQuiz.value = true
+		}
+		if (block.type === 'dragDrop') {
 			hasQuiz.value = true
 		}
 	})
