@@ -12,7 +12,7 @@
 						</template>
 					</Button>
 				</Tooltip>
-				<Button v-if="canSeeStats()" @click="showVideoStats()">
+				<Button v-if="isAdmin" @click="showVideoStats()">
 					<template #icon>
 						<TrendingUp class="size-4 stroke-1.5" />
 					</template>
@@ -65,7 +65,7 @@
 				</router-link>
 			</div>
 		</header>
-		<div class="grid md:grid-cols-[70%,30%] h-screen">
+		<div class="grid md:grid-cols-[70%,30%] h-[94vh]">
 			<div v-if="lesson.data.no_preview" class="border-r">
 				<div class="shadow rounded-md w-3/4 mt-10 mx-auto text-center p-4">
 					<div class="flex items-center justify-center mt-4 space-x-2">
@@ -263,7 +263,7 @@
 						</div>
 					</div>
 					<div
-						v-if="lesson.data"
+						v-if="lesson.data && (allowDiscussions || tabs.length > 1)"
 						class="mt-10 pb-20 pt-5 border-t px-5"
 						ref="discussionsContainer"
 					>
@@ -293,7 +293,7 @@
 				</div>
 			</div>
 			<div class="sticky top-10">
-				<div class="bg-surface-menu-bar py-5 px-2 border-b">
+				<div class="bg-surface-menu-bar p-5 border-b">
 					<div class="text-lg font-semibold text-ink-gray-9">
 						{{ lesson.data.course_title }}
 					</div>
@@ -326,7 +326,7 @@
 		@updateNotes="updateNotes"
 	/>
 	<VideoStatistics
-		v-if="showStatsDialog"
+		v-if="isAdmin"
 		v-model="showStatsDialog"
 		:lessonName="lesson.data?.name"
 		:lessonTitle="lesson.data?.title"
@@ -399,15 +399,10 @@ const { brand } = sessionStore()
 const sidebarStore = useSidebar()
 const plyrSources = ref([])
 const showInlineMenu = ref(false)
-const currentTab = ref('Notes')
-let timerInterval
+const currentTab = ref(null)
+let timerInterval = null
 
-const tabs = ref([
-	{
-		label: __('Notes'),
-		value: 'Notes',
-	},
-])
+const tabs = ref([])
 
 const props = defineProps({
 	courseName: {
@@ -525,7 +520,14 @@ const renderEditor = (holder, content) => {
 
 const markProgress = () => {
 	if (user.data && lesson.data && !lesson.data.progress) {
-		progress.submit()
+		progress.submit(
+			{},
+			{
+				onError(err) {
+					console.error(err)
+				},
+			}
+		)
 	}
 }
 
@@ -560,12 +562,12 @@ const notes = createListResource({
 })
 
 const breadcrumbs = computed(() => {
-	let items = [{ label: 'Courses', route: { name: 'Courses' } }]
-	items.push({
+	let crumbs = [{ label: __('Courses'), route: { name: 'Courses' } }]
+	crumbs.push({
 		label: lesson?.data?.course_title,
 		route: { name: 'CourseDetail', params: { courseName: props.courseName } },
 	})
-	items.push({
+	crumbs.push({
 		label: lesson?.data?.title,
 		route: {
 			name: 'Lesson',
@@ -576,7 +578,7 @@ const breadcrumbs = computed(() => {
 			},
 		},
 	})
-	return items
+	return crumbs
 })
 
 const switchLesson = (direction) => {
@@ -606,7 +608,6 @@ watch(
 			plyrSources.value = []
 			await nextTick()
 			resetLessonState(newChapterNumber, newLessonNumber)
-			startTimer()
 			updateNotes()
 			checkIfDiscussionsAllowed()
 			checkQuiz()
@@ -675,6 +676,7 @@ watch(
 	() => lesson.data,
 	async (data) => {
 		setupLesson(data)
+		startTimer()
 		getPlyrSource()
 		updateNotes()
 		if (data.icon == 'icon-youtube') clearInterval(timerInterval)
@@ -736,7 +738,7 @@ const updateVideoTime = (video) => {
 
 const startTimer = () => {
 	if (!lesson.data?.membership) return
-	let timerInterval = setInterval(() => {
+	timerInterval = setInterval(() => {
 		timer.value++
 		if (timer.value == 30) {
 			clearInterval(timerInterval)
@@ -773,17 +775,19 @@ const checkIfDiscussionsAllowed = () => {
 	}
 }
 
+const isAdmin = computed(() => {
+	let isInstructor = lesson.data?.instructors?.includes(user.data?.name)
+	return user.data?.is_moderator || isInstructor
+})
+
 const allowEdit = () => {
 	if (window.read_only_mode) return false
-	if (user.data?.is_moderator) return true
-	if (lesson.data?.instructors?.includes(user.data?.name)) return true
-	return false
+	return isAdmin.value
 }
 
 const allowInstructorContent = () => {
-	if (user.data?.is_moderator) return true
-	if (lesson.data?.instructors?.includes(user.data?.name)) return true
-	return false
+	if (window.read_only_mode) return false
+	return isAdmin.value
 }
 
 const enrollment = createResource({
@@ -821,11 +825,6 @@ const toggleInlineMenu = async () => {
 	if (selection.toString()) {
 		showInlineMenu.value = true
 	}
-}
-
-const canSeeStats = () => {
-	if (user.data?.is_moderator || user.data?.is_instructor) return true
-	return false
 }
 
 const showVideoStats = () => {
@@ -887,24 +886,24 @@ const updateNotes = () => {
 }
 
 watch(allowDiscussions, () => {
-	if (allowDiscussions.value) {
-		tabs.value = [
-			{
+	if (!isAdmin.value) {
+		if (!tabs.value.find((tab) => tab.value === 'Notes')) {
+			tabs.value.push({
 				label: __('Notes'),
 				value: 'Notes',
-			},
-			{
+			})
+		}
+		currentTab.value = 'Notes'
+	} else {
+		currentTab.value = allowDiscussions.value ? 'Community' : null
+	}
+	if (allowDiscussions.value) {
+		if (!tabs.value.find((tab) => tab.value === 'Community')) {
+			tabs.value.push({
 				label: __('Community'),
 				value: 'Community',
-			},
-		]
-	} else {
-		tabs.value = [
-			{
-				label: __('Notes'),
-				value: 'Notes',
-			},
-		]
+			})
+		}
 	}
 })
 

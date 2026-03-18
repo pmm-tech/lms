@@ -127,6 +127,7 @@ export function getEditorTools() {
 				defaultStyle: 'ordered',
 			},
 		},
+		upload: Upload,
 		table: {
 			class: Table,
 			inlineToolbar: true,
@@ -135,7 +136,6 @@ export function getEditorTools() {
 		dragDrop: DragDrop,
 		assignment: Assignment,
 		program: Program,
-		upload: Upload,
 		markdown: {
 			class: Markdown,
 			inlineToolbar: true,
@@ -164,20 +164,21 @@ export function getEditorTools() {
 			config: {
 				services: {
 					youtube: {
-						regex: /(?:https?:\/\/)?(?:www\.)?(?:(?:youtu\.be\/)|(?:youtube\.com)\/(?:v\/|u\/\w\/|embed\/|watch))(?:(?:\?v=)?([^#&?=]*))?((?:[?&]\w*=\w*)*)/,
+						regex: /^(?:https?:\/\/)?(?:www\.)?(?:(?:youtu\.be\/)|(?:youtube\.com)\/(?:v\/|u\/\w\/|embed\/|watch))(?:(?:\?v=)?([^#&?=]*))?((?:[?&]\w*=\w*)*)$/,
 						embedUrl: '<%= remote_id %>',
 						/* 'https://www.youtube.com/embed/<%= remote_id %>?origin=https://plyr.io&amp;iv_load_policy=3&amp;modestbranding=1&amp;playsinline=1&amp;showinfo=0&amp;rel=0&amp;enablejsapi=1' */
 						html: `<div class="video-player" data-plyr-provider="youtube"></div>`,
 						id: ([id]) => id,
 					},
 					vimeo: {
-						regex: /(?:http[s]?:\/\/)?(?:www\.)?vimeo\.com\/(\d+)/,
-						embedUrl: '<%= remote_id %>',
+						regex: /^(?:http[s]?:\/\/)?(?:www\.)?vimeo\.com\/(\d+)(?:\/([a-zA-Z0-9]+))?(?:\?[^\s]*)?$/,
+						embedUrl:
+							'https://player.vimeo.com/video/<%= remote_id %>',
 						html: `<div class="video-player" data-plyr-provider="vimeo"></div>`,
-						id: ([id]) => id,
+						id: ([id, hash]) => (hash ? `${id}?h=${hash}` : id),
 					},
 					cloudflareStream: {
-						regex: /https:\/\/customer-[a-z0-9]+\.cloudflarestream\.com\/([a-f0-9]{32})\/watch/,
+						regex: /^https:\/\/customer-[a-z0-9]+\.cloudflarestream\.com\/([a-f0-9]{32})\/watch$/,
 						embedUrl:
 							'https://iframe.videodelivery.net/<%= remote_id %>',
 						html: `<iframe style="width:100%; height: ${
@@ -185,16 +186,16 @@ export function getEditorTools() {
 						};" frameborder="0" allowfullscreen></iframe>`,
 					},
 					bunnyStream: {
-						regex: /https:\/\/(?:iframe\.mediadelivery\.net|video\.bunnycdn\.com)\/play\/([a-zA-Z0-9]+\/[a-zA-Z0-9-]+)/,
+						regex: /^https:\/\/(?:iframe\.mediadelivery\.net|video\.bunnycdn\.com|player\.mediadelivery\.net)\/play\/([a-zA-Z0-9]+\/[a-zA-Z0-9-]+)$/,
 						embedUrl:
-							'https://iframe.mediadelivery.net/embed/<%= remote_id %>',
+							'https://player.mediadelivery.net/embed/<%= remote_id %>',
 						html: `<iframe style="width:100%; height: ${
 							window.innerWidth < 640 ? '15rem' : '30rem'
 						};" frameborder="0" allowfullscreen></iframe>`,
 					},
 					codepen: true,
 					aparat: {
-						regex: /(?:http[s]?:\/\/)?(?:www.)?aparat\.com\/v\/([^\/\?\&]+)\/?/,
+						regex: /^(?:http[s]?:\/\/)?(?:www.)?aparat\.com\/v\/([^\/\?\&]+)\/?$/,
 						embedUrl:
 							'https://www.aparat.com/video/video/embed/videohash/<%= remote_id %>/vt/frame',
 						html: `<iframe style="margin: 0 auto; width: 100%; height: ${
@@ -203,7 +204,7 @@ export function getEditorTools() {
 					},
 					github: true,
 					slides: {
-						regex: /https:\/\/docs\.google\.com\/presentation\/d\/([A-Za-z0-9_-]+)\/pub/,
+						regex: /^https:\/\/docs\.google\.com\/presentation\/d\/([A-Za-z0-9_-]+)\/pub$/,
 						embedUrl:
 							'https://docs.google.com/presentation/d/<%= remote_id %>/embed',
 						html: `<iframe style='width: 100%; height: ${
@@ -211,7 +212,7 @@ export function getEditorTools() {
 						}; border: 1px solid #D3D3D3; border-radius: 12px; margin: 1rem 0' frameborder='0' allowfullscreen='true'></iframe>`,
 					},
 					drive: {
-						regex: /https:\/\/drive\.google\.com\/file\/d\/([A-Za-z0-9_-]+)\/view(\?.+)?/,
+						regex: /^https:\/\/drive\.google\.com\/file\/d\/([A-Za-z0-9_-]+)\/view(\?.+)?$/,
 						embedUrl:
 							'https://drive.google.com/file/d/<%= remote_id %>/preview',
 						html: `<iframe style='width: 100%; height: ${
@@ -219,28 +220,28 @@ export function getEditorTools() {
 						}; border: 1px solid #D3D3D3; border-radius: 12px;' frameborder='0' allowfullscreen='true'></iframe>`,
 					},
 					docsPublic: {
-						regex: /https:\/\/docs\.google\.com\/document\/d\/([A-Za-z0-9_-]+)\/edit(\?.+)?/,
+						regex: /^https:\/\/docs\.google\.com\/document\/d\/([A-Za-z0-9_-]+)\/edit(\?.+)?$/,
 						embedUrl:
 							'https://docs.google.com/document/d/<%= remote_id %>/preview',
 						html: "<iframe style='width: 100%; height: 40rem; border: 1px solid #D3D3D3; border-radius: 12px;' frameborder='0' allowfullscreen='true'></iframe>",
 					},
 					sheetsPublic: {
-						regex: /https:\/\/docs\.google\.com\/spreadsheets\/d\/([A-Za-z0-9_-]+)\/edit(\?.+)?/,
+						regex: /^https:\/\/docs\.google\.com\/spreadsheets\/d\/([A-Za-z0-9_-]+)\/edit(\?.+)?$/,
 						embedUrl:
 							'https://docs.google.com/spreadsheets/d/<%= remote_id %>/preview',
 						html: "<iframe style='width: 100%; height: 40rem; border: 1px solid #D3D3D3; border-radius: 12px;' frameborder='0' allowfullscreen='true'></iframe>",
 					},
 					slidesPublic: {
-						regex: /https:\/\/docs\.google\.com\/presentation\/d\/([A-Za-z0-9_-]+)\/edit(\?.+)?/,
+						regex: /^https:\/\/docs\.google\.com\/presentation\/d\/([A-Za-z0-9_-]+)\/edit(\?.+)?$/,
 						embedUrl:
 							'https://docs.google.com/presentation/d/<%= remote_id %>/embed',
 						html: "<iframe style='width: 100%; height: 30rem; border: 1px solid #D3D3D3; border-radius: 12px; margin: 1rem 0;' frameborder='0' allowfullscreen='true'></iframe>",
 					},
 					codesandbox: {
-						regex: /^https:\/\/codesandbox\.io\/(?:embed\/)?([A-Za-z0-9_-]+)(?:\?[^\/]*)?$/,
+						regex: /^https:\/\/codesandbox\.io\/(?:(?:p\/(?:sandbox|devbox)\/)|(?:embed\/)|(?:s\/))?([A-Za-z0-9_-]+)(?:[\/\?].*)?$/,
 						embedUrl:
 							'https://codesandbox.io/embed/<%= remote_id %>?view=editor+%2B+preview&module=%2Findex.html',
-						html: "<iframe style='width: 100%; height: 500px; border: 0; border-radius: 4px; overflow: hidden;' sandbox='allow-mods allow-forms allow-popups allow-scripts allow-same-origin' frameborder='0' allowfullscreen='true'></iframe>",
+						html: "<iframe style='width: 100%; height: 500px; border: 0; border-radius: 4px; overflow: hidden;' sandbox='allow-modals allow-forms allow-popups allow-scripts allow-same-origin' frameborder='0' allowfullscreen='true'></iframe>",
 					},
 				},
 			},
@@ -515,7 +516,8 @@ const getSidebarItems = () => {
 						: settings.data?.contact_us_email,
 					condition: () => {
 						return (
-							settings?.data?.contact_us_email ||
+							(settings?.data?.contact_us_email &&
+								userResource?.data) ||
 							settings?.data?.contact_us_url
 						)
 					},
@@ -644,16 +646,25 @@ export const validateFile = async (
 	showToast = true,
 	fileType = 'image'
 ) => {
+	const extension = file.name.split('.').pop().toLowerCase()
 	const error = (msg) => {
 		if (showToast) toast.error(msg)
 		console.error(msg)
 		return msg
 	}
-	if (!file.type.startsWith(`${fileType}/`)) {
-		return error(__('Only {0} file is allowed.').format(fileType))
-	}
 
-	if (file.type === 'image/svg+xml') {
+	if (fileType == 'pdf' && extension != 'pdf') {
+		return error(__('Only PDF files are allowed.'))
+	} else if (fileType == 'document' && !['doc', 'docx'].includes(extension)) {
+		return error(
+			__('Only document file of type .doc or .docx are allowed.')
+		)
+	} else if (
+		['image', 'video'].includes(fileType) &&
+		!file.type.startsWith(`${fileType}/`)
+	) {
+		return error(__('Only {0} file is allowed.').format(fileType))
+	} else if (file.type === 'image/svg+xml') {
 		const text = await file.text()
 
 		const blacklist = [
@@ -680,13 +691,11 @@ export const validateFile = async (
 export const escapeHTML = (text) => {
 	if (!text) return ''
 	let escape_html_mapping = {
-		'&': '&amp;',
 		'<': '&lt;',
 		'>': '&gt;',
 		'"': '&quot;',
 		"'": '&#39;',
 		'`': '&#x60;',
-		'=': '&#x3D;',
 	}
 
 	return String(text).replace(
@@ -699,6 +708,19 @@ export const sanitizeHTML = (text) => {
 	text = DOMPurify.sanitize(decodeEntities(text), {
 		ALLOWED_TAGS: [
 			'b',
+			'br',
+			'h1',
+			'h2',
+			'h3',
+			'h4',
+			'h5',
+			'h6',
+			'table',
+			'thead',
+			'tbody',
+			'tr',
+			'th',
+			'td',
 			'i',
 			'em',
 			'strong',
@@ -709,6 +731,7 @@ export const sanitizeHTML = (text) => {
 			'ol',
 			'li',
 			'img',
+			'blockquote',
 		],
 		ALLOWED_ATTR: ['href', 'target', 'src'],
 	})
@@ -801,6 +824,24 @@ const extractYouTubeId = (url) => {
 	} catch {
 		return url.split('/').pop()
 	}
+}
+
+export const createLMSCategory = (name) => {
+	return call('frappe.client.insert', {
+		doc: {
+			doctype: 'LMS Category',
+			category: name,
+		},
+	})
+		.then((data) => {
+			toast.success(__('Category created successfully'))
+			return data.name
+		})
+		.catch((err) => {
+			toast.error(
+				cleanError(err.messages?.[0]) || __('Unable to create category')
+			)
+		})
 }
 
 export const openSettings = (category, close = null) => {
