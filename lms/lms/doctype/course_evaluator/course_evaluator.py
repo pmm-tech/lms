@@ -17,6 +17,11 @@ class CourseEvaluator(Document):
 		self.validate_time_slots()
 		self.validate_unavailability()
 
+	def on_trash(self):
+		roles = frappe.get_roles(self.evaluator)
+		if "Batch Evaluator" in roles:
+			frappe.get_doc("User", self.evaluator).remove_roles("Batch Evaluator")
+
 	def validate_evaluator_role(self):
 		roles = frappe.get_roles(self.evaluator)
 		if "Batch Evaluator" not in roles:
@@ -58,7 +63,7 @@ class CourseEvaluator(Document):
 
 
 @frappe.whitelist()
-def get_schedule(course, batch=None):
+def get_schedule(course: str, batch: str = None):
 	evaluator = get_evaluator(course, batch)
 	start_date = nowdate()
 	end_date = get_schedule_range_end_date(start_date, batch)

@@ -2,8 +2,8 @@
 	<Dialog
 		v-model="show"
 		:options="{
-			title: __('Add a Student'),
-			size: 'sm',
+			title: __('Enroll a Student'),
+			size: 'lg',
 			actions: [
 				{
 					label: 'Submit',
@@ -18,10 +18,24 @@
 				<Link
 					doctype="User"
 					v-model="student"
-					:filters="{ ignore_user_type: 1 }"
+					placeholder=" "
+					:label="__('Student')"
 					:onCreate="
-						(value, close) => {
-							openSettings('Members', close)
+						() => {
+							openSettings('Members')
+							show = false
+						}
+					"
+					:required="true"
+				/>
+				<Link
+					doctype="LMS Payment"
+					v-model="payment"
+					placeholder=" "
+					:label="__('Payment')"
+					:onCreate="
+						() => {
+							openSettings('Transactions')
 							show = false
 						}
 					"
@@ -31,54 +45,49 @@
 	</Dialog>
 </template>
 <script setup>
-import { Dialog, createResource, toast } from 'frappe-ui'
+import { call, Dialog, toast } from 'frappe-ui'
 import { ref, inject } from 'vue'
-import Link from '@/components/Controls/Link.vue'
 import { useOnboarding } from 'frappe-ui/frappe'
 import { openSettings } from '@/utils'
+import Link from '@/components/Controls/Link.vue'
 
-const students = defineModel('reloadStudents')
-const batchModal = defineModel('batchModal')
-const student = ref()
+const student = ref(null)
+const payment = ref(null)
 const user = inject('$user')
 const { updateOnboardingStep } = useOnboarding('learning')
 const show = defineModel()
 
 const props = defineProps({
 	batch: {
-		type: String,
+		type: Object,
+		default: null,
+	},
+	students: {
+		type: Object,
 		default: null,
 	},
 })
 
-const studentResource = createResource({
-	url: 'frappe.client.insert',
-	makeParams(values) {
-		return {
-			doc: {
-				doctype: 'LMS Batch Enrollment',
-				batch: props.batch,
-				member: student.value,
-			},
-		}
-	},
-})
-
 const addStudent = (close) => {
-	studentResource.submit(
-		{},
+	props.students.insert.submit(
+		{
+			member: student.value,
+			payment: payment.value,
+			batch: props.batch.data?.name,
+		},
 		{
 			onSuccess() {
 				if (user.data?.is_system_manager)
 					updateOnboardingStep('add_batch_student')
 
-				students.value.reload()
-				batchModal.value.reload()
 				student.value = null
+				payment.value = null
+				props.batch.reload()
 				close()
 			},
 			onError(err) {
 				toast.error(err.messages?.[0] || err)
+				console.error(err)
 			},
 		}
 	)

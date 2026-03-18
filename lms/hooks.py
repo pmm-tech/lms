@@ -3,21 +3,24 @@ import frappe
 from . import __version__ as app_version
 
 app_name = "frappe_lms"
-app_title = "Frappe LMS"
+app_title = "Learning"
 app_publisher = "Frappe"
-app_description = "Frappe LMS App"
+app_description = "Open Source Learning Management System built with Frappe Framework"
 app_icon_url = "/assets/lms/images/lms-logo.png"
 app_icon_title = "Learning"
+app_icon_route = "/lms"
 app_color = "grey"
 app_email = "jannat@frappe.io"
 app_license = "AGPL"
+required_apps = ["frappe/payments"]
 
 
 def get_lms_path():
-	return (frappe.conf.get("lms_path") or "lms").strip("/")
+	path = "lms"
+	if frappe.conf and frappe.conf.get("lms_path"):
+		path = frappe.conf.get("lms_path")
+	return path.strip("/")
 
-
-app_icon_route = f"/{get_lms_path()}"
 
 # Includes in <head>
 # ------------------
@@ -71,7 +74,7 @@ web_include_js = []
 after_install = "lms.install.after_install"
 after_sync = "lms.install.after_sync"
 before_uninstall = "lms.install.before_uninstall"
-setup_wizard_requires = "assets/lms/js/setup_wizard.js"
+setup_wizard_complete = "lms.demo.demo_data.create_demo_data"
 after_migrate = [
 	"lms.sqlite.build_index_in_background",
 ]
@@ -86,13 +89,16 @@ after_migrate = [
 # -----------
 # Permissions evaluated in scripted ways
 
-# permission_query_conditions = {
-# 	"Event": "frappe.desk.doctype.event.event.get_permission_query_conditions",
-# }
-#
-# has_permission = {
-# 	"Event": "frappe.desk.doctype.event.event.has_permission",
-# }
+permission_query_conditions = {
+	"LMS Certificate": "lms.lms.doctype.lms_certificate.lms_certificate.get_permission_query_conditions",
+}
+
+has_permission = {
+	"LMS Live Class": "lms.lms.doctype.lms_live_class.lms_live_class.has_permission",
+	"LMS Batch": "lms.lms.doctype.lms_batch.lms_batch.has_permission",
+	"LMS Program": "lms.lms.doctype.lms_program.lms_program.has_permission",
+	"LMS Certificate": "lms.lms.doctype.lms_certificate.lms_certificate.has_permission",
+}
 
 # DocType Class
 # ---------------
@@ -131,7 +137,7 @@ scheduler_events = {
 	],
 	"hourly": [
 		"lms.lms.doctype.lms_certificate_request.lms_certificate_request.schedule_evals",
-		"lms.lms.api.update_course_statistics",
+		"lms.lms.doctype.lms_course.lms_course.update_course_statistics",
 		"lms.lms.doctype.lms_certificate_request.lms_certificate_request.mark_eval_as_completed",
 		"lms.lms.doctype.lms_live_class.lms_live_class.update_attendance",
 	],
@@ -277,3 +283,4 @@ add_to_apps_screen = [
 
 sqlite_search = ["lms.sqlite.LearningSearch"]
 auth_hooks = ["lms.auth.authenticate"]
+require_type_annotated_api_methods = True

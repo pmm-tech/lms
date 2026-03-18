@@ -2,7 +2,7 @@
 	<Dialog
 		v-model="show"
 		:options="{
-			title: __('Create Course'),
+			title: __('New Course'),
 			size: '3xl',
 		}"
 	>
@@ -13,25 +13,24 @@
 						v-model="course.title"
 						:label="__('Title')"
 						:required="true"
+						autocomplete="off"
 					/>
 					<Link
-						doctype="LMS Category"
 						v-model="course.category"
+						doctype="LMS Category"
 						:label="__('Category')"
-						:allowCreate="true"
-						@create="
-							() => {
-								openSettings('Categories')
-								show = false
-							}
-						"
+						:inlineCreate="true"
+						:onCreate="createCategory"
 					/>
 					<MultiSelect
 						v-model="course.instructors"
 						doctype="User"
 						:label="__('Instructors')"
-						:filters="{ ignore_user_type: 1 }"
-						:onCreate="(close: () => void) => openSettings('Members', close)"
+						url="lms.lms.api.search_users_by_role"
+						:searchParams="{
+							roles: JSON.stringify(['Course Creator', 'Batch Evaluator']),
+						}"
+						:onCreate="() => (showMemberModal = true)"
 						:required="true"
 					/>
 					<Uploader
@@ -58,7 +57,7 @@
 							@change="(val: string) => (course.description = val)"
 							:editable="true"
 							:fixedMenu="true"
-							editorClass="prose-sm max-w-none border-b border-x bg-surface-gray-2 rounded-b-md py-1 px-2 min-h-[10rem]"
+							editorClass="prose-sm max-w-none border-b border-x border-outline-gray-modals bg-surface-gray-2 rounded-b-md py-1 px-2 min-h-[10rem] max-h-[17rem] overflow-auto"
 						/>
 					</div>
 				</div>
@@ -67,32 +66,55 @@
 		<template #actions="{ close }">
 			<div class="text-right">
 				<Button variant="solid" @click="saveCourse(close)">
-					{{ __('Create') }}
+					{{ __('Save') }}
 				</Button>
 			</div>
 		</template>
 	</Dialog>
+	<NewMemberModal
+		v-model="showMemberModal"
+		:defaultRoles="['course_creator']"
+		@created="onInstructorCreated"
+	/>
 </template>
 <script setup lang="ts">
 import { Button, Dialog, FormControl, TextEditor, toast } from 'frappe-ui'
-import { Link, useOnboarding, useTelemetry } from 'frappe-ui/frappe'
-import { inject, onMounted, onBeforeUnmount, ref, watch } from 'vue'
+import { useOnboarding, useTelemetry } from 'frappe-ui/frappe'
+import { inject, onMounted, onBeforeUnmount, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { openSettings } from '@/utils'
+import Link from '@/components/Controls/Link.vue'
+import {
+	cleanError,
+	sanitizeHTML,
+	escapeHTML,
+	createLMSCategory,
+} from '@/utils'
 import MultiSelect from '@/components/Controls/MultiSelect.vue'
 import Uploader from '@/components/Controls/Uploader.vue'
+import NewMemberModal from '@/components/Modals/NewMemberModal.vue'
 
 const show = defineModel<boolean>({ required: true, default: false })
 const router = useRouter()
 const { capture } = useTelemetry()
 const { updateOnboardingStep } = useOnboarding('learning')
 const user = inject<any>('$user')
+const courseCreated = ref(false)
+const showMemberModal = ref(false)
 
 const props = defineProps<{
 	courses: any
 }>()
 
-const course = ref({
+type Course = {
+	title: string
+	short_introduction: string
+	description: string
+	instructors: string[]
+	category: string | null
+	image: string | null
+}
+
+const course = ref<Course>({
 	title: '',
 	short_introduction: '',
 	description: '',
@@ -101,7 +123,35 @@ const course = ref({
 	image: null,
 })
 
+const createCategory = (name: string, done: () => void) => {
+	createLMSCategory(name).then((categoryName: string) => {
+		if (!categoryName) return
+		course.value.category = categoryName
+		done()
+	})
+}
+
+const onInstructorCreated = (user: any) => {
+	course.value.instructors = [...course.value.instructors, user.name]
+}
+
+const validateFields = () => {
+	course.value.description = sanitizeHTML(course.value.description)
+
+	Object.keys(course.value).forEach((key) => {
+		if (
+			key != 'description' &&
+			typeof course.value[key as keyof Course] === 'string'
+		) {
+			course.value[key as keyof Course] = escapeHTML(
+				course.value[key as keyof Course] as string
+			)
+		}
+	})
+}
+
 const saveCourse = (close: () => void = () => {}) => {
+	validateFields()
 	props.courses.insert.submit(
 		{
 			...course.value,
@@ -114,6 +164,7 @@ const saveCourse = (close: () => void = () => {}) => {
 				toast.success(__('Course created successfully'))
 				close()
 				capture('course_created')
+				courseCreated.value = true
 				router.push({
 					name: 'CourseDetail',
 					params: { courseName: data.name },
@@ -124,6 +175,10 @@ const saveCourse = (close: () => void = () => {}) => {
 						localStorage.setItem('firstCourse', data.name)
 					})
 				}
+			},
+			onError(err: any) {
+				toast.error(cleanError(err.messages?.[0]))
+				console.error(err)
 			},
 		}
 	)
@@ -144,13 +199,15 @@ const keyboardShortcut = (e: KeyboardEvent) => {
 
 onMounted(() => {
 	window.addEventListener('keydown', keyboardShortcut)
+	capture('course_form_opened')
 })
 
 onBeforeUnmount(() => {
 	window.removeEventListener('keydown', keyboardShortcut)
-})
-
-watch(show, () => {
-	capture('course_form_opened')
+	if (!courseCreated.value) {
+		capture('course_form_closed', {
+			data: course.value,
+		})
+	}
 })
 </script>

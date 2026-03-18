@@ -15,17 +15,22 @@
 					</Button>
 				</header>
 				<div class="py-5">
-					<div class="w-5/6 mx-auto">
+					<div class="grid grid-cols-2 gap-5 w-5/6 mx-auto">
 						<FormControl
 							v-model="lesson.title"
-							label="Title"
+							:label="__('Title')"
 							class="mb-4"
 							:required="true"
+							autocomplete="off"
 						/>
-						<FormControl
+						<Switch
 							v-model="lesson.include_in_preview"
-							type="checkbox"
-							label="Include in Preview"
+							:label="__('Include in Preview')"
+							:description="
+								__(
+									'If enabled, the lesson will also be accessible to users who are not enrolled in the course.'
+								)
+							"
 						/>
 					</div>
 					<div class="border-t mt-4">
@@ -83,6 +88,7 @@ import {
 	Button,
 	createResource,
 	FormControl,
+	Switch,
 	usePageMeta,
 	toast,
 } from 'frappe-ui'
@@ -466,7 +472,7 @@ const validateLesson = () => {
 const breadcrumbs = computed(() => {
 	let crumbs = [
 		{
-			label: 'Courses',
+			label: __('Courses'),
 			route: { name: 'Courses' },
 		},
 		{
@@ -493,7 +499,9 @@ const breadcrumbs = computed(() => {
 		})
 	}
 	crumbs.push({
-		label: lessonDetails?.data?.lesson ? 'Edit Lesson' : 'Create Lesson',
+		label: lessonDetails?.data?.lesson
+			? __('Edit Lesson')
+			: __('Create Lesson'),
 		route: {
 			name: 'LessonForm',
 			params: {
@@ -510,7 +518,7 @@ usePageMeta(() => {
 	return {
 		title: lessonDetails?.data?.lesson
 			? lessonDetails.data.lesson.title
-			: 'New Lesson',
+			: __('New Lesson'),
 		icon: brand.favicon,
 	}
 })
@@ -706,8 +714,8 @@ iframe {
 	height: 15px;
 }
 
-.ce-popover--opened > .ce-popover__container {
-	max-height: unset;
+.ce-popover--opened {
+	max-height: unset !important;
 }
 
 .cdx-search-field__icon svg {

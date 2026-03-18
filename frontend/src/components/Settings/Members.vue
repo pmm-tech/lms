@@ -2,7 +2,7 @@
 	<div class="flex min-h-0 flex-col text-base">
 		<div class="flex items-center justify-between">
 			<div>
-				<div class="text-xl font-semibold mb-1 text-ink-gray-9">
+				<div class="text-xl font-semibold mb-2 text-ink-gray-9">
 					{{ __(label) }}
 				</div>
 				<div class="text-ink-gray-6 leading-5">
@@ -10,7 +10,7 @@
 				</div>
 			</div>
 			<div class="flex item-center space-x-2">
-				<Button variant="solid" @click="() => (showForm = !showForm)">
+				<Button @click="showNewMember = true">
 					<template #prefix>
 						<Plus class="size-4 stroke-1.5" />
 					</template>
@@ -31,8 +31,8 @@
 					<Search class="size-4 stroke-1.5 text-ink-gray-5" />
 				</template>
 			</FormControl>
-			<div class="overflow-y-scroll h-[60vh]">
-				<ul class="divide-y">
+			<div class="overflow-y-scroll max-h-[60vh]">
+				<ul class="divide-y divide-outline-gray-modals">
 					<li
 						v-for="member in memberList"
 						class="flex items-center justify-between py-2 cursor-pointer"
@@ -58,7 +58,7 @@
 							</div>
 						</div>
 						<div
-							class="flex items-center space-x-1 bg-surface-gray-2 px-2 py-1.5 rounded-md"
+							class="flex items-center text-ink-gray-9 space-x-1 bg-surface-gray-2 px-2 py-1.5 rounded-md"
 							v-if="member.role && member.role !== 'LMS Student'"
 						>
 							<Shield class="size-4 stroke-1.5" />
@@ -82,47 +82,16 @@
 			</div>
 		</div>
 	</div>
-	<Dialog
-		v-model="showForm"
-		:options="{
-			title: __('Add a new member'),
-			size: 'lg',
-			actions: [{
-				label: __('Add'),
-				variant: 'solid',
-				onClick({ close }: any) {
-					addMember(close)
-				}
-			}]
-		}"
-	>
-		<template #body-content>
-			<div class="flex items-center space-x-2">
-				<FormControl
-					v-model="member.email"
-					:label="__('Email')"
-					placeholder="jane@doe.com"
-					type="email"
-					class="w-full"
-				/>
-				<FormControl
-					v-model="member.first_name"
-					:label="__('First Name')"
-					placeholder="Jane"
-					type="text"
-					class="w-full"
-				/>
-			</div>
-		</template>
-	</Dialog>
+	<NewMemberModal v-model="showNewMember" @created="onMemberCreated" />
 </template>
 <script setup lang="ts">
-import { Avatar, Button, createResource, Dialog, FormControl } from 'frappe-ui'
+import { Avatar, Button, createResource, FormControl } from 'frappe-ui'
 import { useRouter } from 'vue-router'
-import { ref, watch, reactive, inject } from 'vue'
+import { ref, watch, inject } from 'vue'
 import { RefreshCw, Plus, Search, Shield } from 'lucide-vue-next'
-import { useOnboarding } from 'frappe-ui/frappe'
+import { useOnboarding, useTelemetry } from 'frappe-ui/frappe'
 import type { User } from '@/components/Settings/types'
+import NewMemberModal from '@/components/Modals/NewMemberModal.vue'
 
 type Member = {
 	username: string
@@ -138,14 +107,10 @@ const search = ref('')
 const start = ref(0)
 const memberList = ref<Member[]>([])
 const hasNextPage = ref(false)
-const showForm = ref(false)
+const showNewMember = ref(false)
 const user = inject<User | null>('$user')
 const { updateOnboardingStep } = useOnboarding('learning')
-
-const member = reactive({
-	email: '',
-	first_name: '',
-})
+const { capture } = useTelemetry()
 
 const props = defineProps({
 	label: {
@@ -184,34 +149,12 @@ const openProfile = (username: string) => {
 	})
 }
 
-const newMember = createResource({
-	url: 'frappe.client.insert',
-	makeParams() {
-		return {
-			doc: {
-				doctype: 'User',
-				first_name: member.first_name,
-				email: member.email,
-			},
-		}
-	},
-	auto: false,
-	onSuccess(data: Member) {
-		show.value = false
-		if (user?.data?.is_system_manager) updateOnboardingStep('invite_students')
-
-		router.push({
-			name: 'ProfileRoles',
-			params: {
-				username: data.username,
-			},
-		})
-	},
-})
-
-const addMember = (close: () => void) => {
-	newMember.reload()
-	close()
+const onMemberCreated = (data: any) => {
+	if (user?.data?.is_system_manager) updateOnboardingStep('invite_students')
+	capture('user_added')
+	memberList.value = []
+	start.value = 0
+	members.reload()
 }
 
 watch(search, () => {

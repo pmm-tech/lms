@@ -2,7 +2,7 @@
 	<Dialog
 		v-model="show"
 		:options="{
-			size: '5xl',
+			size: '3xl',
 		}"
 	>
 		<template #body>
@@ -10,17 +10,14 @@
 				<div class="text-lg font-semibold text-ink-gray-9 mb-5">
 					{{ __(props.title) }}
 				</div>
-				<div
+				<Switch
 					v-if="!editMode"
-					class="flex items-center text-xs text-ink-gray-7 space-x-5"
-				>
-					<Switch
-						size="sm"
-						:label="__('Choose an existing question')"
-						v-model="chooseFromExisting"
-						class="!p-0"
-					/>
-				</div>
+					size="sm"
+					:label="__('Choose an existing question')"
+					:description="__('Select from questions you have already created')"
+					v-model="chooseFromExisting"
+					class="!p-0"
+				/>
 				<div v-if="!chooseFromExisting || editMode">
 					<div>
 						<label class="block text-xs text-ink-gray-5 mb-1">
@@ -31,7 +28,7 @@
 							@change="(val) => (question.question = val)"
 							:editable="true"
 							:fixedMenu="true"
-							editorClass="prose-sm max-w-none border-b border-x bg-surface-gray-2 rounded-b-md py-1 px-2 min-h-[7rem]"
+							editorClass="prose-sm max-w-none border-b border-x border-outline-gray-modals bg-surface-gray-2 rounded-b-md py-1 px-2 min-h-[7rem]"
 						/>
 					</div>
 					<div class="grid grid-cols-2 gap-8 mt-4">
@@ -75,10 +72,11 @@
 								:label="__('Explanation')"
 								v-model="question[`explanation_${n}`]"
 							/>
-							<FormControl
+							<Switch
+								size="sm"
 								:label="__('Correct Answer')"
+								:description="__('Mark this option as a correct answer.')"
 								v-model="question[`is_correct_${n}`]"
-								type="checkbox"
 							/>
 						</div>
 					</div>
@@ -164,7 +162,7 @@ populateFields()
 const props = defineProps({
 	title: {
 		type: String,
-		default: __('Add a new question'),
+		default: __('Add new question'),
 	},
 	questionDetail: {
 		type: [Object, null],

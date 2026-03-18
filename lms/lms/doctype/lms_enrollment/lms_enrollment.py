@@ -11,6 +11,12 @@ class LMSEnrollment(Document):
 	def before_insert(self):
 		self.validate_duplicate_enrollment()
 		self.validate_course_enrollment_eligibility()
+		self.validate_owner()
+
+	def validate_owner(self):
+		"""Makes the member as the owner of the document so that users can update their progress"""
+		if self.owner != self.member:
+			self.owner = self.member
 
 	def on_update(self):
 		update_program_progress(self.member)
@@ -21,10 +27,11 @@ class LMSEnrollment(Document):
 			{
 				"course": self.course,
 				"member": self.member,
+				"name": ["!=", self.name],
 			},
 		)
 
-		if existing_enrollment:
+		if existing_enrollment and existing_enrollment != self.name:
 			frappe.throw(_("Student is already enrolled in this course."))
 
 	def validate_course_enrollment_eligibility(self):
@@ -43,9 +50,12 @@ class LMSEnrollment(Document):
 			)
 
 		if self.enrollment_from_batch:
-			return
+			if frappe.db.exists(
+				"LMS Batch Enrollment", {"batch": self.enrollment_from_batch, "member": self.member}
+			):
+				return
 
-		if not course_details.published:
+		if not course_details.published and not is_admin():
 			frappe.throw(_("You cannot enroll in an unpublished course."))
 
 		if course_details.paid_course:

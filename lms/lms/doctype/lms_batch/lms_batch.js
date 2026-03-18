@@ -12,6 +12,14 @@ frappe.ui.form.on("LMS Batch", {
 			};
 		});
 
+		frm.set_query("course", "courses", function () {
+			return {
+				filters: {
+					published: 1,
+				},
+			};
+		});
+
 		frm.set_query("assessment_type", "assessment", function () {
 			let doctypes = ["LMS Quiz", "LMS Assignment"];
 			return {
@@ -42,7 +50,7 @@ frappe.ui.form.on("LMS Batch", {
 	refresh: (frm) => {
 		const lmsPath = frappe.boot.lms_path || "lms";
 		frm.add_web_link(
-			`/${lmsPath}/batches/details/${frm.doc.name}`,
+			`/${lmsPath}/batches/${frm.doc.name}`,
 			"See on website"
 		);
 	},

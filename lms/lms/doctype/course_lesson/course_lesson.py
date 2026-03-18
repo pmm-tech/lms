@@ -9,14 +9,38 @@ from frappe.model.document import Document
 from frappe.realtime import get_website_room
 from frappe.utils.telemetry import capture
 
-from lms.lms.utils import get_course_progress
+from lms.lms.utils import get_course_progress, is_demo_course, recalculate_course_progress
 
 from ...md import find_macros
 
 
 class CourseLesson(Document):
+	def after_insert(self):
+		self.validate_progress_recalculation()
+
+	def after_delete(self):
+		self.validate_progress_recalculation()
+
 	def on_update(self):
 		self.validate_quiz_id()
+
+	def validate_progress_recalculation(self):
+		if not self.course or not self.chapter:
+			return
+
+		enrollments = frappe.db.get_all(
+			"LMS Enrollment",
+			filters={"course": self.course},
+			fields=["name", "member"],
+		)
+		if not len(enrollments):
+			return
+
+		frappe.enqueue(method=self.recalculate_progress, queue="long", is_async=True, enrollments=enrollments)
+
+	def recalculate_progress(self, enrollments):
+		for enrollment in enrollments:
+			recalculate_course_progress(self.course, enrollment.member)
 
 	def validate_quiz_id(self):
 		if self.quiz_id and not frappe.db.exists("LMS Quiz", self.quiz_id):
@@ -46,7 +70,7 @@ class CourseLesson(Document):
 
 
 @frappe.whitelist()
-def save_progress(lesson, course, scorm_details=None):
+def save_progress(lesson: str, course: str, scorm_details: dict = None):
 	"""
 	Note: Pass the argument scorm_details as a dict if it is SCORM related save_progress
 	"""
@@ -103,7 +127,8 @@ def save_progress(lesson, course, scorm_details=None):
 		)
 
 	progress = get_course_progress(course)
-	capture_progress_for_analytics(progress, course)
+	if not is_demo_course(course):
+		capture("course_progress", "lms")
 
 	# Had to get doc, as on_change doesn't trigger when you use set_value. The trigger is necessary for badge to get assigned.
 	enrollment = frappe.get_doc("LMS Enrollment", membership)
@@ -119,11 +144,6 @@ def save_progress(lesson, course, scorm_details=None):
 	)
 
 	return progress
-
-
-def capture_progress_for_analytics(progress, course):
-	if progress in [25, 50, 75, 100]:
-		capture("course_progress", "lms", properties={"course": course, "progress": progress})
 
 
 def get_quiz_progress(lesson):
