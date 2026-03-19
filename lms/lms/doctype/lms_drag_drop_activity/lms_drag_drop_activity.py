@@ -41,7 +41,7 @@ def normalize_answer(answer):
 
 
 @frappe.whitelist()
-def submit_activity(activity, answers):
+def submit_activity(activity: str, answers: str):
 	answers = json.loads(answers or "[]")
 	activity_doc = frappe.get_doc("LMS Drag Drop Activity", activity)
 
