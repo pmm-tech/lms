@@ -4,6 +4,10 @@ on:
   push:
     tags:
       - "v*"
+
+env:
+  FRAPPE_BRANCH: version-15
+
 jobs:
   build:
     name: Build
@@ -35,15 +39,19 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
-      # Build from this repo and ref so the image contains the code being built.
+      # Build from the current repository/ref so the image contains the code being released.
       # For tags like v1.0, image tag is 1.0 (without the leading v).
-      - name: Set build context (APPS_JSON, FRAPPE_BRANCH, IMAGE_TAG)
+      - name: Set build context (APPS_JSON, APP_REF, IMAGE_TAG)
         run: |
-          REPO_URL="${{ github.server_url }}/${{ github.repository }}"
           REF="${{ github.ref_name }}"
-          APPS_JSON="[{\"url\": \"${REPO_URL}\", \"branch\": \"${REF}\"}]"
+          APP_REF="${REF}"
+          PAYMENTS_REF="${FRAPPE_BRANCH}"
+          APPS_JSON="[{\"url\":\"${{ github.server_url }}/frappe/payments\",\"branch\":\"${PAYMENTS_REF}\"},{\"url\":\"${{ github.server_url }}/${{ github.repository }}\",\"branch\":\"${APP_REF}\"}]"
+
+          echo "APP_REF=${APP_REF}" >> $GITHUB_ENV
+          echo "PAYMENTS_REF=${PAYMENTS_REF}" >> $GITHUB_ENV
           echo "APPS_JSON_BASE64=$(echo ${APPS_JSON} | base64 -w 0)" >> $GITHUB_ENV
-          echo "FRAPPE_BRANCH=version-15" >> $GITHUB_ENV
+
           if [[ "${{ github.ref_type }}" == "tag" ]]; then
             if [[ "${REF}" == v* ]]; then
               echo "IMAGE_TAG=${REF#v}" >> $GITHUB_ENV
@@ -55,6 +63,43 @@ jobs:
           else
             echo "IMAGE_TAG=${REF}" >> $GITHUB_ENV
           fi
+
+      - name: Validate build inputs
+        run: |
+          if [[ -z "${APP_REF}" ]]; then
+            echo "APP_REF is empty. Expected the workflow ref to resolve to an LMS ref."
+            exit 1
+          fi
+
+          if [[ "${{ github.ref_type }}" == "tag" && "${APP_REF}" != "${{ github.ref_name }}" ]]; then
+            echo "Tag builds must use the exact release tag as APP_REF."
+            exit 1
+          fi
+
+          APPS_JSON=$(echo "${APPS_JSON_BASE64}" | base64 -d)
+
+          if [[ "${APPS_JSON}" != *"frappe/payments"* ]]; then
+            echo "APPS_JSON must include frappe/payments because LMS depends on the payments app."
+            exit 1
+          fi
+
+          if [[ "${APPS_JSON}" != *"${{ github.repository }}"* ]]; then
+            echo "APPS_JSON must include the current repository as the LMS app source."
+            exit 1
+          fi
+
+      - name: Summarize build inputs
+        run: |
+          {
+            echo "## Container Build Inputs"
+            echo ""
+            echo "- Repository: \`${{ github.repository }}\`"
+            echo "- Ref type: \`${{ github.ref_type }}\`"
+            echo "- LMS ref: \`${APP_REF}\`"
+            echo "- Frappe branch: \`${FRAPPE_BRANCH}\`"
+            echo "- Payments ref: \`${PAYMENTS_REF}\`"
+            echo "- Image tag: \`${IMAGE_TAG}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Checkout frappe_docker (build context)
         uses: actions/checkout@v4
@@ -73,3 +118,10 @@ jobs:
           build-args: |
             FRAPPE_BRANCH=${{ env.FRAPPE_BRANCH }}
             APPS_JSON_BASE64=${{ env.APPS_JSON_BASE64 }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ env.IMAGE_TAG }}
+            org.opencontainers.image.ref.name=${{ env.APP_REF }}
+            org.opencontainers.image.url=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            io.frappe.frappe-branch=${{ env.FRAPPE_BRANCH }}
