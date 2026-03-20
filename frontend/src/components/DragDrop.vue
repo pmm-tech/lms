@@ -26,22 +26,34 @@
 		</div>
 
 		<div v-if="started && !submission.data" class="space-y-6">
-			<div class="rounded-lg border bg-surface-gray-2 p-4">
-				<div class="mb-2 text-sm font-medium text-ink-gray-7">
+			<div class="overflow-hidden rounded-2xl border border-transparent bg-gradient-to-br from-surface-blue-1 via-surface-orange-1 to-surface-green-1 p-1 shadow-sm">
+				<div class="rounded-[calc(1rem-1px)] bg-surface-white/90 p-4 backdrop-blur-sm">
+					<div class="mb-1 text-sm font-semibold text-ink-gray-8">
 					{{ __('Answer Bank') }}
-				</div>
-				<div class="flex flex-wrap gap-3">
-					<button
-						v-for="answer in availableAnswers"
-						:key="answer.id"
-						type="button"
-						draggable="true"
-						class="rounded-md bg-surface-blue-5 px-4 py-2 text-white"
-						@click="selectAnswer(answer)"
-						@dragstart="dragStart(answer)"
-					>
-						{{ answer.label }}
-					</button>
+					</div>
+					<div class="mb-4 text-sm leading-5 text-ink-gray-7">
+						{{ __('Choose an answer, then click a blank or drag it into place.') }}
+					</div>
+					<div class="flex flex-wrap gap-3">
+						<button
+							v-for="answer in availableAnswers"
+							:key="answer.id"
+							type="button"
+							draggable="true"
+							class="min-h-11 rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2"
+							:class="{
+								'ring-2 ring-offset-2 scale-[1.02]': selectedAnswer?.id === answer.id,
+								'cursor-grabbing opacity-80 scale-[0.98]': draggedAnswer?.id === answer.id,
+								'cursor-pointer': draggedAnswer?.id !== answer.id,
+							}"
+							:style="answerButtonStyle(answer)"
+							@click="selectAnswer(answer)"
+							@dragstart="dragStart(answer)"
+							@dragend="dragEnd"
+						>
+							{{ answer.label }}
+						</button>
+					</div>
 				</div>
 			</div>
 
@@ -49,16 +61,18 @@
 				<div
 					v-for="item in items"
 					:key="item.name"
-					class="rounded-lg border p-4 text-ink-gray-9"
+					class="rounded-xl border border-outline-gray-2 bg-surface-white p-4 text-ink-gray-9 shadow-sm"
 				>
 					<div class="flex flex-wrap items-center gap-2 leading-7">
 						<span>{{ item.prompt_before }}</span>
 						<button
 							type="button"
-							class="min-w-28 rounded-md border-b-2 border-outline-gray-3 px-3 py-1 text-center"
-							:class="{ 'bg-surface-orange-2': placements[item.name] }"
+							class="min-w-32 rounded-xl border-2 px-4 py-2 text-center text-sm font-medium transition duration-150 ease-out"
+							:class="dropTargetClass(item.name)"
 							@click="placeSelected(item.name)"
 							@dragover.prevent
+							@dragenter.prevent="activeDropTarget = item.name"
+							@dragleave.prevent="clearDropTarget(item.name)"
 							@drop.prevent="dropAnswer(item.name)"
 						>
 							{{ placements[item.name]?.label || __('Drop here') }}
@@ -156,6 +170,7 @@ const selectedAnswer = ref(null)
 const started = ref(false)
 const timer = ref(0)
 const answerBank = ref([])
+const activeDropTarget = ref(null)
 let timerInterval = null
 
 const props = defineProps({
@@ -193,6 +208,45 @@ const availableAnswers = computed(() =>
 		(answer) => !Object.values(placements).some((placed) => placed?.id === answer.id)
 	)
 )
+
+const answerPalette = [
+	{
+		background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+		borderColor: '#1d4ed8',
+		ringColor: '#93c5fd',
+		shadowColor: 'rgba(37, 99, 235, 0.28)',
+	},
+	{
+		background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+		borderColor: '#ea580c',
+		ringColor: '#fdba74',
+		shadowColor: 'rgba(249, 115, 22, 0.28)',
+	},
+	{
+		background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
+		borderColor: '#15803d',
+		ringColor: '#86efac',
+		shadowColor: 'rgba(22, 163, 74, 0.28)',
+	},
+	{
+		background: 'linear-gradient(135deg, #db2777 0%, #be185d 100%)',
+		borderColor: '#be185d',
+		ringColor: '#f9a8d4',
+		shadowColor: 'rgba(219, 39, 119, 0.28)',
+	},
+	{
+		background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+		borderColor: '#6d28d9',
+		ringColor: '#c4b5fd',
+		shadowColor: 'rgba(124, 58, 237, 0.28)',
+	},
+	{
+		background: 'linear-gradient(135deg, #0891b2 0%, #0e7490 100%)',
+		borderColor: '#0e7490',
+		ringColor: '#67e8f9',
+		shadowColor: 'rgba(8, 145, 178, 0.28)',
+	},
+]
 
 const attempts = createResource({
 	url: 'frappe.client.get_list',
@@ -296,6 +350,11 @@ const dragStart = (answer) => {
 	draggedAnswer.value = answer
 }
 
+const dragEnd = () => {
+	draggedAnswer.value = null
+	activeDropTarget.value = null
+}
+
 const selectAnswer = (answer) => {
 	selectedAnswer.value = answer
 }
@@ -311,6 +370,7 @@ const placeAnswer = (itemName, answer) => {
 	placements[itemName] = answer
 	draggedAnswer.value = null
 	selectedAnswer.value = null
+	activeDropTarget.value = null
 }
 
 const dropAnswer = (itemName) => {
@@ -325,10 +385,47 @@ const removePlacement = (itemName) => {
 	delete placements[itemName]
 }
 
+const clearDropTarget = (itemName) => {
+	if (activeDropTarget.value === itemName) {
+		activeDropTarget.value = null
+	}
+}
+
+const answerButtonStyle = (answer) => {
+	const index = answerBank.value.findIndex((item) => item.id === answer.id)
+	const palette = answerPalette[(index >= 0 ? index : 0) % answerPalette.length]
+	const isSelected = selectedAnswer.value?.id === answer.id
+
+	return {
+		background: palette.background,
+		border: `1px solid ${palette.borderColor}`,
+		boxShadow: isSelected
+			? `0 0 0 3px ${palette.ringColor}, 0 12px 24px ${palette.shadowColor}`
+			: `0 10px 22px ${palette.shadowColor}`,
+	}
+}
+
+const dropTargetClass = (itemName) => {
+	if (placements[itemName]) {
+		return 'border-orange-300 bg-surface-orange-1 text-ink-gray-9 shadow-sm'
+	}
+
+	if (activeDropTarget.value === itemName && draggedAnswer.value) {
+		return 'border-blue-400 bg-surface-blue-1 text-ink-blue-3 border-dashed'
+	}
+
+	if (selectedAnswer.value) {
+		return 'border-green-300 bg-surface-green-1 text-ink-gray-8'
+	}
+
+	return 'border-outline-gray-3 bg-surface-gray-1 text-ink-gray-5 border-dashed'
+}
+
 const resetActivity = () => {
 	Object.keys(placements).forEach((key) => delete placements[key])
 	selectedAnswer.value = null
 	draggedAnswer.value = null
+	activeDropTarget.value = null
 	started.value = false
 	submission.reset()
 	resetAnswerBank()

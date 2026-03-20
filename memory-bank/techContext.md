@@ -9,6 +9,7 @@
 ## Setup
 - Local Frappe workflow uses Bench: create a site, install the app, and run `bench start`.
 - Docker workflow uses [`docker/docker-compose.yml`](/Users/purwaren/Projects/frappe/lms/docker/docker-compose.yml) and [`docker/init.sh`](/Users/purwaren/Projects/frappe/lms/docker/init.sh).
+- 2026-03-20: In this workspace, the active runtime is driven from the parent compose project at `/Users/purwaren/Projects/frappe/frappe-learning/docker-compose.yml`, with the app mounted into the `frappe` service at `/home/frappe/frappe-bench/apps/lms`.
 - Root `package.json` delegates frontend development and build commands into the `frontend/` workspace-like folder.
 - Frontend dev server uses Vite with a local `frappe-ui` checkout when available, otherwise the npm package fallback.
 
@@ -17,6 +18,7 @@
 - Route handling depends on a configurable `lms_path`; hardcoded `/lms` assumptions can regress custom deployments.
 - Endpoint blocking in [`lms/auth.py`](/Users/purwaren/Projects/frappe/lms/lms/auth.py) can reject non-allowlisted API calls for non-system users.
 - The backend surface is large, with many whitelisted methods in [`lms/lms/api.py`](/Users/purwaren/Projects/frappe/lms/lms/lms/api.py) and [`lms/lms/utils.py`](/Users/purwaren/Projects/frappe/lms/lms/lms/utils.py), so behavioral changes can have wide reach.
+- Docker-backed verification may be more reliable than host-shell verification because node/yarn availability and dependency state differ between the host and the running `frappe` container.
 
 ## Key Commands
 - `bench start`
@@ -25,3 +27,4 @@
 - `yarn build`
 - `yarn test-local`
 - `ruff check .`
+- `docker compose exec frappe bash -lc 'cd /home/frappe/frappe-bench/apps/lms/frontend && yarn build'`
