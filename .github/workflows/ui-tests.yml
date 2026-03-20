@@ -10,7 +10,6 @@ on:
       - main-hotfix
 
 permissions:
-  # Do not change this as GITHUB_TOKEN is being used by roulette
   contents: read
 
 jobs:
@@ -35,7 +34,7 @@ jobs:
 
     steps:
       - name: Clone
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v6
@@ -104,21 +103,28 @@ jobs:
           bench --site lms.test set-password frappe@example.com admin
           bench --site lms.test execute lms.lms.utils.persona_captured
 
-      - name: cypress pre-requisites
-        run: |
-          cd ~/frappe-bench/apps/lms
-          yarn add cypress@^10 --no-lockfile -W
-
       - name: UI Tests
         run: cd ~/frappe-bench/ && bench --site lms.test run-ui-tests lms --headless
         env:
           CYPRESS_BASE_URL: http://lms.test:8000
-          CYPRESS_RECORD_KEY: 095366ec-7b9f-41bd-aeec-03bb76d627fe
+          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
 
       - name: Stop server and wait for coverage file
+        if: ${{ always() }}
         run: |
           ps -ef | grep "[f]rappe serve" | awk '{print $2}' | xargs kill -s SIGINT
           sleep 5
+
+      - name: Upload UI artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-test-artifacts
+          if-no-files-found: ignore
+          path: |
+            ~/frappe-bench/bench_start.log
+            ~/frappe-bench/apps/lms/cypress/screenshots
+            ~/frappe-bench/apps/lms/cypress/videos
 
       - name: Show bench output
         if: ${{ always() }}

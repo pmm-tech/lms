@@ -14,6 +14,7 @@ jobs:
         arch: [amd64]
 
     permissions:
+      contents: read
       packages: write
 
     steps:
@@ -32,7 +33,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ github.token }}
 
       # Build from this repo and ref so the image contains the code being built.
       # For tags like v1.0, image tag is 1.0 (without the leading v).
