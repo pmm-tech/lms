@@ -36,8 +36,10 @@ services:
       - db-data:/var/lib/mysql
     networks:
       - lms-network
+    # Use explicit password so healthcheck works when .my-healthcheck.cnf is not
+    # present (e.g. on Podman or certain MariaDB image versions).
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p\"$$MYSQL_ROOT_PASSWORD\" || exit 1"]
       start_period: 10s
       interval: 5s
       timeout: 5s
