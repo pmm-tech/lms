@@ -6,7 +6,7 @@ on:
       - "v*"
 
 env:
-  FRAPPE_BRANCH: version-15
+  FRAPPE_BRANCH: ${{ vars.FRAPPE_BRANCH || 'version-15' }}
 
 jobs:
   build:
@@ -38,6 +38,13 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ github.token }}
+
+      - name: Validate configured Frappe branch
+        run: |
+          if [[ -z "${FRAPPE_BRANCH}" ]]; then
+            echo "FRAPPE_BRANCH is empty. Set the repository variable FRAPPE_BRANCH or provide a fallback."
+            exit 1
+          fi
 
       # Build from the current repository/ref so the image contains the code being released.
       # For tags like v1.0, image tag is 1.0 (without the leading v).
@@ -102,7 +109,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Checkout frappe_docker (build context)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: frappe/frappe_docker
           path: builds
