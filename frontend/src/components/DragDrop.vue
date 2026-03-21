@@ -71,72 +71,103 @@
 				</div>
 			</div>
 
-			<div class="space-y-4">
+			<div class="rounded-2xl border border-outline-gray-2 bg-surface-white p-4 shadow-sm space-y-4">
+				<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+					<div>
+						<div class="text-sm font-medium text-ink-gray-8">
+							{{ __('Item {0} of {1}').format(currentItemIndex + 1, items.length) }}
+						</div>
+						<div class="mt-1 text-sm text-ink-gray-6">
+							{{ __('{0} of {1} answered').format(answeredCount, items.length) }}
+						</div>
+					</div>
+					<div class="text-sm" :class="currentItemAnswered ? 'text-ink-green-3' : 'text-ink-orange-3'">
+						{{ currentItemAnswered ? __('Answered') : __('Unanswered') }}
+					</div>
+				</div>
+				<ProgressBar :progress="itemProgress" />
+			</div>
+
+			<div v-if="currentItem" class="space-y-4">
 				<div
-					v-for="item in items"
-					:key="item.name"
+					:key="currentItem.name"
 					class="rounded-xl border border-outline-gray-2 bg-surface-white p-4 text-ink-gray-9 shadow-sm"
 				>
-					<div v-if="getItemDisplayType(item) === 'Image'" class="space-y-4">
+					<div v-if="getItemDisplayType(currentItem) === 'Image'" class="space-y-4">
 						<div class="overflow-hidden rounded-2xl border border-outline-gray-2 bg-surface-gray-1">
 							<img
-								:src="item.image"
-								:alt="item.correct_answer"
+								:src="currentItem.image"
+								:alt="currentItem.correct_answer"
 								class="h-56 w-full object-contain bg-surface-white sm:h-72"
 							/>
 						</div>
-						<div v-if="imagePromptText(item)" class="text-sm leading-6 text-ink-gray-7">
-							{{ imagePromptText(item) }}
+						<div v-if="imagePromptText(currentItem)" class="text-sm leading-6 text-ink-gray-7">
+							{{ imagePromptText(currentItem) }}
 						</div>
 						<button
 							type="button"
 							class="min-h-16 w-full rounded-2xl border-2 px-4 py-4 text-center text-sm font-medium transition duration-150 ease-out"
-							:class="dropTargetClass(item.name)"
-							:aria-label="dropTargetAriaLabel(item.name)"
-							@click="placeSelected(item.name)"
+							:class="dropTargetClass(currentItem.name)"
+							:aria-label="dropTargetAriaLabel(currentItem.name)"
+							@click="placeSelected(currentItem.name)"
 							@dragover.prevent
-							@dragenter.prevent="activeDropTarget = item.name"
-							@dragleave.prevent="clearDropTarget(item.name)"
-							@drop.prevent="dropAnswer(item.name)"
+							@dragenter.prevent="activeDropTarget = currentItem.name"
+							@dragleave.prevent="clearDropTarget(currentItem.name)"
+							@drop.prevent="dropAnswer(currentItem.name)"
 						>
-							{{ placements[item.name]?.label || __('Drop here') }}
+							{{ placements[currentItem.name]?.label || __('Drop here') }}
 						</button>
 					</div>
 					<div v-else class="flex flex-wrap items-center gap-2 leading-7">
-						<span>{{ item.prompt_before }}</span>
+						<span>{{ currentItem.prompt_before }}</span>
 						<button
 							type="button"
 							class="min-h-12 min-w-36 rounded-xl border-2 px-4 py-3 text-center text-sm font-medium transition duration-150 ease-out"
-							:class="dropTargetClass(item.name)"
-							:aria-label="dropTargetAriaLabel(item.name)"
-							@click="placeSelected(item.name)"
+							:class="dropTargetClass(currentItem.name)"
+							:aria-label="dropTargetAriaLabel(currentItem.name)"
+							@click="placeSelected(currentItem.name)"
 							@dragover.prevent
-							@dragenter.prevent="activeDropTarget = item.name"
-							@dragleave.prevent="clearDropTarget(item.name)"
-							@drop.prevent="dropAnswer(item.name)"
+							@dragenter.prevent="activeDropTarget = currentItem.name"
+							@dragleave.prevent="clearDropTarget(currentItem.name)"
+							@drop.prevent="dropAnswer(currentItem.name)"
 						>
-							{{ placements[item.name]?.label || __('Drop here') }}
+							{{ placements[currentItem.name]?.label || __('Drop here') }}
 						</button>
-						<span>{{ item.prompt_after }}</span>
+						<span>{{ currentItem.prompt_after }}</span>
 					</div>
 					<div class="mt-2 text-xs text-ink-gray-6">
-						{{ __('Marks: {0}').format(item.marks) }}
+						{{ __('Marks: {0}').format(currentItem.marks) }}
 					</div>
 					<Button
-						v-if="placements[item.name]"
+						v-if="placements[currentItem.name]"
 						class="mt-3"
 						size="sm"
-						@click="removePlacement(item.name)"
+						@click="removePlacement(currentItem.name)"
 					>
 						{{ __('Remove') }}
 					</Button>
 				</div>
 			</div>
 
-			<div class="flex items-center gap-3">
-				<Button variant="solid" @click="submitActivity()">
+			<div class="flex flex-wrap items-center justify-between gap-3">
+				<div class="flex items-center gap-3">
+					<Button v-if="!isFirstItem" @click="goToPreviousItem()">
+						{{ __('Previous') }}
+					</Button>
+					<Button v-if="!isLastItem" variant="solid" @click="goToNextItem()">
+						{{ __('Next') }}
+					</Button>
+				</div>
+				<Button v-if="isLastItem" variant="solid" @click="submitActivity()">
 					{{ __('Submit') }}
 				</Button>
+			</div>
+
+			<div v-if="unansweredItems.length" class="rounded-2xl border border-outline-gray-2 bg-surface-gray-1 p-4 text-sm text-ink-gray-7">
+				{{ __('Unanswered items: {0}').format(unansweredItems.join(', ')) }}
+			</div>
+
+			<div class="flex items-center gap-3">
 				<Button @click="resetActivity()">
 					{{ __('Reset') }}
 				</Button>
@@ -243,10 +274,36 @@ const activity = createResource({
 })
 
 const items = computed(() => activity.data?.items || [])
+const currentItemIndex = ref(0)
 
 const getItemDisplayType = (item) => item.display_type || 'Text'
 
 const imagePromptText = (item) => [item.prompt_before, item.prompt_after].filter(Boolean).join(' ')
+
+const currentItem = computed(() => items.value[currentItemIndex.value] || null)
+
+const answeredCount = computed(
+	() => items.value.filter((item) => Boolean(placements[item.name])).length
+)
+
+const unansweredItems = computed(() =>
+	items.value
+		.filter((item) => !placements[item.name])
+		.map((item, index) => index + 1)
+)
+
+const currentItemAnswered = computed(() =>
+	currentItem.value ? Boolean(placements[currentItem.value.name]) : false
+)
+
+const isFirstItem = computed(() => currentItemIndex.value === 0)
+
+const isLastItem = computed(() => currentItemIndex.value === Math.max(items.value.length - 1, 0))
+
+const itemProgress = computed(() => {
+	if (!items.value.length) return 0
+	return ((currentItemIndex.value + 1) / items.value.length) * 100
+})
 
 const interactionHint = computed(() => {
 	return isTouchDevice.value
@@ -412,7 +469,20 @@ const startTimer = () => {
 
 const startActivity = () => {
 	started.value = true
+	currentItemIndex.value = 0
 	if (activity.data?.duration) startTimer()
+}
+
+const goToNextItem = () => {
+	if (currentItemIndex.value < items.value.length - 1) {
+		currentItemIndex.value++
+	}
+}
+
+const goToPreviousItem = () => {
+	if (currentItemIndex.value > 0) {
+		currentItemIndex.value--
+	}
 }
 
 const dragStart = (answer) => {
@@ -511,6 +581,7 @@ const resetActivity = () => {
 	selectedAnswer.value = null
 	draggedAnswer.value = null
 	activeDropTarget.value = null
+	currentItemIndex.value = 0
 	started.value = false
 	submission.reset()
 	resetAnswerBank()
