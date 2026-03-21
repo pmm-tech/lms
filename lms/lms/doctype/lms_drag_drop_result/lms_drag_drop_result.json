@@ -6,6 +6,8 @@
  "engine": "InnoDB",
  "field_order": [
   "item",
+  "display_type",
+  "image",
   "prompt_before",
   "prompt_after",
   "submitted_answer",
@@ -20,6 +22,18 @@
    "fieldname": "item",
    "fieldtype": "Data",
    "label": "Item"
+  },
+  {
+   "fieldname": "display_type",
+   "fieldtype": "Data",
+   "label": "Display Type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "image",
+   "fieldtype": "Attach Image",
+   "label": "Image",
+   "read_only": 1
   },
   {
    "fieldname": "prompt_before",

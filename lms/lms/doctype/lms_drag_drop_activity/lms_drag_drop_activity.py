@@ -23,8 +23,13 @@ class LMSDragDropActivity(Document):
 
 	def validate_items(self):
 		for row in self.items:
-			if not row.prompt_before and not row.prompt_after:
-				frappe.throw(_("Each row must contain prompt text before or after the blank."))
+			display_type = (row.display_type or "Text").strip().lower()
+
+			if display_type == "image":
+				if not row.image:
+					frappe.throw(_("Each image row must contain an image."))
+			elif not row.prompt_before and not row.prompt_after:
+				frappe.throw(_("Each text row must contain prompt text before or after the blank."))
 
 			if not row.correct_answer:
 				frappe.throw(_("Each row must have a correct answer."))
@@ -62,6 +67,8 @@ def submit_activity(activity: str, answers: str):
 		results.append(
 			{
 				"item": item.name,
+				"display_type": item.display_type,
+				"image": item.image,
 				"prompt_before": item.prompt_before,
 				"prompt_after": item.prompt_after,
 				"submitted_answer": submitted_answer,

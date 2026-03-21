@@ -14,12 +14,14 @@
 - 2026-03-20: Confirmed this app runs inside the parent Docker Compose project at `/Users/purwaren/Projects/frappe/frappe-learning/docker-compose.yml` and frontend verification should target the `frappe` container path `/home/frappe/frappe-bench/apps/lms`.
 - 2026-03-20: Updated GitHub workflows to prefer `github.token` over a custom release token for repo-local release, note regeneration, PR automation, translation PRs, and GHCR publishing; also standardized several checkout actions and improved UI test artifact capture.
 - 2026-03-20: Removed the duplicate `Semantic Commits` job from `.github/workflows/linters.yml` after confirming workflow failures were caused by commitlint, not the separate PR-title validation workflow. Repo rule is now to enforce semantic PR titles, not every commit message.
+- 2026-03-21: Extended drag and drop activities to support mixed item rendering modes. Each row can now render as either text (`prompt_before`/`prompt_after`) or image (`image` + drop target), while keeping the same answer-bank and scoring flow.
 
 ## Next Actions
 - Continue frontend verification from the parent compose project using `docker compose exec frappe ...` instead of host-shell builds.
 - Investigate why `yarn build` in the `frappe` container remains inside the Vite build phase for several minutes without completing.
 - Watch the next GitHub Actions runs to confirm built-in token permissions are sufficient for release notes, weekly release PR creation, semantic release, and POT-file PR automation.
 - Watch the next PR run to confirm `Validate PR title` remains the only semantic gate and that the removed commitlint check no longer blocks non-conventional commit messages.
+- Manually verify mixed text/image drag and drop activities end-to-end in the LMS UI, including authoring, answer placement, submission, and retry flows.
 - Use the memory bank as the starting context for the next implementation or review task in this repo.
 - Expand system notes when future work touches under-documented areas like payments, search indexing, or SCORM delivery.
 

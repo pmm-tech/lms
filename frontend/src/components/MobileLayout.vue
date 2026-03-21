@@ -155,6 +155,7 @@ watch(userResource, () => {
 		if (isModerator.value || isInstructor.value) {
 			addProgrammingExercises()
 			addQuizzes()
+			addDragDropActivities()
 			addAssignments()
 		}
 	}
@@ -165,6 +166,21 @@ const addQuizzes = () => {
 		label: 'Quizzes',
 		icon: 'CircleHelp',
 		to: 'Quizzes',
+	})
+}
+
+const addDragDropActivities = () => {
+	otherLinks.value.push({
+		label: 'Drag & Drop Activities',
+		icon: 'Hand',
+		to: 'DragDropActivities',
+		activeFor: [
+			'DragDropActivities',
+			'DragDropForm',
+			'DragDropPage',
+			'DragDropSubmissionList',
+			'DragDropSubmission',
+		],
 	})
 }
 

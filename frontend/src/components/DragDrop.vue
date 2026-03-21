@@ -63,7 +63,31 @@
 					:key="item.name"
 					class="rounded-xl border border-outline-gray-2 bg-surface-white p-4 text-ink-gray-9 shadow-sm"
 				>
-					<div class="flex flex-wrap items-center gap-2 leading-7">
+					<div v-if="getItemDisplayType(item) === 'Image'" class="space-y-4">
+						<div class="overflow-hidden rounded-2xl border border-outline-gray-2 bg-surface-gray-1">
+							<img
+								:src="item.image"
+								:alt="item.correct_answer"
+								class="h-56 w-full object-contain bg-surface-white sm:h-72"
+							/>
+						</div>
+						<div v-if="imagePromptText(item)" class="text-sm leading-6 text-ink-gray-7">
+							{{ imagePromptText(item) }}
+						</div>
+						<button
+							type="button"
+							class="min-h-14 w-full rounded-2xl border-2 px-4 py-3 text-center text-sm font-medium transition duration-150 ease-out"
+							:class="dropTargetClass(item.name)"
+							@click="placeSelected(item.name)"
+							@dragover.prevent
+							@dragenter.prevent="activeDropTarget = item.name"
+							@dragleave.prevent="clearDropTarget(item.name)"
+							@drop.prevent="dropAnswer(item.name)"
+						>
+							{{ placements[item.name]?.label || __('Drop here') }}
+						</button>
+					</div>
+					<div v-else class="flex flex-wrap items-center gap-2 leading-7">
 						<span>{{ item.prompt_before }}</span>
 						<button
 							type="button"
@@ -202,6 +226,10 @@ const activity = createResource({
 })
 
 const items = computed(() => activity.data?.items || [])
+
+const getItemDisplayType = (item) => item.display_type || 'Text'
+
+const imagePromptText = (item) => [item.prompt_before, item.prompt_after].filter(Boolean).join(' ')
 
 const availableAnswers = computed(() =>
 	answerBank.value.filter(
