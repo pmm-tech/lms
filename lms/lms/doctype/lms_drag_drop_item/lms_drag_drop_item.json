@@ -5,12 +5,27 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "display_type",
+  "image",
   "prompt_before",
   "prompt_after",
   "correct_answer",
   "marks"
  ],
  "fields": [
+  {
+   "default": "Text",
+   "fieldname": "display_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Display Type",
+   "options": "Text\nImage"
+  },
+  {
+   "fieldname": "image",
+   "fieldtype": "Attach Image",
+   "label": "Image"
+  },
   {
    "fieldname": "prompt_before",
    "fieldtype": "Small Text",

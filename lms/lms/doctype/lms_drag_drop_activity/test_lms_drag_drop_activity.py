@@ -33,3 +33,63 @@ class TestLMSDragDropActivity(unittest.TestCase):
 		)
 		activity.insert()
 		self.assertEqual(activity.total_marks, 5)
+
+	def test_image_item_is_valid_with_image(self):
+		activity = frappe.get_doc(
+			{
+				"doctype": "LMS Drag Drop Activity",
+				"title": "Image Activity",
+				"passing_percentage": 100,
+				"items": [
+					{
+						"doctype": "LMS Drag Drop Item",
+						"display_type": "Image",
+						"image": "/files/example.png",
+						"correct_answer": "Answer",
+						"marks": 2,
+					}
+				],
+			}
+		)
+		activity.insert()
+		self.assertEqual(activity.total_marks, 2)
+
+	def test_text_item_requires_prompt_text(self):
+		activity = frappe.get_doc(
+			{
+				"doctype": "LMS Drag Drop Activity",
+				"title": "Invalid Text Activity",
+				"passing_percentage": 100,
+				"items": [
+					{
+						"doctype": "LMS Drag Drop Item",
+						"display_type": "Text",
+						"correct_answer": "Answer",
+						"marks": 1,
+					}
+				],
+			}
+		)
+
+		with self.assertRaises(frappe.ValidationError):
+			activity.insert()
+
+	def test_image_item_requires_image(self):
+		activity = frappe.get_doc(
+			{
+				"doctype": "LMS Drag Drop Activity",
+				"title": "Invalid Image Activity",
+				"passing_percentage": 100,
+				"items": [
+					{
+						"doctype": "LMS Drag Drop Item",
+						"display_type": "Image",
+						"correct_answer": "Answer",
+						"marks": 1,
+					}
+				],
+			}
+		)
+
+		with self.assertRaises(frappe.ValidationError):
+			activity.insert()

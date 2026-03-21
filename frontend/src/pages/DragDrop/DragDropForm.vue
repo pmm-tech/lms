@@ -48,8 +48,23 @@
 			<div class="space-y-4">
 				<div v-for="(item, idx) in details.doc.items" :key="item.name || idx" class="rounded-lg border p-4 space-y-4">
 					<div class="grid grid-cols-2 gap-4">
+						<FormControl
+							v-model="item.display_type"
+							type="select"
+							:options="displayTypes"
+							:label="__('Display Type')"
+						/>
+					</div>
+					<div v-if="getItemDisplayType(item) === 'Text'" class="grid grid-cols-2 gap-4">
 						<FormControl v-model="item.prompt_before" :label="__('Prompt Before')" />
 						<FormControl v-model="item.prompt_after" :label="__('Prompt After')" />
+					</div>
+					<div v-else>
+						<Uploader
+							v-model="item.image"
+							:label="__('Prompt Image')"
+							:description="__('Upload the image learners should match with an answer.')"
+						/>
 					</div>
 					<div class="grid grid-cols-2 gap-4">
 						<FormControl v-model="item.correct_answer" :label="__('Correct Answer')" :required="true" />
@@ -68,6 +83,7 @@ import { Plus } from 'lucide-vue-next'
 import { sessionStore } from '@/stores/session'
 import { useRouter } from 'vue-router'
 import { escapeHTML } from '@/utils'
+import Uploader from '@/components/Controls/Uploader.vue'
 
 const { brand } = sessionStore()
 const user = inject('$user')
@@ -94,12 +110,18 @@ const details = createDocumentResource({
 	auto: false,
 })
 
+const displayTypes = ['Text', 'Image']
+
+const getItemDisplayType = (item) => item.display_type || 'Text'
+
 const addItem = () => {
 	if (!details.doc.items) {
 		details.doc.items = []
 	}
 	details.doc.items.push({
 		doctype: 'LMS Drag Drop Item',
+		display_type: 'Text',
+		image: '',
 		prompt_before: '',
 		prompt_after: '',
 		correct_answer: '',

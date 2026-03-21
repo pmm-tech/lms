@@ -544,6 +544,21 @@ const getSidebarItems = () => {
 					],
 				},
 				{
+					label: 'Drag & Drop Activities',
+					icon: 'Hand',
+					to: 'DragDropActivities',
+					condition: () => {
+						return isAdmin()
+					},
+					activeFor: [
+						'DragDropActivities',
+						'DragDropForm',
+						'DragDropPage',
+						'DragDropSubmissionList',
+						'DragDropSubmission',
+					],
+				},
+				{
 					label: 'Assignments',
 					icon: 'Pencil',
 					to: 'Assignments',
