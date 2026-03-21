@@ -32,21 +32,35 @@
 					{{ __('Answer Bank') }}
 					</div>
 					<div class="mb-4 text-sm leading-5 text-ink-gray-7">
-						{{ __('Choose an answer, then click a blank or drag it into place.') }}
+						{{ interactionHint }}
+					</div>
+					<div
+						v-if="selectedAnswer"
+						class="mb-4 flex flex-col gap-3 rounded-2xl border border-green-200 bg-surface-green-1 px-4 py-3 text-sm text-ink-gray-8 sm:flex-row sm:items-center sm:justify-between"
+					>
+						<div class="flex items-center gap-2">
+							<span class="font-medium">{{ __('Selected answer:') }}</span>
+							<span>{{ selectedAnswer.label }}</span>
+						</div>
+						<Button size="sm" @click="clearSelectedAnswer()">
+							{{ __('Clear Selection') }}
+						</Button>
 					</div>
 					<div class="flex flex-wrap gap-3">
 						<button
 							v-for="answer in availableAnswers"
 							:key="answer.id"
 							type="button"
-							draggable="true"
-							class="min-h-11 rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2"
+							:draggable="!isTouchDevice"
+							class="min-h-12 rounded-xl px-4 py-3 text-sm font-semibold text-white shadow-sm transition duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2"
 							:class="{
 								'ring-2 ring-offset-2 scale-[1.02]': selectedAnswer?.id === answer.id,
 								'cursor-grabbing opacity-80 scale-[0.98]': draggedAnswer?.id === answer.id,
 								'cursor-pointer': draggedAnswer?.id !== answer.id,
 							}"
 							:style="answerButtonStyle(answer)"
+							:aria-pressed="selectedAnswer?.id === answer.id"
+							:aria-label="__('Select answer {0}').format(answer.label)"
 							@click="selectAnswer(answer)"
 							@dragstart="dragStart(answer)"
 							@dragend="dragEnd"
@@ -76,8 +90,9 @@
 						</div>
 						<button
 							type="button"
-							class="min-h-14 w-full rounded-2xl border-2 px-4 py-3 text-center text-sm font-medium transition duration-150 ease-out"
+							class="min-h-16 w-full rounded-2xl border-2 px-4 py-4 text-center text-sm font-medium transition duration-150 ease-out"
 							:class="dropTargetClass(item.name)"
+							:aria-label="dropTargetAriaLabel(item.name)"
 							@click="placeSelected(item.name)"
 							@dragover.prevent
 							@dragenter.prevent="activeDropTarget = item.name"
@@ -91,8 +106,9 @@
 						<span>{{ item.prompt_before }}</span>
 						<button
 							type="button"
-							class="min-w-32 rounded-xl border-2 px-4 py-2 text-center text-sm font-medium transition duration-150 ease-out"
+							class="min-h-12 min-w-36 rounded-xl border-2 px-4 py-3 text-center text-sm font-medium transition duration-150 ease-out"
 							:class="dropTargetClass(item.name)"
+							:aria-label="dropTargetAriaLabel(item.name)"
 							@click="placeSelected(item.name)"
 							@dragover.prevent
 							@dragenter.prevent="activeDropTarget = item.name"
@@ -184,7 +200,7 @@
 </template>
 <script setup>
 import { Button, createResource, ListView, toast, call } from 'frappe-ui'
-import { computed, inject, reactive, ref, watch } from 'vue'
+import { computed, inject, onMounted, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { timeAgo } from '@/utils'
 import ProgressBar from '@/components/ProgressBar.vue'
 
@@ -195,6 +211,7 @@ const started = ref(false)
 const timer = ref(0)
 const answerBank = ref([])
 const activeDropTarget = ref(null)
+const isTouchDevice = ref(false)
 let timerInterval = null
 
 const props = defineProps({
@@ -230,6 +247,12 @@ const items = computed(() => activity.data?.items || [])
 const getItemDisplayType = (item) => item.display_type || 'Text'
 
 const imagePromptText = (item) => [item.prompt_before, item.prompt_after].filter(Boolean).join(' ')
+
+const interactionHint = computed(() => {
+	return isTouchDevice.value
+		? __('Tap an answer, then tap the correct blank to place it.')
+		: __('Choose an answer, then click a blank or drag it into place.')
+})
 
 const availableAnswers = computed(() =>
 	answerBank.value.filter(
@@ -313,6 +336,24 @@ const submission = createResource({
 	},
 })
 
+const detectTouchDevice = () => {
+	if (typeof window === 'undefined') return
+
+	isTouchDevice.value =
+		window.matchMedia?.('(pointer: coarse)')?.matches ||
+		window.matchMedia?.('(hover: none)')?.matches ||
+		navigator.maxTouchPoints > 0
+}
+
+onMounted(() => {
+	detectTouchDevice()
+	window.addEventListener('resize', detectTouchDevice)
+})
+
+onBeforeUnmount(() => {
+	window.removeEventListener('resize', detectTouchDevice)
+})
+
 watch(
 	() => props.activityName,
 	() => {
@@ -384,7 +425,11 @@ const dragEnd = () => {
 }
 
 const selectAnswer = (answer) => {
-	selectedAnswer.value = answer
+	selectedAnswer.value = selectedAnswer.value?.id === answer.id ? null : answer
+}
+
+const clearSelectedAnswer = () => {
+	selectedAnswer.value = null
 }
 
 const placeAnswer = (itemName, answer) => {
@@ -417,6 +462,18 @@ const clearDropTarget = (itemName) => {
 	if (activeDropTarget.value === itemName) {
 		activeDropTarget.value = null
 	}
+}
+
+const dropTargetAriaLabel = (itemName) => {
+	if (placements[itemName]) {
+		return __('Placed answer: {0}').format(placements[itemName].label)
+	}
+
+	if (selectedAnswer.value) {
+		return __('Tap to place selected answer here')
+	}
+
+	return __('Drop or place an answer here')
 }
 
 const answerButtonStyle = (answer) => {
