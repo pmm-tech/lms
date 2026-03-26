@@ -1,10 +1,19 @@
 <template>
 	<div v-if="lesson.data" class="">
 		<header
-			class="sticky top-0 z-10 flex items-center justify-between border-b bg-surface-white px-3 py-2.5 sm:px-5"
+			class="lesson-header sticky top-0 z-20 flex items-center justify-between border-b bg-surface-white px-3 py-2.5 sm:px-5"
 		>
-			<Breadcrumbs class="h-7" :items="breadcrumbs" />
-			<div class="flex items-center space-x-2">
+			<Breadcrumbs class="h-7 min-w-0 truncate" :items="breadcrumbs" />
+			
+			<div class="sm:hidden flex items-center">
+				<Button @click="showMobileActions = !showMobileActions" variant="ghost">
+					<template #icon>
+						<component :is="showMobileActions ? X : Menu" class="size-6 text-ink-gray-9" />
+					</template>
+				</Button>
+			</div>
+
+			<div class="lesson-header-actions hidden sm:flex items-center space-x-2 flex-shrink-0">
 				<Tooltip v-if="canGoZen()" :text="__('Zen Mode')">
 					<Button @click="goFullScreen()">
 						<template #icon>
@@ -22,7 +31,7 @@
 					<template #prefix>
 						<ChevronLeft class="w-4 h-4 stroke-1" />
 					</template>
-					<span>
+					<span class="hidden sm:inline">
 						{{ __('Previous') }}
 					</span>
 				</Button>
@@ -39,7 +48,8 @@
 					}"
 				>
 					<Button>
-						{{ __('Edit') }}
+						<span class="hidden sm:inline">{{ __('Edit') }}</span>
+						<Pencil class="w-4 h-4 stroke-1.5 sm:hidden" />
 					</Button>
 				</router-link>
 
@@ -47,7 +57,7 @@
 					<template #suffix>
 						<ChevronRight class="w-4 h-4 stroke-1" />
 					</template>
-					<span>
+					<span class="hidden sm:inline">
 						{{ __('Next') }}
 					</span>
 				</Button>
@@ -60,9 +70,65 @@
 					}"
 				>
 					<Button>
-						{{ __('Back to Course') }}
+						<span class="hidden sm:inline">{{ __('Back to Course') }}</span>
+						<span class="sm:hidden">{{ __('Back') }}</span>
 					</Button>
 				</router-link>
+			</div>
+
+			<div v-if="showMobileActions" class="sm:hidden fixed inset-x-0 top-[57px] bottom-0 bg-white z-50 p-4 shadow-xl border-t">
+				<div class="flex flex-col space-y-2">
+					<Button v-if="canGoZen()" @click="goFullScreen(); showMobileActions = false" class="w-full justify-start py-4" variant="ghost">
+						<template #prefix><Focus class="size-5 mr-2" /></template>
+						{{ __('Zen Mode') }}
+					</Button>
+					<Button v-if="isAdmin" @click="showVideoStats(); showMobileActions = false" class="w-full justify-start py-4" variant="ghost">
+						<template #prefix><TrendingUp class="size-5 mr-2" /></template>
+						{{ __('Video Statistics') }}
+					</Button>
+					<div class="px-2 py-4">
+						<CertificationLinks :courseName="courseName" />
+					</div>
+					<hr class="my-2 border-outline-gray-2" />
+					<Button v-if="lesson.data.prev" @click="switchLesson('prev'); showMobileActions = false" class="w-full justify-start py-4" variant="ghost">
+						<template #prefix><ChevronLeft class="size-5 mr-2" /></template>
+						{{ __('Previous Lesson') }}
+					</Button>
+					<router-link
+						v-if="allowEdit()"
+						:to="{
+							name: 'LessonForm',
+							params: {
+								courseName: courseName,
+								chapterNumber: props.chapterNumber,
+								lessonNumber: props.lessonNumber,
+							},
+						}"
+						@click="showMobileActions = false"
+					>
+						<Button class="w-full justify-start py-4" variant="ghost">
+							<template #prefix><Pencil class="size-5 mr-2" /></template>
+							{{ __('Edit Lesson') }}
+						</Button>
+					</router-link>
+					<Button v-if="lesson.data.next" @click="switchLesson('next'); showMobileActions = false" class="w-full justify-start py-4" variant="ghost">
+						<template #prefix><ChevronRight class="size-5 mr-2" /></template>
+						{{ __('Next Lesson') }}
+					</Button>
+					<router-link
+						v-else
+						:to="{
+							name: 'CourseDetail',
+							params: { courseName: courseName },
+						}"
+						@click="showMobileActions = false"
+					>
+						<Button class="w-full justify-start py-4" variant="ghost">
+							<template #prefix><ChevronLeft class="size-5 mr-2" /></template>
+							{{ __('Back to Course') }}
+						</Button>
+					</router-link>
+				</div>
 			</div>
 		</header>
 		<div class="grid md:grid-cols-[70%,30%] h-[94vh]">
@@ -120,10 +186,10 @@
 				>
 					<div class="px-5">
 						<div
-							class="flex flex-col space-y-3 md:space-y-0 md:flex-row md:items-center justify-between"
+							class="lesson-title-section flex items-center justify-between gap-4"
 						>
-							<div class="flex flex-col">
-								<div class="text-3xl font-semibold text-ink-gray-9">
+							<div class="flex flex-col min-w-0 flex-1">
+								<div class="lesson-title text-3xl font-semibold text-ink-gray-9 truncate">
 									{{ lesson.data.title }}
 								</div>
 
@@ -145,64 +211,83 @@
 								</div>
 							</div>
 
-							<div
-								v-if="zenModeEnabled"
-								class="flex items-center space-x-2 mt-2 md:mt-0"
-							>
-								<Button @click="showDiscussionsInZenMode()">
-									<template #icon>
-										<MessageCircleQuestion class="w-4 h-4 stroke-1.5" />
-									</template>
-								</Button>
-								<Button v-if="lesson.data.prev" @click="switchLesson('prev')">
-									<template #prefix>
-										<ChevronLeft class="w-4 h-4 stroke-1" />
-									</template>
-									<span>
-										{{ __('Previous') }}
-									</span>
-								</Button>
-
-								<router-link
-									v-if="allowEdit()"
-									:to="{
-										name: 'LessonForm',
-										params: {
-											courseName: courseName,
-											chapterNumber: props.chapterNumber,
-											lessonNumber: props.lessonNumber,
-										},
-									}"
-								>
-									<Button>
-										{{ __('Edit') }}
+							<div class="flex items-center flex-shrink-0">
+								<div v-if="zenModeEnabled" class="flex items-center space-x-2">
+									<Button @click="showDiscussionsInZenMode()">
+										<template #icon>
+											<MessageCircleQuestion class="w-4 h-4 stroke-1.5" />
+										</template>
 									</Button>
-								</router-link>
-
-								<Button v-if="lesson.data.next" @click="switchLesson('next')">
-									<template #suffix>
-										<ChevronRight class="w-4 h-4 stroke-1" />
-									</template>
-									<span>
-										{{ __('Next') }}
-									</span>
-								</Button>
-
-								<router-link
-									v-else
-									:to="{
-										name: 'CourseDetail',
-										params: { courseName: courseName },
-									}"
-								>
-									<Button>
-										{{ __('Back to Course') }}
+									<Button v-if="lesson.data.prev" @click="switchLesson('prev')">
+										<template #prefix>
+											<ChevronLeft class="w-4 h-4 stroke-1" />
+										</template>
+										<span class="hidden sm:inline">
+											{{ __('Previous') }}
+										</span>
 									</Button>
-								</router-link>
+
+									<router-link
+										v-if="allowEdit()"
+										:to="{
+											name: 'LessonForm',
+											params: {
+												courseName: courseName,
+												chapterNumber: props.chapterNumber,
+												lessonNumber: props.lessonNumber,
+											},
+										}"
+									>
+										<Button>
+											<span class="hidden sm:inline">{{ __('Edit') }}</span>
+											<Pencil class="w-4 h-4 stroke-1.5 sm:hidden" />
+										</Button>
+									</router-link>
+
+									<Button v-if="lesson.data.next" @click="switchLesson('next')">
+										<template #suffix>
+											<ChevronRight class="w-4 h-4 stroke-1" />
+										</template>
+										<span class="hidden sm:inline">
+											{{ __('Next') }}
+										</span>
+									</Button>
+
+									<router-link
+										v-else
+										:to="{
+											name: 'CourseDetail',
+											params: { courseName: courseName },
+										}"
+									>
+										<Button>
+											<span class="hidden sm:inline">{{ __('Back to Course') }}</span>
+											<span class="sm:hidden">{{ __('Back') }}</span>
+										</Button>
+									</router-link>
+								</div>
+
+								<div v-if="!zenModeEnabled" class="lesson-author sm:hidden flex items-center">
+									<span
+										class="h-6 mr-1"
+										:class="{
+											'avatar-group overlap': lesson.data.instructors?.length > 1,
+										}"
+									>
+										<UserAvatar
+											v-for="instructor in lesson.data.instructors"
+											:user="instructor"
+										/>
+									</span>
+									<CourseInstructors
+										v-if="lesson.data?.instructors"
+										:instructors="lesson.data.instructors"
+									/>
+								</div>
 							</div>
 						</div>
 
-						<div v-if="!zenModeEnabled" class="flex items-center mt-4 md:mt-2">
+						<div v-if="!zenModeEnabled" class="lesson-author hidden sm:flex items-center mt-4 md:mt-2">
 							<span
 								class="h-6 mr-1"
 								:class="{
@@ -364,6 +449,8 @@ import {
 	Info,
 	MessageCircleQuestion,
 	TrendingUp,
+	Menu,
+	X,
 } from 'lucide-vue-next'
 import { getEditorTools, enablePlyr, highlightText } from '@/utils'
 import { sessionStore } from '@/stores/session'
@@ -399,6 +486,7 @@ const { brand } = sessionStore()
 const sidebarStore = useSidebar()
 const plyrSources = ref([])
 const showInlineMenu = ref(false)
+const showMobileActions = ref(false)
 const currentTab = ref(null)
 let timerInterval = null
 
@@ -1107,5 +1195,33 @@ usePageMeta(() => {
 :root {
 	--plyr-range-fill-background: white;
 	--plyr-video-control-background-hover: transparent;
+}
+
+/* ===== Mobile & Tablet Responsive (≤768px) ===== */
+@media (max-width: 768px) {
+	/* Header toolbar */
+	.lesson-header {
+		padding: 0.375rem 0.625rem !important;
+		height: 57px;
+	}
+
+	/* Title + Author: force 1 row alignment */
+	.lesson-title-section {
+		flex-direction: row !important;
+		align-items: center !important;
+		justify-content: space-between !important;
+		gap: 0.75rem !important;
+		margin-top: 1rem !important;
+	}
+	.lesson-title {
+		font-size: 1.125rem !important;
+		line-height: 1.5rem !important;
+		flex: 1;
+		min-width: 0;
+	}
+	.lesson-author {
+		margin-top: 0 !important;
+		flex-shrink: 0;
+	}
 }
 </style>
