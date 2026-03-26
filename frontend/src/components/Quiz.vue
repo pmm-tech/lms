@@ -133,7 +133,7 @@
 						</div>
 					</div>
 					<div
-						class="text-ink-gray-9 font-semibold mt-2 leading-5"
+    					class="text-ink-gray-9 font-semibold mt-2 leading-5 [&_img]:max-h-[400px] [&_img]:w-auto [&_img]:object-contain"
 						v-html="questionDetails.data.question"
 					></div>
 					<div v-if="questionDetails.data.type == 'Choices'" v-for="index in 4">
@@ -967,3 +967,11 @@ const getSubmissionColumns = () => {
 	]
 }
 </script>
+
+<!-- <style>
+.border.rounded-lg.p-5 img {
+    max-height: 400px;
+    width: auto;
+    object-fit: contain;
+}
+</style> -->

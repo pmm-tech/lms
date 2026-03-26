@@ -46,14 +46,54 @@ export class Quiz {
 	renderQuiz(quiz) {
 		if (this.readOnly) {
 			const quizPath = getLmsRoute(`quiz/${quiz}?fromLesson=1`)
-			this.wrapper.innerHTML = `<iframe src="${quizPath}" class="w-full h-[500px]"></iframe>`
+
+			const iframe = document.createElement('iframe')
+			iframe.src = quizPath
+			iframe.className = 'w-full'
+			iframe.style.border = 'none'
+			iframe.style.height = '200px'
+
+			iframe.addEventListener('load', () => {
+				let lastHeight = 0
+				let attempts = 0
+				const poll = setInterval(() => {
+					try {
+						const height = iframe.contentWindow.document.body.scrollHeight
+						if (height === lastHeight || attempts > 20) {
+							clearInterval(poll)
+							if (height > 0) iframe.style.height = height + 'px'
+						}
+						lastHeight = height
+						attempts++
+					} catch (e) {
+						clearInterval(poll)
+					}
+				}, 100)
+			})
+
+			this.wrapper.appendChild(iframe)
+
+			setTimeout(() => {
+				iframe.style.height = iframe.contentWindow.document.body.scrollHeight + 'px'
+
+				let lastHeight = 0
+				setInterval(() => {
+					try {
+						const height = iframe.contentWindow.document.body.scrollHeight
+						if (height !== lastHeight) {
+							iframe.style.height = height + 'px'
+							lastHeight = height
+						}
+					} catch (e) { }
+				}, 300)
+			}, 500)
 			return
 		}
 		this.wrapper.innerHTML = `<div class='border rounded-md p-4 text-center bg-surface-menu-bar mb-4'>
-            <span class="font-medium">
-                Quiz: ${quiz}
-            </span>
-        </div>`
+        <span class="font-medium">
+            Quiz: ${quiz}
+        </span>
+    </div>`
 		return
 	}
 
