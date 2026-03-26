@@ -31,8 +31,13 @@ class LMSDragDropActivity(Document):
 			elif not row.prompt_before and not row.prompt_after:
 				frappe.throw(_("Each text row must contain prompt text before or after the blank."))
 
-			if not row.correct_answer:
-				frappe.throw(_("Each row must have a correct answer."))
+			answer_type = (row.answer_type or "Text").strip().lower()
+			if answer_type == "image":
+				if not row.answer_image:
+					frappe.throw(_("Each image answer row must contain an answer image."))
+			else:
+				if not row.correct_answer:
+					frappe.throw(_("Each text answer row must have a correct answer."))
 
 	def calculate_total_marks(self):
 		self.total_marks = sum(cint(row.marks) for row in self.items)
@@ -61,7 +66,13 @@ def submit_activity(activity: str, answers: str):
 			),
 			"",
 		)
-		is_correct = normalize_answer(submitted_answer) == normalize_answer(item.correct_answer)
+		answer_type = item.answer_type or "Text"
+		is_correct = False
+		if answer_type == "Image":
+			is_correct = normalize_answer(submitted_answer) == normalize_answer(item.answer_image)
+		else:
+			is_correct = normalize_answer(submitted_answer) == normalize_answer(item.correct_answer)
+
 		marks = cint(item.marks) if is_correct else 0
 		score += marks
 		results.append(
@@ -71,8 +82,11 @@ def submit_activity(activity: str, answers: str):
 				"image": item.image,
 				"prompt_before": item.prompt_before,
 				"prompt_after": item.prompt_after,
-				"submitted_answer": submitted_answer,
-				"correct_answer": item.correct_answer,
+				"answer_type": answer_type,
+				"submitted_answer": submitted_answer if answer_type == "Text" else "",
+				"submitted_answer_image": submitted_answer if answer_type == "Image" else "",
+				"correct_answer": item.correct_answer if answer_type == "Text" else "",
+				"correct_answer_image": item.answer_image if answer_type == "Image" else "",
 				"is_correct": 1 if is_correct else 0,
 				"marks": marks,
 				"marks_out_of": item.marks,

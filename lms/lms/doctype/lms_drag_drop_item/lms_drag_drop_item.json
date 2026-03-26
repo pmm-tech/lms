@@ -9,6 +9,9 @@
   "image",
   "prompt_before",
   "prompt_after",
+  "section_break_answer",
+  "answer_type",
+  "answer_image",
   "correct_answer",
   "marks"
  ],
@@ -39,11 +42,29 @@
    "label": "Prompt After"
   },
   {
+   "fieldname": "section_break_answer",
+   "fieldtype": "Section Break",
+   "label": "Answer"
+  },
+  {
+   "default": "Text",
+   "fieldname": "answer_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Answer Type",
+   "options": "Text\nImage"
+  },
+  {
+   "depends_on": "eval:doc.answer_type == 'Image'",
+   "fieldname": "answer_image",
+   "fieldtype": "Attach Image",
+   "label": "Answer Image"
+  },
+  {
    "fieldname": "correct_answer",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Correct Answer",
-   "reqd": 1
+   "label": "Correct Answer"
   },
   {
    "default": "1",
@@ -58,7 +79,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-03-18 00:00:00.000000",
+ "modified": "2026-03-27 01:45:00.000000",
  "modified_by": "Administrator",
  "module": "LMS",
  "name": "LMS Drag Drop Item",

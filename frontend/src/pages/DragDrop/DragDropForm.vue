@@ -67,8 +67,24 @@
 						/>
 					</div>
 					<div class="grid grid-cols-2 gap-4">
-						<FormControl v-model="item.correct_answer" :label="__('Correct Answer')" :required="true" />
+						<FormControl
+							v-model="item.answer_type"
+							type="select"
+							:options="displayTypes"
+							:label="__('Answer Type')"
+						/>
 						<FormControl type="number" v-model="item.marks" :label="__('Marks')" :required="true" />
+					</div>
+					<div v-if="item.answer_type === 'Image'" class="grid grid-cols-1">
+						<Uploader
+							v-model="item.answer_image"
+							:label="__('Answer Image')"
+							:required="true"
+							:description="__('Upload the image for the answer choice.')"
+						/>
+					</div>
+					<div v-else class="grid grid-cols-1">
+						<FormControl v-model="item.correct_answer" :label="__('Correct Answer')" :required="true" />
 					</div>
 					<Button v-if="!readOnlyMode" @click="removeItem(idx)">{{ __('Remove') }}</Button>
 				</div>
@@ -124,6 +140,8 @@ const addItem = () => {
 		image: '',
 		prompt_before: '',
 		prompt_after: '',
+		answer_type: 'Text',
+		answer_image: '',
 		correct_answer: '',
 		marks: 1,
 	})

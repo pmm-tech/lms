@@ -10,9 +10,12 @@
   "image",
   "prompt_before",
   "prompt_after",
+  "answer_type",
   "submitted_answer",
+  "submitted_answer_image",
   "column_break_ixwe",
   "correct_answer",
+  "correct_answer_image",
   "is_correct",
   "marks",
   "marks_out_of"
@@ -49,10 +52,22 @@
    "read_only": 1
   },
   {
+   "fieldname": "answer_type",
+   "fieldtype": "Data",
+   "label": "Answer Type",
+   "read_only": 1
+  },
+  {
    "fieldname": "submitted_answer",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Submitted Answer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submitted_answer_image",
+   "fieldtype": "Attach Image",
+   "label": "Submitted Answer Image",
    "read_only": 1
   },
   {
@@ -63,6 +78,12 @@
    "fieldname": "correct_answer",
    "fieldtype": "Data",
    "label": "Correct Answer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "correct_answer_image",
+   "fieldtype": "Attach Image",
+   "label": "Correct Answer Image",
    "read_only": 1
   },
   {
@@ -89,7 +110,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-03-18 00:00:00.000000",
+ "modified": "2026-03-27 01:35:00.000000",
  "modified_by": "Administrator",
  "module": "LMS",
  "name": "LMS Drag Drop Result",
