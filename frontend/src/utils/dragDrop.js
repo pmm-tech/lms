@@ -41,7 +41,50 @@ export class DragDrop {
 	renderActivity(activity) {
 		if (this.readOnly) {
 			const activityPath = getLmsRoute(`drag-drop/${activity}?fromLesson=1`)
-			this.wrapper.innerHTML = `<iframe src="${activityPath}" class="w-full h-[560px]"></iframe>`
+
+			const iframe = document.createElement('iframe')
+			iframe.src = activityPath
+			iframe.className = 'w-full'
+			iframe.style.border = 'none'
+			iframe.style.height = '200px'
+
+			iframe.addEventListener('load', () => {
+				let lastHeight = 0
+				let attempts = 0
+				const poll = setInterval(() => {
+					try {
+						const height =
+							iframe.contentWindow.document.body.scrollHeight
+						if (height === lastHeight || attempts > 20) {
+							clearInterval(poll)
+							if (height > 0) iframe.style.height = height + 'px'
+						}
+						lastHeight = height
+						attempts++
+					} catch (e) {
+						clearInterval(poll)
+					}
+				}, 100)
+			})
+
+			this.wrapper.appendChild(iframe)
+
+			setTimeout(() => {
+				iframe.style.height =
+					iframe.contentWindow.document.body.scrollHeight + 'px'
+
+				let lastHeight = 0
+				setInterval(() => {
+					try {
+						const height =
+							iframe.contentWindow.document.body.scrollHeight
+						if (height !== lastHeight) {
+							iframe.style.height = height + 'px'
+							lastHeight = height
+						}
+					} catch (e) {}
+				}, 300)
+			}, 1500)
 			return
 		}
 
