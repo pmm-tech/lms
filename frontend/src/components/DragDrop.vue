@@ -40,33 +40,58 @@
 					>
 						<div class="flex items-center gap-2">
 							<span class="font-medium">{{ __('Selected answer:') }}</span>
-							<span>{{ selectedAnswer.label }}</span>
+							<img v-if="selectedAnswer.answer_type === 'Image'" :src="selectedAnswer.image" class="h-8 w-auto rounded border" />
+							<span v-else>{{ selectedAnswer.label }}</span>
 						</div>
 						<Button size="sm" @click="clearSelectedAnswer()">
 							{{ __('Clear Selection') }}
 						</Button>
 					</div>
-					<div class="flex flex-wrap gap-3">
-						<button
-							v-for="answer in availableAnswers"
-							:key="answer.id"
-							type="button"
-							:draggable="!isTouchDevice"
-							class="min-h-12 rounded-xl px-4 py-3 text-sm font-semibold text-white shadow-sm transition duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2"
-							:class="{
-								'ring-2 ring-offset-2 scale-[1.02]': selectedAnswer?.id === answer.id,
-								'cursor-grabbing opacity-80 scale-[0.98]': draggedAnswer?.id === answer.id,
-								'cursor-pointer': draggedAnswer?.id !== answer.id,
-							}"
-							:style="answerButtonStyle(answer)"
-							:aria-pressed="selectedAnswer?.id === answer.id"
-							:aria-label="__('Select answer {0}').format(answer.label)"
-							@click="selectAnswer(answer)"
-							@dragstart="dragStart(answer)"
-							@dragend="dragEnd"
-						>
-							{{ answer.label }}
-						</button>
+					<div class="flex flex-wrap items-center gap-4">
+						<template v-for="(box, bIdx) in availableAnswerBoxes" :key="'box-' + bIdx">
+							<!-- Image Answer Box -->
+							<button
+								v-if="box.type === 'Image' && box.answer"
+								type="button"
+								:draggable="!isTouchDevice"
+								class="w-20 h-20 sm:w-32 sm:h-32 shadow-sm transition duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 flex items-center justify-center overflow-hidden rounded-2xl p-0"
+								:style="answerButtonStyle(box.answer)"
+								:aria-pressed="selectedAnswer?.id === box.answer.id"
+								:aria-label="__('Select answer {0}').format(box.answer.label)"
+								@click="selectAnswer(box.answer)"
+								@dragstart="dragStart(box.answer)"
+								@dragend="dragEnd"
+							>
+								<img :src="box.answer.image" class="h-full w-full object-cover transition-transform duration-200 hover:scale-110 pointer-events-none" />
+							</button>
+
+							<!-- Text Answer Box (Grouped) -->
+							<div
+								v-else-if="box.type === 'TextGroup' && box.answers.length"
+								class="flex flex-col gap-1 w-20 h-20 sm:w-32 sm:h-32"
+							>
+								<button
+									v-for="answer in box.answers"
+									:key="answer.id"
+									type="button"
+									:draggable="!isTouchDevice"
+									class="flex-1 rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-sm transition duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2"
+									:class="{
+										'ring-2 ring-offset-2 scale-[1.02]': selectedAnswer?.id === answer.id,
+										'cursor-grabbing opacity-80 scale-[0.98]': draggedAnswer?.id === answer.id,
+										'cursor-pointer': draggedAnswer?.id !== answer.id,
+									}"
+									:style="answerButtonStyle(answer)"
+									:aria-pressed="selectedAnswer?.id === answer.id"
+									:aria-label="__('Select answer {0}').format(answer.label)"
+									@click="selectAnswer(answer)"
+									@dragstart="dragStart(answer)"
+									@dragend="dragEnd"
+								>
+									{{ answer.label }}
+								</button>
+							</div>
+						</template>
 					</div>
 				</div>
 			</div>
@@ -115,7 +140,11 @@
 							@dragleave.prevent="clearDropTarget(currentItem.name)"
 							@drop.prevent="dropAnswer(currentItem.name)"
 						>
-							{{ placements[currentItem.name]?.label || __('Drop here') }}
+							<template v-if="placements[currentItem.name]">
+								<img v-if="placements[currentItem.name].answer_type === 'Image'" :src="placements[currentItem.name].image" class="mx-auto h-24 w-24 object-contain rounded drop-shadow-sm" />
+								<span v-else>{{ placements[currentItem.name].label }}</span>
+							</template>
+							<span v-else>{{ __('Drop here') }}</span>
 						</button>
 					</div>
 					<div v-else class="flex flex-wrap items-center gap-2 leading-7">
@@ -131,7 +160,11 @@
 							@dragleave.prevent="clearDropTarget(currentItem.name)"
 							@drop.prevent="dropAnswer(currentItem.name)"
 						>
-							{{ placements[currentItem.name]?.label || __('Drop here') }}
+							<template v-if="placements[currentItem.name]">
+								<img v-if="placements[currentItem.name].answer_type === 'Image'" :src="placements[currentItem.name].image" class="mx-auto h-16 w-16 sm:h-24 sm:w-24 object-cover rounded-xl drop-shadow-md border-2 border-surface-blue-2" />
+								<span v-else>{{ placements[currentItem.name].label }}</span>
+							</template>
+							<span v-else>{{ __('Drop here') }}</span>
 						</button>
 						<span>{{ currentItem.prompt_after }}</span>
 					</div>
@@ -317,6 +350,36 @@ const availableAnswers = computed(() =>
 	)
 )
 
+const availableAnswerBoxes = computed(() => {
+	const currentAvailableAnswers = availableAnswers.value
+	const items = []
+
+	// Place Image Answers as separate boxes
+	currentAvailableAnswers
+		.filter((a) => a.answer_type === 'Image')
+		.forEach((a) => {
+			items.push({ type: 'Image', answer: a, id: a.id })
+		})
+
+	// Group Text Answers into boxes of 2
+	const texts = currentAvailableAnswers.filter((a) => a.answer_type === 'Text')
+	for (let i = 0; i < texts.length; i += 2) {
+		const chunk = texts.slice(i, i + 2)
+		items.push({ type: 'TextGroup', answers: chunk, id: chunk.map((c) => c.id).join('-') })
+	}
+
+	// Shuffle boxes if enabled (requires stable shuffle linked to answerBank)
+	if (activity.data?.shuffle_answers) {
+		// Use a predictable pseudo-random shuffle based on IDs to avoid jumping
+		return items.sort((a, b) => {
+			const hashA = a.id.split('').reduce((h, c) => (Math.imul(31, h) + c.charCodeAt(0)) | 0, 0)
+			const hashB = b.id.split('').reduce((h, c) => (Math.imul(31, h) + c.charCodeAt(0)) | 0, 0)
+			return hashA - hashB
+		})
+	}
+	return items
+})
+
 const answerPalette = [
 	{
 		background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
@@ -386,7 +449,7 @@ const submission = createResource({
 				items.value.map((item) => ({
 					item: item.name,
 					idx: item.idx,
-					submitted_answer: placements[item.name]?.label || '',
+					submitted_answer: placements[item.name]?.answer_type === 'Image' ? placements[item.name].image : (placements[item.name]?.label || ''),
 				}))
 			),
 		}
@@ -420,13 +483,17 @@ watch(
 )
 
 const resetAnswerBank = () => {
-	let answers = items.value.map((item) => item.correct_answer)
+	let answers = items.value.map((item) => ({
+		answer_type: item.answer_type || 'Text',
+		label: item.correct_answer,
+		image: item.answer_image,
+	}))
 	if (activity.data?.shuffle_answers) {
 		answers = [...answers].sort(() => Math.random() - 0.5)
 	}
 	answerBank.value = answers.map((answer, index) => ({
-		id: `${index}-${answer}`,
-		label: answer,
+		id: `${index}-${answer.label}`,
+		...answer,
 	}))
 }
 
@@ -547,9 +614,18 @@ const dropTargetAriaLabel = (itemName) => {
 }
 
 const answerButtonStyle = (answer) => {
+	const isSelected = selectedAnswer.value?.id === answer.id
+
+	if (answer.answer_type === 'Image') {
+		return {
+			background: 'transparent',
+			border: isSelected ? '4px solid #2563eb' : 'none',
+			boxShadow: isSelected ? '0 0 0 4px #93c5fd, 0 20px 25px -5px rgb(0 0 0 / 0.1)' : 'none',
+		}
+	}
+
 	const index = answerBank.value.findIndex((item) => item.id === answer.id)
 	const palette = answerPalette[(index >= 0 ? index : 0) % answerPalette.length]
-	const isSelected = selectedAnswer.value?.id === answer.id
 
 	return {
 		background: palette.background,

@@ -6,7 +6,7 @@
 		<Breadcrumbs :items="breadcrumbs" />
 	</header>
 	<div
-		class="md:w-7/12 md:mx-auto mx-4 py-10"
+		class="md:w-7/12 md:mx-auto mx-2 sm:mx-4 py-4 sm:py-10"
 		:class="{ 'pt-4 md:w-full': fromLesson }"
 	>
 		<Quiz :quizName="quizID" />

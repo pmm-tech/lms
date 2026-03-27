@@ -1,7 +1,7 @@
 <template>
 	<div v-if="quiz.data">
 		<div
-			class="bg-surface-blue-2 text-ink-blue-3 space-y-2 p-3 mb-4 rounded-lg leading-5"
+			class="quiz-instructions bg-surface-blue-2 text-ink-blue-3 space-y-2 p-3 mb-4 rounded-lg leading-5"
 		>
 			<div class="font-medium">
 				{{
@@ -80,7 +80,7 @@
 		</div>
 
 		<div v-if="activeQuestion == 0">
-			<div class="border text-center p-20 rounded-md">
+			<div class="quiz-start-area border text-center p-20 rounded-md">
 				<div class="font-semibold text-lg text-ink-gray-9">
 					{{ quiz.data.title }}
 				</div>
@@ -120,7 +120,7 @@
 			<div v-for="(question, qtidx) in questions">
 				<div
 					v-if="qtidx == activeQuestion - 1 && questionDetails.data"
-					class="border rounded-lg p-5"
+					class="quiz-question-card border rounded-lg p-5"
 				>
 					<div class="flex justify-between">
 						<div class="text-sm text-ink-gray-5">
@@ -133,7 +133,7 @@
 						</div>
 					</div>
 					<div
-						class="text-ink-gray-9 font-semibold mt-2 leading-5"
+					class="quiz-question-content text-ink-gray-9 font-semibold mt-2 leading-5 [&_img]:max-h-[400px] [&_img]:w-auto [&_img]:object-contain"
 						v-html="questionDetails.data.question"
 					></div>
 					<div v-if="questionDetails.data.type == 'Choices'" v-for="index in 4">
@@ -222,7 +222,7 @@
 							editorClass="prose-sm max-w-none border-b border-x border-outline-gray-modals bg-surface-gray-2 rounded-b-md py-1 px-2 min-h-[7rem]"
 						/>
 					</div>
-					<div class="flex items-center justify-between mt-8">
+					<div class="quiz-actions flex items-center justify-between mt-8">
 						<Checkbox
 							:label="__('Mark for review')"
 							:model-value="reviewQuestions.includes(activeQuestion) ? 1 : 0"
@@ -323,7 +323,7 @@
 				</div>
 			</div>
 		</div>
-		<div v-else class="border rounded-lg p-20 text-center space-y-2">
+		<div v-else class="quiz-summary border rounded-lg p-20 text-center space-y-2">
 			<div class="text-lg font-semibold text-ink-gray-9">
 				{{ __('Quiz Summary') }}
 			</div>
@@ -967,3 +967,59 @@ const getSubmissionColumns = () => {
 	]
 }
 </script>
+
+<!-- <style>
+.border.rounded-lg.p-5 img {
+    max-height: 400px;
+    width: auto;
+    object-fit: contain;
+}
+</style> -->
+
+<style>
+/* ===== Quiz: Mobile & Tablet Responsive (max-width 768px) ===== */
+@media (max-width: 768px) {
+	/* Instruction box: tighter */
+	.quiz-instructions {
+		padding: 0.5rem 0.75rem;
+		font-size: 0.8125rem;
+		line-height: 1.25rem;
+		margin-bottom: 0.75rem;
+	}
+	.quiz-instructions ol {
+		gap: 0.25rem;
+	}
+
+	/* Start area: less padding */
+	.quiz-start-area {
+		padding: 2rem 1rem !important;
+	}
+
+	/* Question card: compact */
+	.quiz-question-card {
+		padding: 0.75rem !important;
+	}
+
+	/* Question images: smaller on mobile */
+	.quiz-question-content img {
+		max-height: 180px !important;
+		width: auto;
+		object-fit: contain;
+		margin-left: auto;
+		margin-right: auto;
+		display: block;
+	}
+
+	/* Bottom actions: compact */
+	.quiz-actions {
+		margin-top: 1rem !important;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+	}
+
+	/* Quiz summary: less padding */
+	.quiz-summary {
+		padding: 2rem 1rem !important;
+	}
+}
+</style>
