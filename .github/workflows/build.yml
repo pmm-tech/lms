@@ -6,7 +6,8 @@ on:
       - "v*"
 
 env:
-  FRAPPE_BRANCH: ${{ vars.FRAPPE_BRANCH || 'version-15' }}
+  FRAPPE_REF: ${{ vars.FRAPPE_REF || vars.FRAPPE_BRANCH || 'version-15' }}
+  PAYMENTS_REF: ${{ vars.PAYMENTS_REF || vars.FRAPPE_REF || vars.FRAPPE_BRANCH || 'version-15' }}
 
 jobs:
   build:
@@ -23,7 +24,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -33,18 +34,46 @@ jobs:
         with:
           platforms: linux/${{ matrix.arch }}
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
-      - name: Validate configured Frappe branch
+      - name: Validate configured framework refs
         run: |
-          if [[ -z "${FRAPPE_BRANCH}" ]]; then
-            echo "FRAPPE_BRANCH is empty. Set the repository variable FRAPPE_BRANCH or provide a fallback."
+          if [[ -z "${FRAPPE_REF}" ]]; then
+            echo "FRAPPE_REF is empty. Set the repository variable FRAPPE_REF or FRAPPE_BRANCH, or provide a fallback."
             exit 1
           fi
+
+          if [[ -z "${PAYMENTS_REF}" ]]; then
+            echo "PAYMENTS_REF is empty. Set the repository variable PAYMENTS_REF or provide a fallback."
+            exit 1
+          fi
+
+      - name: Validate upstream refs exist
+        run: |
+          check_remote_ref() {
+            local repo="$1"
+            local ref="$2"
+            if git ls-remote --exit-code --heads "https://github.com/${repo}" "${ref}" >/dev/null 2>&1; then
+              echo "Validated branch ${ref} in ${repo}"
+              return 0
+            fi
+
+            if git ls-remote --exit-code --tags "https://github.com/${repo}" "${ref}" >/dev/null 2>&1; then
+              echo "Validated tag ${ref} in ${repo}"
+              return 0
+            fi
+
+            echo "Configured ref '${ref}' was not found in ${repo}."
+            echo "Update the repository variable to a real upstream branch or tag before retrying."
+            exit 1
+          }
+
+          check_remote_ref "frappe/frappe" "${FRAPPE_REF}"
+          check_remote_ref "frappe/payments" "${PAYMENTS_REF}"
 
       # Build from the current repository/ref so the image contains the code being released.
       # For tags like v1.0, image tag is 1.0 (without the leading v).
@@ -52,11 +81,9 @@ jobs:
         run: |
           REF="${{ github.ref_name }}"
           APP_REF="${REF}"
-          PAYMENTS_REF="${FRAPPE_BRANCH}"
           APPS_JSON="[{\"url\":\"${{ github.server_url }}/frappe/payments\",\"branch\":\"${PAYMENTS_REF}\"},{\"url\":\"${{ github.server_url }}/${{ github.repository }}\",\"branch\":\"${APP_REF}\"}]"
 
           echo "APP_REF=${APP_REF}" >> $GITHUB_ENV
-          echo "PAYMENTS_REF=${PAYMENTS_REF}" >> $GITHUB_ENV
           echo "APPS_JSON_BASE64=$(echo ${APPS_JSON} | base64 -w 0)" >> $GITHUB_ENV
 
           if [[ "${{ github.ref_type }}" == "tag" ]]; then
@@ -103,7 +130,7 @@ jobs:
             echo "- Repository: \`${{ github.repository }}\`"
             echo "- Ref type: \`${{ github.ref_type }}\`"
             echo "- LMS ref: \`${APP_REF}\`"
-            echo "- Frappe branch: \`${FRAPPE_BRANCH}\`"
+            echo "- Frappe ref: \`${FRAPPE_REF}\`"
             echo "- Payments ref: \`${PAYMENTS_REF}\`"
             echo "- Image tag: \`${IMAGE_TAG}\`"
           } >> "$GITHUB_STEP_SUMMARY"
@@ -123,7 +150,7 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository }}:${{ env.IMAGE_TAG }}
           build-args: |
-            FRAPPE_BRANCH=${{ env.FRAPPE_BRANCH }}
+            FRAPPE_BRANCH=${{ env.FRAPPE_REF }}
             APPS_JSON_BASE64=${{ env.APPS_JSON_BASE64 }}
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
@@ -131,4 +158,5 @@ jobs:
             org.opencontainers.image.version=${{ env.IMAGE_TAG }}
             org.opencontainers.image.ref.name=${{ env.APP_REF }}
             org.opencontainers.image.url=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-            io.frappe.frappe-branch=${{ env.FRAPPE_BRANCH }}
+            io.frappe.frappe-ref=${{ env.FRAPPE_REF }}
+            io.frappe.payments-ref=${{ env.PAYMENTS_REF }}
