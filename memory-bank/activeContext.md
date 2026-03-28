@@ -1,10 +1,9 @@
 # Active Context
 
 ## Current Focus
-- 2026-03-18: Complete a comprehensive repo analysis and refresh the project memory bank to match the current codebase.
-- 2026-03-18: Establish a reliable baseline for future feature work by documenting architecture, stack, constraints, and risks.
-- 2026-03-20: Refresh the learner-facing drag and drop activity so the answer bank feels more colorful, interactive, and mobile-friendly.
-- 2026-03-20: Simplify GitHub Actions token usage by preferring the built-in `github.token` for repo-local automation and GHCR publishing.
+- 2026-03-29: Keep the memory bank aligned with recent drag and drop UX changes and container-build workflow hardening.
+- 2026-03-29: Validate the remaining drag and drop learner flow end-to-end inside the running LMS app, especially mixed text/image prompts and stepped navigation.
+- 2026-03-29: Monitor GitHub Actions release builds after the `FRAPPE_REF` / `PAYMENTS_REF` split and action-version upgrades.
 
 ## Recent Changes
 - 2026-03-18: Reviewed repository docs, packaging files, hooks, auth layer, SPA router, frontend bootstrap, and test/CI surface.
@@ -15,19 +14,21 @@
 - 2026-03-20: Updated GitHub workflows to prefer `github.token` over a custom release token for repo-local release, note regeneration, PR automation, translation PRs, and GHCR publishing; also standardized several checkout actions and improved UI test artifact capture.
 - 2026-03-20: Removed the duplicate `Semantic Commits` job from `.github/workflows/linters.yml` after confirming workflow failures were caused by commitlint, not the separate PR-title validation workflow. Repo rule is now to enforce semantic PR titles, not every commit message.
 - 2026-03-21: Extended drag and drop activities to support mixed item rendering modes. Each row can now render as either text (`prompt_before`/`prompt_after`) or image (`image` + drop target), while keeping the same answer-bank and scoring flow.
+- 2026-03-21: Added instructor navigation for drag and drop activities under the Quizzes area and updated the learner view to favor touch-friendly tap placement on mobile.
+- 2026-03-21: Reworked the learner drag and drop flow to show one item at a time with Previous/Next navigation while keeping placements persistent across the whole activity.
+- 2026-03-29: Merged `origin/develop` into `devel`, resolved the recurring `ui-tests.yml` conflict by keeping the secret-based Cypress key plus the newer parallel screenshot behavior, and pushed the merge to `origin/devel`.
+- 2026-03-29: Hardened `.github/workflows/build.yml` by separating `FRAPPE_REF` and `PAYMENTS_REF`, validating upstream refs before Docker build, and upgrading workflow action versions where repo-controlled updates were available.
+- 2026-03-29: Confirmed release builds now succeed after fixing the invalid `version-16` framework ref assumption; the remaining Node 20 deprecation warning comes from Docker-maintained actions still on their current major lines.
 
 ## Next Actions
 - Continue frontend verification from the parent compose project using `docker compose exec frappe ...` instead of host-shell builds.
-- Investigate why `yarn build` in the `frappe` container remains inside the Vite build phase for several minutes without completing.
-- Watch the next GitHub Actions runs to confirm built-in token permissions are sufficient for release notes, weekly release PR creation, semantic release, and POT-file PR automation.
-- Watch the next PR run to confirm `Validate PR title` remains the only semantic gate and that the removed commitlint check no longer blocks non-conventional commit messages.
-- Manually verify mixed text/image drag and drop activities end-to-end in the LMS UI, including authoring, answer placement, submission, and retry flows.
+- Manually verify drag and drop activities end-to-end in the LMS UI, including authoring, mixed text/image items, mobile tap placement, sidebar access, stepped navigation, submission, and retry flows.
+- Monitor GitHub Actions release runs to confirm the new `FRAPPE_REF` / `PAYMENTS_REF` validation produces clear failures when refs are wrong and that successful builds keep pushing to GHCR.
+- Revisit the remaining Node 20 deprecation warning only when Docker publishes Node 24-ready action runtimes or when a test branch is ready to opt into forced Node 24 execution.
 - Use the memory bank as the starting context for the next implementation or review task in this repo.
 - Expand system notes when future work touches under-documented areas like payments, search indexing, or SCORM delivery.
 
 ## Blockers
-- No immediate blocker for initialization work.
-- Deeper product or operational history still depends on external issues, PRs, and deployment context not stored in this repo.
 - Host-shell frontend validation is misleading in this workspace because the app is meant to run inside Docker.
 - Container-side frontend validation currently hangs in `vite build` when run as `docker compose exec frappe bash -lc 'cd /home/frappe/frappe-bench/apps/lms/frontend && yarn build'`.
-- Built-in GitHub token behavior still needs live workflow confirmation for jobs that mutate releases or open PRs, even though the YAML permissions now match those intents.
+- Remaining Node 20 deprecation warnings cannot be fully removed from the build workflow until Docker updates the affected GitHub Actions runtimes upstream.

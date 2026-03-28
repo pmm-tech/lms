@@ -19,9 +19,15 @@
 - Role-aware behavior: user capabilities are inferred from Frappe roles and surfaced to the frontend via boot data and `get_user_info`.
 - Scheduled automation pattern: reminders, attendance updates, statistics refresh, and evaluation scheduling run through Frappe scheduler hooks.
 - Content extensibility pattern: lessons support embedded exercises, quizzes, videos, assignments, audio, PDF, and SCORM-related flows.
+- Assessment rendering pattern: drag and drop activities now support multiple item presentation modes while keeping one scoring payload shape (`submitted_answer` per row).
+- Container release pattern: the image build sources LMS from the executing repository/ref, while framework dependencies are controlled by explicit upstream refs validated before Docker build.
 
 ## Decisions
 - 2026-03-18: Keep LMS delivery inside a single Frappe app. Rationale: the repo couples routing, DocTypes, permissions, scheduled jobs, and frontend bootstrapping tightly. Impact: changes usually span hooks, DocTypes, and SPA routes instead of service boundaries.
 - 2026-03-18: Use a Vue SPA mounted at a configurable `lms_path`. Rationale: one routed client app gives a modern UX while preserving Frappe website entry points. Impact: server routes and frontend base-path logic must stay aligned.
 - 2026-03-18: Treat DocTypes as the primary domain boundary. Rationale: Frappe permissions, schema, forms, and tests all center on DocTypes. Impact: new features should usually start with schema and permission design, not standalone tables.
 - 2026-03-18: Allow selective public access through whitelisted methods and route rules. Rationale: browsing courses and other public LMS surfaces must coexist with protected authoring and learner actions. Impact: API additions need explicit guest/auth decisions.
+- 2026-03-21: Keep drag and drop scoring uniform across text and image prompt types. Rationale: the backend already grades per item using submitted answer strings. Impact: new prompt types should reuse the same result and submission model instead of introducing a second grading path.
+- 2026-03-21: Treat tap-to-place as the primary mobile interaction model for drag and drop. Rationale: native HTML drag events are unreliable on touch browsers. Impact: mobile UX should emphasize selection state and tappable drop targets rather than relying on drag-only affordances.
+- 2026-03-21: Present drag and drop items one at a time with Previous/Next navigation. Rationale: the stepped flow is easier to use on mobile and less visually overwhelming than rendering every item at once. Impact: placement state must persist independently of the currently visible item.
+- 2026-03-29: Separate LMS release refs from framework dependency refs in the container build pipeline. Rationale: assuming one shared branch name caused failed builds when `version-16` did not exist upstream. Impact: Frappe and Payments refs are now independently configurable and validated before build.
