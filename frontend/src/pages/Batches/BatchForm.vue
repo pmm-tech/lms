@@ -321,15 +321,13 @@ import {
 } from 'frappe-ui'
 import {
 	createLMSCategory,
-	escapeHTML,
 	getMetaInfo,
 	openSettings,
 	sanitizeHTML,
 	updateMetaInfo,
 } from '@/utils'
 import { useRouter } from 'vue-router'
-import { useOnboarding, useTelemetry } from 'frappe-ui/frappe'
-import { sessionStore } from '@/stores/session'
+import { useTelemetry } from 'frappe-ui/frappe'
 import Uploader from '@/components/Controls/Uploader.vue'
 import MultiSelect from '@/components/Controls/MultiSelect.vue'
 import Link from '@/components/Controls/Link.vue'
@@ -340,8 +338,6 @@ import EmailTemplateModal from '@/components/Modals/EmailTemplateModal.vue'
 
 const router = useRouter()
 const user = inject('$user')
-const { brand } = sessionStore()
-const { updateOnboardingStep } = useOnboarding('learning')
 const instructors = ref([])
 const app = getCurrentInstance()
 const { capture } = useTelemetry()
@@ -419,9 +415,16 @@ watch(
 	() => batchDetail.doc,
 	() => {
 		if (!batchDetail.doc) return
-		getMetaInfo('batches', batchDetail.doc?.name, meta)
+
+		if (originalDoc.value) {
+			isDirty.value =
+				JSON.stringify(batchDetail.doc) !== JSON.stringify(originalDoc.value)
+		}
+
 		updateBatchData()
-	}
+		getMetaInfo('batches', batchDetail.doc?.name, meta)
+	},
+	{ deep: true }
 )
 
 const updateBatchData = () => {
@@ -456,15 +459,9 @@ const formatTime = (timeStr) => {
 }
 
 const validateFields = () => {
-	batchDetail.doc.description = sanitizeHTML(batchDetail.doc.description)
-	batchDetail.doc.batch_details = sanitizeHTML(batchDetail.doc.batch_details)
-
 	Object.keys(batchDetail.doc).forEach((key) => {
-		if (
-			!['description', 'batch_details'].includes(key) &&
-			typeof batchDetail.doc[key] === 'string'
-		) {
-			batchDetail.doc[key] = escapeHTML(batchDetail.doc[key])
+		if (typeof batchDetail.doc[key] === 'string') {
+			batchDetail.doc[key] = sanitizeHTML(batchDetail.doc[key])
 		}
 	})
 }
@@ -498,17 +495,6 @@ const updateBatch = () => {
 		}
 	)
 }
-
-watch(
-	() => batchDetail.doc,
-	() => {
-		if (originalDoc.value) {
-			isDirty.value =
-				JSON.stringify(batchDetail.doc) !== JSON.stringify(originalDoc.value)
-		}
-	},
-	{ deep: true }
-)
 
 const deleteBatch = () => {
 	$dialog({

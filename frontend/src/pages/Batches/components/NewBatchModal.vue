@@ -120,7 +120,7 @@ import { Button, Dialog, FormControl, TextEditor, toast } from 'frappe-ui'
 import { useOnboarding, useTelemetry } from 'frappe-ui/frappe'
 import { computed, inject, onMounted, onBeforeUnmount, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { sanitizeHTML, escapeHTML, createLMSCategory } from '@/utils'
+import { sanitizeHTML, createLMSCategory } from '@/utils'
 import MultiSelect from '@/components/Controls/MultiSelect.vue'
 import Link from '@/components/Controls/Link.vue'
 import NewMemberModal from '@/components/Modals/NewMemberModal.vue'
@@ -179,14 +179,9 @@ const onInstructorCreated = (user: any) => {
 }
 
 const validateFields = () => {
-	batch.value.description = sanitizeHTML(batch.value.description)
-
 	Object.keys(batch.value).forEach((key) => {
-		if (
-			key != 'description' &&
-			typeof batch.value[key as keyof Batch] === 'string'
-		) {
-			batch.value[key as keyof Batch] = escapeHTML(
+		if (typeof batch.value[key as keyof Batch] === 'string') {
+			batch.value[key as keyof Batch] = sanitizeHTML(
 				batch.value[key as keyof Batch] as string
 			)
 		}
