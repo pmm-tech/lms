@@ -49,12 +49,12 @@
 						<div
 							v-if="activity.data.duration"
 							class="-mt-1 flex shrink-0 items-center justify-center self-start whitespace-nowrap rounded-md px-1 py-1 text-center text-[11px] font-semibold sm:mt-0 sm:min-w-[124px] sm:rounded-xl sm:px-2 sm:py-2 sm:text-base"
-							style="background-color: #111111; color: #ffffff;"
+							style="background-color: #2a2a2a; color: #ffffff;"
 						>
 							<span class="text-[10px] uppercase tracking-[0.05em] sm:text-xs" style="color: rgba(255, 255, 255, 0.82);">
 								{{ __('Time') }}
 							</span>
-							<span class="ml-1.5 text-[13px] font-bold sm:ml-2 sm:text-2xl sm:leading-6" style="color: #ffffff;">
+							<span class="ml-1.5 text-[13px] font-bold sm:ml-2 sm:text-[22px] sm:leading-6" style="color: #ffffff;">
 								{{ formatTimer(timer) }}
 							</span>
 						</div>
