@@ -22,6 +22,7 @@
 			</Button>
 		</div>
 		<div
+			:style="outlineContainerStyle"
 			:class="{
 				'border-2 rounded-md py-2 px-2': showOutline && outline.data?.length,
 			}"
@@ -34,7 +35,7 @@
 				@end="updateChapterOrder"
 			>
 				<template #item="{ element: chapter, index }">
-					<div class="chapter-item">
+					<div class="chapter-item py-1">
 						<Disclosure
 							v-slot="{ open }"
 							:key="chapter.name"
@@ -42,7 +43,7 @@
 						>
 							<DisclosureButton
 								ref=""
-								class="flex items-center w-full p-2 group"
+								class="flex items-center w-full rounded-lg p-2 group transition-colors"
 							>
 								<ChevronRight
 									:class="{
@@ -94,9 +95,9 @@
 								>
 									<template #item="{ element: lesson }">
 										<div
-											class="outline-lesson pl-8 py-2 pr-4 text-ink-gray-9"
+											class="outline-lesson mt-2 rounded-md pl-8 py-2.5 pr-4 text-ink-gray-9 transition-colors"
 											:class="
-												isActiveLesson(lesson.number) ? 'bg-surface-gray-3' : ''
+												isActiveLesson(lesson.number) ? 'bg-surface-white/70' : ''
 											"
 										>
 											<router-link
@@ -181,7 +182,7 @@
 </template>
 <script setup>
 import { Button, createResource, Tooltip, toast } from 'frappe-ui'
-import { getCurrentInstance, inject, ref, watch } from 'vue'
+import { computed, getCurrentInstance, inject, ref, watch } from 'vue'
 import Draggable from 'vuedraggable'
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue'
 import {
@@ -198,6 +199,7 @@ import {
 } from 'lucide-vue-next'
 import { useRoute, useRouter } from 'vue-router'
 import ChapterModal from '@/components/Modals/ChapterModal.vue'
+import { getColor } from '@/utils'
 
 const route = useRoute()
 const router = useRouter()
@@ -232,7 +234,41 @@ const props = defineProps({
 		type: Number,
 		default: 0,
 	},
+	accentColor: {
+		type: String,
+		default: 'blue',
+	},
 })
+
+const accentColorName = computed(() => (props.accentColor || 'blue').toLowerCase())
+
+const hexToRgb = (hex) => {
+	if (!hex) return '37, 99, 235'
+	const normalized = hex.replace('#', '')
+	const fullHex =
+		normalized.length === 3
+			? normalized
+					.split('')
+					.map((char) => char + char)
+					.join('')
+			: normalized
+	const int = parseInt(fullHex, 16)
+	if (Number.isNaN(int)) return '37, 99, 235'
+	return `${(int >> 16) & 255}, ${(int >> 8) & 255}, ${int & 255}`
+}
+
+const accentRgb = computed(() => hexToRgb(getColor(accentColorName.value, 400)))
+
+const alphaColor = (opacity) => `rgba(${accentRgb.value}, ${opacity})`
+
+const outlineContainerStyle = computed(() =>
+	props.showOutline && outline.data?.length
+		? {
+				backgroundColor: alphaColor(0.08),
+				borderColor: alphaColor(0.22),
+			}
+		: {}
+)
 
 const outline = createResource({
 	url: 'lms.lms.utils.get_course_outline',

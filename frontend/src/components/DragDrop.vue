@@ -15,25 +15,51 @@
 			</div>
 		</div>
 
-		<div v-if="activity.data.duration" class="flex flex-col space-x-1 my-4">
-			<div class="mb-2">
-				<span class="text-ink-gray-9"> {{ __('Time') }}: </span>
-				<span class="font-semibold text-ink-gray-9">
-					{{ formatTimer(timer) }}
-				</span>
-			</div>
-			<ProgressBar :progress="timerProgress" />
-		</div>
-
 		<div v-if="started && !submission.data" class="space-y-6">
 			<div class="overflow-hidden rounded-2xl border border-transparent bg-gradient-to-br from-surface-blue-1 via-surface-orange-1 to-surface-green-1 p-1 shadow-sm">
 				<div class="rounded-[calc(1rem-1px)] bg-surface-white/90 p-4 backdrop-blur-sm">
-					<div class="mb-1 text-sm font-semibold text-ink-gray-8">
-					{{ __('Answer Bank') }}
+					<div class="mb-2 flex items-start justify-between gap-3">
+						<div class="flex-1 space-y-1">
+							<div class="flex items-center gap-1 text-sm font-semibold text-ink-gray-8">
+								<button
+									v-if="isMobileView"
+									type="button"
+									class="flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-bold text-ink-gray-7"
+									@click="showMobileHint = !showMobileHint"
+									:aria-label="__('Show answer bank instructions')"
+									:aria-expanded="showMobileHint"
+								>
+									<Info class="h-3.5 w-3.5 stroke-2" />
+								</button>
+								{{ __('Answer Bank') }}
+							</div>
+							<div
+								v-if="isMobileView && showMobileHint"
+								class="max-w-[15rem] rounded-lg border border-outline-gray-2 bg-surface-white px-2 py-1.5 text-[10px] leading-4 text-ink-gray-7 shadow-sm"
+							>
+								{{ interactionHint }}
+							</div>
+							<div
+								v-else-if="!isMobileView"
+								class="text-[10px] leading-4 text-ink-gray-7 sm:text-sm sm:leading-5"
+							>
+								{{ interactionHint }}
+							</div>
+						</div>
+						<div
+							v-if="activity.data.duration"
+							class="-mt-1 flex shrink-0 items-center justify-center self-start whitespace-nowrap rounded-md px-1 py-1 text-center text-[11px] font-semibold sm:mt-0 sm:min-w-[124px] sm:rounded-xl sm:px-2 sm:py-2 sm:text-base"
+							style="background-color: #111111; color: #ffffff;"
+						>
+							<span class="text-[10px] uppercase tracking-[0.05em] sm:text-xs" style="color: rgba(255, 255, 255, 0.82);">
+								{{ __('Time') }}
+							</span>
+							<span class="ml-1.5 text-[13px] font-bold sm:ml-2 sm:text-2xl sm:leading-6" style="color: #ffffff;">
+								{{ formatTimer(timer) }}
+							</span>
+						</div>
 					</div>
-					<div class="mb-4 text-sm leading-5 text-ink-gray-7">
-						{{ interactionHint }}
-					</div>
+					<ProgressBar v-if="activity.data.duration" :progress="timerProgress" class="mb-2" />
 					<div
 						v-if="selectedAnswer"
 						class="mb-4 flex flex-col gap-3 rounded-2xl border border-green-200 bg-surface-green-1 px-4 py-3 text-sm text-ink-gray-8 sm:flex-row sm:items-center sm:justify-between"
@@ -47,66 +73,89 @@
 							{{ __('Clear Selection') }}
 						</Button>
 					</div>
-					<div class="flex flex-wrap items-center gap-4">
-						<template v-for="(box, bIdx) in availableAnswerBoxes" :key="'box-' + bIdx">
-							<!-- Image Answer Box -->
-							<button
-								v-if="box.type === 'Image' && box.answer"
-								type="button"
-								:draggable="!isTouchDevice"
-								class="w-20 h-20 sm:w-32 sm:h-32 shadow-sm transition duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 flex items-center justify-center overflow-hidden rounded-2xl p-0"
-								:style="answerButtonStyle(box.answer)"
-								:aria-pressed="selectedAnswer?.id === box.answer.id"
-								:aria-label="__('Select answer {0}').format(box.answer.label)"
-								@click="selectAnswer(box.answer)"
-								@dragstart="dragStart(box.answer)"
-								@dragend="dragEnd"
-							>
-								<img :src="box.answer.image" class="h-full w-full object-cover transition-transform duration-200 hover:scale-110 pointer-events-none" />
-							</button>
+					<div class="flex items-center gap-2 sm:gap-3">
+						<button
+							v-if="availableAnswerBoxes.length > 3"
+							type="button"
+							class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-outline-gray-2 bg-surface-white text-lg text-ink-gray-7 shadow-sm transition disabled:cursor-not-allowed disabled:opacity-40"
+							:disabled="!canScrollAnswerBankLeft"
+							@click="scrollAnswerBank('left')"
+							:aria-label="__('Scroll answer bank left')"
+						>
+							‹
+						</button>
+						<div
+							ref="answerBankScroller"
+							class="flex-1 overflow-x-auto scroll-smooth"
+							@scroll="syncAnswerBankScrollState"
+						>
+							<div class="flex min-w-max snap-x snap-mandatory gap-3 pt-1.5 pb-1 pl-1.5">
+								<template v-for="(box, bIdx) in availableAnswerBoxes" :key="'box-' + bIdx">
+									<button
+										v-if="box.type === 'Image' && box.answer"
+										type="button"
+										:draggable="!isTouchDevice"
+										class="flex h-20 w-[calc((100vw-8rem)/3)] min-w-20 max-w-32 snap-start items-center justify-center overflow-hidden rounded-2xl p-0 shadow-sm transition duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 sm:h-32 sm:w-32"
+										:style="answerButtonStyle(box.answer)"
+										:aria-pressed="selectedAnswer?.id === box.answer.id"
+										:aria-label="__('Select answer {0}').format(box.answer.label)"
+										@click="selectAnswer(box.answer)"
+										@dragstart="dragStart(box.answer)"
+										@dragend="dragEnd"
+									>
+										<img :src="box.answer.image" class="h-full w-full object-cover transition-transform duration-200 hover:scale-110 pointer-events-none" />
+									</button>
 
-							<!-- Text Answer Box (Grouped) -->
-							<div
-								v-else-if="box.type === 'TextGroup' && box.answers.length"
-								class="flex flex-col gap-1 w-20 h-20 sm:w-32 sm:h-32"
-							>
-								<button
-									v-for="answer in box.answers"
-									:key="answer.id"
-									type="button"
-									:draggable="!isTouchDevice"
-									class="flex-1 rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-sm transition duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2"
-									:class="{
-										'ring-2 ring-offset-2 scale-[1.02]': selectedAnswer?.id === answer.id,
-										'cursor-grabbing opacity-80 scale-[0.98]': draggedAnswer?.id === answer.id,
-										'cursor-pointer': draggedAnswer?.id !== answer.id,
-									}"
-									:style="answerButtonStyle(answer)"
-									:aria-pressed="selectedAnswer?.id === answer.id"
-									:aria-label="__('Select answer {0}').format(answer.label)"
-									@click="selectAnswer(answer)"
-									@dragstart="dragStart(answer)"
-									@dragend="dragEnd"
-								>
-									{{ answer.label }}
-								</button>
+									<div
+										v-else-if="box.type === 'TextGroup' && box.answers.length"
+										class="flex h-20 w-[calc((100vw-8rem)/3)] min-w-20 max-w-32 snap-start flex-col gap-1 sm:h-32 sm:w-32"
+									>
+										<button
+											v-for="answer in box.answers"
+											:key="answer.id"
+											type="button"
+											:draggable="!isTouchDevice"
+											class="flex-1 rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-sm transition duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2"
+											:class="{
+												'ring-2 ring-offset-2 scale-[1.02]': selectedAnswer?.id === answer.id,
+												'cursor-grabbing opacity-80 scale-[0.98]': draggedAnswer?.id === answer.id,
+												'cursor-pointer': draggedAnswer?.id !== answer.id,
+											}"
+											:style="answerButtonStyle(answer)"
+											:aria-pressed="selectedAnswer?.id === answer.id"
+											:aria-label="__('Select answer {0}').format(answer.label)"
+											@click="selectAnswer(answer)"
+											@dragstart="dragStart(answer)"
+											@dragend="dragEnd"
+										>
+											{{ answer.label }}
+										</button>
+									</div>
+								</template>
 							</div>
-						</template>
+						</div>
+						<button
+							v-if="availableAnswerBoxes.length > 3"
+							type="button"
+							class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-outline-gray-2 bg-surface-white text-lg text-ink-gray-7 shadow-sm transition disabled:cursor-not-allowed disabled:opacity-40"
+							:disabled="!canScrollAnswerBankRight"
+							@click="scrollAnswerBank('right')"
+							:aria-label="__('Scroll answer bank right')"
+						>
+							›
+						</button>
 					</div>
 				</div>
 			</div>
 
-			<div class="rounded-2xl border border-outline-gray-2 bg-surface-white p-4 shadow-sm space-y-4">
-				<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+			<div class="rounded-xl border border-outline-gray-2 bg-surface-white p-2.5 shadow-sm space-y-1.5 sm:rounded-2xl sm:p-3 sm:space-y-2">
+				<div class="flex items-center justify-between gap-3">
 					<div>
-						<div class="text-sm font-medium text-ink-gray-8">
-							{{ __('Item {0} of {1}').format(currentItemIndex + 1, items.length) }}
-						</div>
-						<div class="mt-1 text-sm text-ink-gray-6">
-							{{ __('{0} of {1} answered').format(answeredCount, items.length) }}
+						<div class="text-xs text-ink-gray-6 sm:text-sm">
+							{{ `${answeredCount} of ${items.length} ${__('answered')}` }}
 						</div>
 					</div>
-					<div class="text-sm" :class="currentItemAnswered ? 'text-ink-green-3' : 'text-ink-orange-3'">
+					<div class="text-xs sm:text-sm" :class="currentItemAnswered ? 'text-ink-green-3' : 'text-ink-orange-3'">
 						{{ currentItemAnswered ? __('Answered') : __('Unanswered') }}
 					</div>
 				</div>
@@ -116,7 +165,7 @@
 			<div v-if="currentItem" class="space-y-4">
 				<div
 					:key="currentItem.name"
-					class="rounded-xl border border-outline-gray-2 bg-surface-white p-4 text-ink-gray-9 shadow-sm"
+					class="rounded-xl border border-outline-gray-2 bg-surface-white p-3 text-ink-gray-9 shadow-sm"
 				>
 					<div v-if="getItemDisplayType(currentItem) === 'Image'" class="space-y-4">
 						<div class="overflow-hidden rounded-2xl border border-outline-gray-2 bg-surface-gray-1">
@@ -182,28 +231,25 @@
 				</div>
 			</div>
 
-			<div class="flex flex-wrap items-center justify-between gap-3">
-				<div class="flex items-center gap-3">
-					<Button v-if="!isFirstItem" @click="goToPreviousItem()">
+			<div class="flex flex-wrap items-start gap-3">
+				<div>
+					<Button @click="resetActivity()">
+						{{ __('Reset') }}
+					</Button>
+				</div>
+				<div v-if="!isFirstItem">
+					<Button @click="goToPreviousItem()">
 						{{ __('Previous') }}
 					</Button>
+				</div>
+				<div>
 					<Button v-if="!isLastItem" variant="solid" @click="goToNextItem()">
 						{{ __('Next') }}
 					</Button>
+					<Button v-else variant="solid" @click="submitActivity()">
+						{{ __('Submit') }}
+					</Button>
 				</div>
-				<Button v-if="isLastItem" variant="solid" @click="submitActivity()">
-					{{ __('Submit') }}
-				</Button>
-			</div>
-
-			<div v-if="unansweredItems.length" class="rounded-2xl border border-outline-gray-2 bg-surface-gray-1 p-4 text-sm text-ink-gray-7">
-				{{ __('Unanswered items: {0}').format(unansweredItems.join(', ')) }}
-			</div>
-
-			<div class="flex items-center gap-3">
-				<Button @click="resetActivity()">
-					{{ __('Reset') }}
-				</Button>
 			</div>
 		</div>
 
@@ -264,7 +310,8 @@
 </template>
 <script setup>
 import { Button, createResource, ListView, toast, call } from 'frappe-ui'
-import { computed, inject, onMounted, onBeforeUnmount, reactive, ref, watch } from 'vue'
+import { computed, inject, nextTick, onMounted, onBeforeUnmount, reactive, ref, watch } from 'vue'
+import { Info } from 'lucide-vue-next'
 import { timeAgo } from '@/utils'
 import ProgressBar from '@/components/ProgressBar.vue'
 
@@ -274,8 +321,13 @@ const selectedAnswer = ref(null)
 const started = ref(false)
 const timer = ref(0)
 const answerBank = ref([])
+const answerBankScroller = ref(null)
 const activeDropTarget = ref(null)
 const isTouchDevice = ref(false)
+const isMobileView = ref(false)
+const showMobileHint = ref(false)
+const canScrollAnswerBankLeft = ref(false)
+const canScrollAnswerBankRight = ref(false)
 let timerInterval = null
 
 const props = defineProps({
@@ -315,15 +367,7 @@ const imagePromptText = (item) => [item.prompt_before, item.prompt_after].filter
 
 const currentItem = computed(() => items.value[currentItemIndex.value] || null)
 
-const answeredCount = computed(
-	() => items.value.filter((item) => Boolean(placements[item.name])).length
-)
-
-const unansweredItems = computed(() =>
-	items.value
-		.filter((item) => !placements[item.name])
-		.map((item, index) => index + 1)
-)
+const answeredCount = computed(() => Object.keys(placements).length)
 
 const currentItemAnswered = computed(() =>
 	currentItem.value ? Boolean(placements[currentItem.value.name]) : false
@@ -333,10 +377,6 @@ const isFirstItem = computed(() => currentItemIndex.value === 0)
 
 const isLastItem = computed(() => currentItemIndex.value === Math.max(items.value.length - 1, 0))
 
-const itemProgress = computed(() => {
-	if (!items.value.length) return 0
-	return ((currentItemIndex.value + 1) / items.value.length) * 100
-})
 
 const interactionHint = computed(() => {
 	return isTouchDevice.value
@@ -379,6 +419,30 @@ const availableAnswerBoxes = computed(() => {
 	}
 	return items
 })
+
+const syncAnswerBankScrollState = () => {
+	const scroller = answerBankScroller.value
+	if (!scroller) {
+		canScrollAnswerBankLeft.value = false
+		canScrollAnswerBankRight.value = false
+		return
+	}
+
+	canScrollAnswerBankLeft.value = scroller.scrollLeft > 4
+	canScrollAnswerBankRight.value =
+		scroller.scrollLeft + scroller.clientWidth < scroller.scrollWidth - 4
+}
+
+const scrollAnswerBank = (direction) => {
+	const scroller = answerBankScroller.value
+	if (!scroller) return
+
+	const scrollAmount = Math.max(scroller.clientWidth * 0.8, 180)
+	scroller.scrollBy({
+		left: direction === 'right' ? scrollAmount : -scrollAmount,
+		behavior: 'smooth',
+	})
+}
 
 const answerPalette = [
 	{
@@ -465,13 +529,25 @@ const detectTouchDevice = () => {
 		navigator.maxTouchPoints > 0
 }
 
+const detectMobileView = () => {
+	if (typeof window === 'undefined') return
+	isMobileView.value = window.innerWidth < 640
+	if (!isMobileView.value) showMobileHint.value = false
+}
+
 onMounted(() => {
 	detectTouchDevice()
+	detectMobileView()
 	window.addEventListener('resize', detectTouchDevice)
+	window.addEventListener('resize', detectMobileView)
+	window.addEventListener('resize', syncAnswerBankScrollState)
+	nextTick(syncAnswerBankScrollState)
 })
 
 onBeforeUnmount(() => {
 	window.removeEventListener('resize', detectTouchDevice)
+	window.removeEventListener('resize', detectMobileView)
+	window.removeEventListener('resize', syncAnswerBankScrollState)
 })
 
 watch(
@@ -480,6 +556,14 @@ watch(
 		activity.reload()
 		resetActivity()
 	}
+)
+
+watch(
+	availableAnswerBoxes,
+	() => {
+		nextTick(syncAnswerBankScrollState)
+	},
+	{ deep: true }
 )
 
 const resetAnswerBank = () => {

@@ -323,6 +323,7 @@
 					v-if="courseResource.doc"
 					:courseName="courseResource.doc.name"
 					:title="__('Chapters')"
+					:accentColor="courseResource.doc.card_gradient"
 					:allowEdit="true"
 				/>
 			</div>

@@ -11,7 +11,7 @@
 	<div class="py-5 mx-5">
 		<div class="flex items-center justify-between mb-4">
 			<div class="text-lg font-semibold text-ink-gray-7">
-				{{ activities.data?.length ? __('{0} Activities').format(activities.data.length) : __('No Activities') }}
+				{{ totalActivities.data ? __('{0} Activities').format(totalActivities.data) : (totalActivities.loading ? __('Loading...') : __('No Activities')) }}
 			</div>
 			<FormControl v-model="search" type="text" :placeholder="__('Search')" />
 		</div>
@@ -35,6 +35,10 @@
 			</ListRows>
 		</ListView>
 		<EmptyState v-else type="Drag & Drop Activities" />
+		<div ref="loadMoreRef" class="h-2 w-full"></div>
+		<div v-if="activities.loading" class="flex items-center justify-center py-5">
+			<LoadingIndicator class="w-8 h-8 text-gray-400" />
+		</div>
 	</div>
 	<Dialog
 		v-model="showForm"
@@ -54,6 +58,7 @@ import {
 	Breadcrumbs,
 	Button,
 	createListResource,
+	createResource,
 	Dialog,
 	FormControl,
 	ListHeader,
@@ -61,10 +66,11 @@ import {
 	ListRow,
 	ListRows,
 	ListView,
+	LoadingIndicator,
 	toast,
 	usePageMeta,
 } from 'frappe-ui'
-import { computed, inject, onMounted, ref, watch } from 'vue'
+import { computed, inject, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { Plus } from 'lucide-vue-next'
 import { sessionStore } from '@/stores/session'
 import { useRouter, useRoute } from 'vue-router'
@@ -81,6 +87,8 @@ const title = ref('')
 const showForm = ref(false)
 const readOnlyMode = window.read_only_mode
 const filters = ref({})
+const loadMoreRef = ref(null)
+let observer
 
 onMounted(() => {
 	if (!user.data?.is_moderator && !user.data?.is_instructor) {
@@ -91,12 +99,32 @@ onMounted(() => {
 	if (route.query.new === 'true') {
 		showForm.value = true
 	}
+
+	observer = new IntersectionObserver(
+		(entries) => {
+			if (entries[0].isIntersecting && activities.hasNextPage && !activities.loading) {
+				activities.next()
+			}
+		},
+		{ threshold: 1.0 }
+	)
+
+	if (loadMoreRef.value) {
+		observer.observe(loadMoreRef.value)
+	}
+})
+
+onBeforeUnmount(() => {
+	if (observer) {
+		observer.disconnect()
+	}
 })
 
 watch(search, () => {
 	filters.value.title = ['like', `%${search.value}%`]
 	activities.update({ filters: filters.value })
 	activities.reload()
+	totalActivities.reload()
 })
 
 const activities = createListResource({
@@ -109,6 +137,16 @@ const activities = createListResource({
 	transform(data) {
 		return data.map((row) => ({ ...row, modified: dayjs(row.modified).fromNow() }))
 	},
+})
+
+const totalActivities = createResource({
+	url: 'frappe.client.get_count',
+	params: {
+		doctype: 'LMS Drag Drop Activity',
+		filters: filters.value,
+	},
+	auto: true,
+	cache: ['drag-drop-activities-count', user.data?.name],
 })
 
 const insertActivity = (close) => {
