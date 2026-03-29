@@ -90,19 +90,22 @@
 					{{ __('Get Certificate') }}
 				</Button>
 			</div>
-			<div class="space-y-3">
-				<div class="font-medium text-ink-gray-9">
+			<div
+				class="space-y-3 rounded-xl border px-4 py-4"
+				:style="courseHighlightsStyle"
+			>
+				<div class="font-medium text-ink-gray-9" :style="courseHighlightsHeadingStyle">
 					{{ __('This course has:') }}
 				</div>
 				<div class="flex items-center text-ink-gray-9">
-					<BookOpen class="h-4 w-4 stroke-1.5" />
+					<BookOpen class="h-4 w-4 stroke-1.5" :style="courseHighlightIconStyle" />
 					<span class="ml-2">
 						{{ course.data.lessons }}
 						{{ course.data.lessons > 1 ? __('lessons') : __('lesson') }}
 					</span>
 				</div>
 				<div class="flex items-center text-ink-gray-9">
-					<Users class="h-4 w-4 stroke-1.5" />
+					<Users class="h-4 w-4 stroke-1.5" :style="courseHighlightIconStyle" />
 					<span class="ml-2">
 						{{ formatAmount(course.data.enrollments) }}
 						{{
@@ -116,7 +119,7 @@
 					v-if="parseInt(course.data.rating) > 0"
 					class="flex items-center text-ink-gray-9"
 				>
-					<Star class="size-4 stroke-1.5 fill-yellow-500 text-transparent" />
+					<Star class="size-4 stroke-1.5" :style="courseHighlightIconStyle" />
 					<span class="ml-2">
 						{{ course.data.rating }} {{ __('average rating') }}
 					</span>
@@ -125,7 +128,7 @@
 					v-if="course.data.enable_certification"
 					class="flex items-center font-semibold text-ink-gray-9"
 				>
-					<GraduationCap class="h-4 w-4 stroke-2" />
+					<GraduationCap class="h-4 w-4 stroke-2" :style="courseHighlightIconStyle" />
 					<span class="ml-2">
 						{{ __('Certificate of Completion') }}
 					</span>
@@ -134,7 +137,7 @@
 					v-if="course.data.paid_certificate"
 					class="flex items-center font-semibold text-ink-gray-9"
 				>
-					<GraduationCap class="h-4 w-4 stroke-2" />
+					<GraduationCap class="h-4 w-4 stroke-2" :style="courseHighlightIconStyle" />
 					<span class="ml-2">
 						{{ __('Paid Certificate after Evaluation') }}
 					</span>
@@ -160,6 +163,7 @@ import { formatAmount } from '@/utils/'
 import { useRouter } from 'vue-router'
 import CertificationLinks from '@/components/CertificationLinks.vue'
 import { useTelemetry } from 'frappe-ui/frappe'
+import { getColor } from '@/utils'
 
 const router = useRouter()
 const user = inject('$user')
@@ -179,6 +183,43 @@ const video_link = computed(() => {
 	}
 	return null
 })
+
+const accentColorName = computed(
+	() => props.course.data?.card_gradient?.toLowerCase() || 'blue'
+)
+
+const hexToRgb = (hex) => {
+	if (!hex) return '37, 99, 235'
+	const normalized = hex.replace('#', '')
+	const fullHex =
+		normalized.length === 3
+			? normalized
+					.split('')
+					.map((char) => char + char)
+					.join('')
+			: normalized
+	const int = parseInt(fullHex, 16)
+	if (Number.isNaN(int)) return '37, 99, 235'
+	return `${(int >> 16) & 255}, ${(int >> 8) & 255}, ${int & 255}`
+}
+
+const accentRgb = computed(() => hexToRgb(getColor(accentColorName.value, 400)))
+
+const alphaColor = (opacity) => `rgba(${accentRgb.value}, ${opacity})`
+
+const courseHighlightsStyle = computed(() => ({
+	backgroundColor: alphaColor(0.08),
+	borderColor: alphaColor(0.18),
+	boxShadow: `inset 0 3px 0 ${alphaColor(0.24)}`,
+}))
+
+const courseHighlightsHeadingStyle = computed(() => ({
+	color: getColor(accentColorName.value, 600),
+}))
+
+const courseHighlightIconStyle = computed(() => ({
+	color: getColor(accentColorName.value, 500),
+}))
 
 function enrollStudent() {
 	if (!user.data) {

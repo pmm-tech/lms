@@ -24,6 +24,7 @@
 				<FormControl v-model="details.doc.title" :label="__('Title')" :required="true" />
 				<FormControl v-model="details.doc.total_marks" :label="__('Total Marks')" disabled />
 				<FormControl type="number" v-model="details.doc.max_attempts" :label="__('Maximum Attempts')" />
+				<FormControl type="number" v-model="details.doc.duration" :label="__('Duration (in minutes)')" />
 				<FormControl type="number" v-model="details.doc.passing_percentage" :label="__('Passing Percentage')" :required="true" />
 			</div>
 		</div>
@@ -94,7 +95,7 @@
 </template>
 <script setup>
 import { Breadcrumbs, Button, createDocumentResource, FormControl, toast, usePageMeta } from 'frappe-ui'
-import { computed, inject, onMounted } from 'vue'
+import { computed, inject, onMounted, watch } from 'vue'
 import { Plus } from 'lucide-vue-next'
 import { sessionStore } from '@/stores/session'
 import { useRouter } from 'vue-router'
@@ -125,6 +126,16 @@ const details = createDocumentResource({
 	name: props.activityID,
 	auto: false,
 })
+
+watch(
+	() => details.doc?.duration,
+	(duration) => {
+		if (details.doc && (duration === undefined || duration === null || duration === '')) {
+			details.doc.duration = 0
+		}
+	},
+	{ immediate: true }
+)
 
 const displayTypes = ['Text', 'Image']
 
