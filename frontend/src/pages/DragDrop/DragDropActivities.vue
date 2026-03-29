@@ -9,35 +9,117 @@
 		</Button>
 	</header>
 	<div class="py-5 mx-5">
-		<div class="flex items-center justify-between mb-4">
+		<div class="flex items-center justify-between gap-4 mb-4">
 			<div class="text-lg font-semibold text-ink-gray-7">
-				{{ totalActivities.data ? __('{0} Activities').format(totalActivities.data) : (totalActivities.loading ? __('Loading...') : __('No Activities')) }}
+				{{
+					totalActivities.loading
+						? __('Loading...')
+						: totalActivities.data
+							? __('{0} Activities').format(totalActivities.data)
+							: __('No Activities')
+				}}
 			</div>
-			<FormControl v-model="search" type="text" :placeholder="__('Search')" />
+			<FormControl v-model="search" type="text" :placeholder="__('Search by title')" />
+		</div>
+		<div
+			v-if="isInitialLoading"
+			class="flex items-center justify-center rounded border bg-surface-white py-16"
+		>
+			<LoadingIndicator class="w-8 h-8 text-gray-400" />
 		</div>
 		<ListView
-			v-if="activities.data?.length"
+			v-else-if="activities.data?.length"
 			:columns="columns"
 			:rows="activities.data"
 			row-key="name"
-			:options="{ showTooltip: false, selectable: true }"
+			:options="{
+				showTooltip: false,
+				selectable: false,
+				onRowClick: (row) => openActivity(row.name),
+			}"
 		>
 			<ListHeader class="mb-2 grid items-center space-x-4 rounded bg-surface-gray-2 p-2">
 				<ListHeaderItem :item="item" v-for="item in columns" />
 			</ListHeader>
 			<ListRows>
-				<router-link
-					v-for="row in activities.data"
-					:to="{ name: 'DragDropForm', params: { activityID: row.name } }"
-				>
-					<ListRow :row="row" />
-				</router-link>
+				<ListRow v-for="row in activities.data" :row="row" class="hover:bg-surface-gray-1">
+					<template #default="{ column }">
+						<ListRowItem :item="row[column.key]" :align="column.align">
+							<div
+								v-if="column.key === 'modified'"
+								class="text-sm text-ink-gray-5"
+							>
+								{{ row[column.key] }}
+							</div>
+							<div
+								v-else-if="column.key === 'actions'"
+								class="flex items-center justify-end gap-2"
+							>
+								<Button
+									v-if="!readOnlyMode"
+									size="sm"
+									variant="ghost"
+									@click.stop="openActivity(row.name)"
+								>
+									{{ __('Edit') }}
+								</Button>
+								<Button
+									size="sm"
+									variant="ghost"
+									@click.stop="openSubmissions(row.name)"
+								>
+									{{ __('Submissions') }}
+								</Button>
+							</div>
+							<div v-else>
+								{{ row[column.key] }}
+							</div>
+						</ListRowItem>
+					</template>
+				</ListRow>
 			</ListRows>
 		</ListView>
+		<div
+			v-else-if="hasActiveSearch"
+			class="rounded border bg-surface-white px-6 py-12 text-center"
+		>
+			<div class="text-lg font-semibold text-ink-gray-9">
+				{{ __('No matching activities') }}
+			</div>
+			<div class="mt-2 text-ink-gray-7">
+				{{ __('Try a different title or clear the current search.') }}
+			</div>
+		</div>
 		<EmptyState v-else type="Drag & Drop Activities" />
-		<div ref="loadMoreRef" class="h-2 w-full"></div>
-		<div v-if="activities.loading" class="flex items-center justify-center py-5">
+		<div v-if="activities.loading && !isInitialLoading" class="flex items-center justify-center py-5">
 			<LoadingIndicator class="w-8 h-8 text-gray-400" />
+		</div>
+		<div
+			v-if="activities.data?.length"
+			class="mt-4 flex items-center justify-between gap-3"
+		>
+			<div class="text-sm text-ink-gray-5">
+				{{ pageRangeLabel }}
+			</div>
+			<div class="flex items-center gap-2">
+				<Button
+					variant="ghost"
+					:disabled="currentPage === 1 || activities.loading"
+					@click="goToPreviousPage"
+				>
+					{{ __('Previous') }}
+				</Button>
+				<div class="text-sm text-ink-gray-7">
+					{{ __('Page {0} of {1}').format(currentPage, totalPages) }}
+				</div>
+				<Button
+					variant="ghost"
+					:disabled="!activities.hasNextPage || activities.loading"
+					@click="goToNextPage"
+				>
+					{{ __('Next') }}
+				</Button>
+			</div>
 		</div>
 	</div>
 	<Dialog
@@ -64,6 +146,7 @@ import {
 	ListHeader,
 	ListHeaderItem,
 	ListRow,
+	ListRowItem,
 	ListRows,
 	ListView,
 	LoadingIndicator,
@@ -87,8 +170,9 @@ const title = ref('')
 const showForm = ref(false)
 const readOnlyMode = window.read_only_mode
 const filters = ref({})
-const loadMoreRef = ref(null)
-let observer
+const pageLength = 20
+const start = ref(0)
+let searchDebounce
 
 onMounted(() => {
 	if (!user.data?.is_moderator && !user.data?.is_instructor) {
@@ -100,31 +184,23 @@ onMounted(() => {
 		showForm.value = true
 	}
 
-	observer = new IntersectionObserver(
-		(entries) => {
-			if (entries[0].isIntersecting && activities.hasNextPage && !activities.loading) {
-				activities.next()
-			}
-		},
-		{ threshold: 1.0 }
-	)
-
-	if (loadMoreRef.value) {
-		observer.observe(loadMoreRef.value)
-	}
+	reloadActivities({ resetPage: true })
 })
 
 onBeforeUnmount(() => {
-	if (observer) {
-		observer.disconnect()
+	if (searchDebounce) {
+		clearTimeout(searchDebounce)
 	}
 })
 
 watch(search, () => {
-	filters.value.title = ['like', `%${search.value}%`]
-	activities.update({ filters: filters.value })
-	activities.reload()
-	totalActivities.reload()
+	if (searchDebounce) {
+		clearTimeout(searchDebounce)
+	}
+	searchDebounce = setTimeout(() => {
+		updateSearchFilter()
+		reloadActivities({ resetPage: true })
+	}, 300)
 })
 
 const activities = createListResource({
@@ -134,6 +210,8 @@ const activities = createListResource({
 	auto: true,
 	cache: ['drag-drop-activities', user.data?.name],
 	orderBy: 'modified desc',
+	pageLength,
+	start: start.value,
 	transform(data) {
 		return data.map((row) => ({ ...row, modified: dayjs(row.modified).fromNow() }))
 	},
@@ -149,8 +227,79 @@ const totalActivities = createResource({
 	cache: ['drag-drop-activities-count', user.data?.name],
 })
 
+const isInitialLoading = computed(() => activities.loading && !activities.data)
+const hasActiveSearch = computed(() => Boolean(search.value.trim()))
+const currentPage = computed(() => Math.floor(start.value / pageLength) + 1)
+const totalPages = computed(() => {
+	const total = totalActivities.data || 0
+	return Math.max(1, Math.ceil(total / pageLength))
+})
+const pageRangeLabel = computed(() => {
+	const total = totalActivities.data || 0
+	if (!total) {
+		return __('0 of 0')
+	}
+
+	const from = start.value + 1
+	const to = Math.min(start.value + (activities.data?.length || 0), total)
+	return __('{0}-{1} of {2}').format(from, to, total)
+})
+
+const updateSearchFilter = () => {
+	const trimmedSearch = search.value.trim()
+	if (trimmedSearch) {
+		filters.value.title = ['like', `%${trimmedSearch}%`]
+	} else {
+		delete filters.value.title
+	}
+}
+
+const reloadActivities = ({ resetPage = false } = {}) => {
+	if (resetPage) {
+		start.value = 0
+	}
+
+	activities.update({
+		filters: filters.value,
+		start: start.value,
+		pageLength,
+	})
+	activities.reload()
+
+	totalActivities.update({
+		filters: filters.value,
+	})
+	totalActivities.reload()
+}
+
+const goToPreviousPage = () => {
+	if (currentPage.value === 1) return
+	start.value = Math.max(0, start.value - pageLength)
+	reloadActivities()
+}
+
+const goToNextPage = () => {
+	if (!activities.hasNextPage) return
+	start.value += pageLength
+	reloadActivities()
+}
+
+const openActivity = (activityID) => {
+	if (readOnlyMode) return
+	router.push({ name: 'DragDropForm', params: { activityID } })
+}
+
+const openSubmissions = (activityID) => {
+	router.push({ name: 'DragDropSubmissionList', params: { activityID } })
+}
+
 const insertActivity = (close) => {
 	title.value = escapeHTML(title.value.trim())
+	if (!title.value) {
+		toast.error(__('Title is required'))
+		return
+	}
+
 	activities.insert.submit(
 		{
 			title: title.value,
@@ -161,6 +310,7 @@ const insertActivity = (close) => {
 				toast.success(__('Activity created successfully'))
 				close()
 				title.value = ''
+				reloadActivities({ resetPage: true })
 				router.push({ name: 'DragDropForm', params: { activityID: data.name } })
 			},
 			onError(err) {
@@ -175,6 +325,7 @@ const columns = computed(() => [
 	{ label: __('Passing %'), key: 'passing_percentage', align: 'center', width: '8rem' },
 	{ label: __('Total Marks'), key: 'total_marks', align: 'center', width: '8rem' },
 	{ label: __('Modified'), key: 'modified', align: 'right', width: '8rem' },
+	{ label: __('Actions'), key: 'actions', align: 'right', width: '12rem' },
 ])
 
 const breadcrumbs = computed(() => [{ label: __('Drag & Drop Activities'), route: { name: 'DragDropActivities' } }])
