@@ -69,6 +69,7 @@
 					<CourseOutline
 						:title="__('Course Outline')"
 						:courseName="course.data.name"
+						:accentColor="course.data.card_gradient"
 						:showOutline="true"
 						:getProgress="course.data.membership ? true : false"
 					/>
