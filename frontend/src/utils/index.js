@@ -3,6 +3,7 @@ import { useTimeAgo } from '@vueuse/core'
 import colorsJSON from '@/utils/frappe-ui-colors.json'
 import { Quiz } from '@/utils/quiz'
 import { DragDrop } from '@/utils/dragDrop'
+import { WordHunt } from '@/utils/wordHunt'
 import { Program } from '@/utils/program'
 import { Assignment } from '@/utils/assignment'
 import { Upload } from '@/utils/upload'
@@ -134,6 +135,7 @@ export function getEditorTools() {
 		},
 		quiz: Quiz,
 		dragDrop: DragDrop,
+		wordHunt: WordHunt,
 		assignment: Assignment,
 		program: Program,
 		markdown: {
@@ -556,6 +558,21 @@ const getSidebarItems = () => {
 						'DragDropPage',
 						'DragDropSubmissionList',
 						'DragDropSubmission',
+					],
+				},
+				{
+					label: 'Word Hunt Activities',
+					icon: 'Search',
+					to: 'WordHuntActivities',
+					condition: () => {
+						return isAdmin()
+					},
+					activeFor: [
+						'WordHuntActivities',
+						'WordHuntForm',
+						'WordHuntPage',
+						'WordHuntSubmissionList',
+						'WordHuntSubmission',
 					],
 				},
 				{

@@ -46,6 +46,13 @@
 										new: 'true',
 									},
 								})
+							} else if (assessmentType === 'LMS Word Hunt Activity') {
+								router.push({
+									name: 'WordHuntActivities',
+									query: {
+										new: 'true',
+									},
+								})
 							} else if (assessmentType === 'LMS Assignment') {
 								router.push({
 									name: 'Assignments',
@@ -110,6 +117,7 @@ const assessmentTypes = computed(() => {
 	return [
 		{ label: 'Quiz', value: 'LMS Quiz' },
 		{ label: 'Drag & Drop', value: 'LMS Drag Drop Activity' },
+		{ label: 'Word Hunt', value: 'LMS Word Hunt Activity' },
 		{ label: 'Assignment', value: 'LMS Assignment' },
 		{ label: 'Programming Exercise', value: 'LMS Programming Exercise' },
 	]

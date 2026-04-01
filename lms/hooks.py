@@ -254,6 +254,7 @@ lms_markdown_macro_renderers = {
 	"Video": "lms.plugins.video_renderer",
 	"Assignment": "lms.plugins.assignment_renderer",
 	"DragDrop": "lms.plugins.drag_drop_renderer",
+	"WordHunt": "lms.plugins.word_hunt_renderer",
 	"Embed": "lms.plugins.embed_renderer",
 	"Audio": "lms.plugins.audio_renderer",
 	"PDF": "lms.plugins.pdf_renderer",

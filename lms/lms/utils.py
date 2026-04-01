@@ -209,6 +209,8 @@ def get_lesson_icon(body: str, content: str):
 				return "icon-quiz"
 			if block.get("type") == "dragDrop":
 				return "icon-quiz"
+			if block.get("type") == "wordHunt":
+				return "icon-quiz"
 			if block.get("type") == "assignment":
 				return "icon-assignment"
 			if block.get("type") == "program":
@@ -223,6 +225,8 @@ def get_lesson_icon(body: str, content: str):
 		elif macro[0] == "Quiz":
 			return "icon-quiz"
 		elif macro[0] == "DragDrop":
+			return "icon-quiz"
+		elif macro[0] == "WordHunt":
 			return "icon-quiz"
 
 	return "icon-list"
@@ -1271,6 +1275,9 @@ def get_assessments(batch: str) -> list:
 		elif assessment.assessment_type == "LMS Drag Drop Activity":
 			assessment = get_drag_drop_details(assessment, member)
 
+		elif assessment.assessment_type == "LMS Word Hunt Activity":
+			assessment = get_word_hunt_details(assessment, member)
+
 		elif assessment.assessment_type == "LMS Programming Exercise":
 			assessment = get_exercise_details(assessment, member)
 
@@ -1395,6 +1402,38 @@ def get_drag_drop_details(assessment, member):
 	return assessment
 
 
+def get_word_hunt_details(assessment, member):
+	assessment_details = frappe.db.get_value(
+		"LMS Word Hunt Activity", assessment.assessment_name, ["title", "passing_percentage"], as_dict=1
+	)
+	assessment.title = assessment_details.title
+
+	existing_submission = frappe.get_all(
+		"LMS Word Hunt Submission",
+		{
+			"member": member,
+			"activity": assessment.assessment_name,
+		},
+		["name", "score", "percentage"],
+		order_by="percentage desc",
+	)
+
+	if len(existing_submission):
+		assessment.submission = existing_submission[0]
+		assessment.completed = True
+		assessment.status = assessment.submission.percentage or assessment.submission.score
+	else:
+		assessment.status = "Not Attempted"
+		assessment.color = "red"
+		assessment.completed = False
+
+	assessment.edit_url = f"/word-hunt-activities/{assessment.assessment_name}"
+	submission_name = existing_submission[0].name if len(existing_submission) else "new-submission"
+	assessment.url = f"/word-hunt-submission/{submission_name}"
+
+	return assessment
+
+
 @frappe.whitelist()
 def get_batch_student_progress(member: str, batch: str) -> dict:
 	if not can_modify_batch(batch):
@@ -1512,6 +1551,33 @@ def get_drag_drop_pass_stats(batch):
 	return [{"task": row.title, "value": row.passed or 0} for row in rows]
 
 
+def get_word_hunt_pass_stats(batch):
+	Assessment = frappe.qb.DocType("LMS Assessment")
+	Activity = frappe.qb.DocType("LMS Word Hunt Activity")
+	BatchEnrollment = frappe.qb.DocType("LMS Batch Enrollment")
+	Submission = frappe.qb.DocType("LMS Word Hunt Submission")
+
+	rows = (
+		frappe.qb.from_(Assessment)
+		.join(Activity)
+		.on(Activity.name == Assessment.assessment_name)
+		.left_join(BatchEnrollment)
+		.on(BatchEnrollment.batch == Assessment.parent)
+		.left_join(Submission)
+		.on((Submission.activity == Assessment.assessment_name) & (Submission.member == BatchEnrollment.member))
+		.where((Assessment.parent == batch) & (Assessment.assessment_type == "LMS Word Hunt Activity"))
+		.groupby(Assessment.assessment_name, Activity.title)
+		.select(
+			Activity.title,
+			fn.Count(Case().when(Submission.percentage >= Submission.passing_percentage, Submission.member))
+			.distinct()
+			.as_("passed"),
+		)
+	).run(as_dict=True)
+
+	return [{"task": row.title, "value": row.passed or 0} for row in rows]
+
+
 @frappe.whitelist()
 def get_batch_chart_data(batch: str) -> list:
 	"""Get completion counts per course and assessment"""
@@ -1525,6 +1591,7 @@ def get_batch_chart_data(batch: str) -> list:
 		+ get_assignment_pass_stats(batch)
 		+ get_quiz_pass_stats(batch)
 		+ get_drag_drop_pass_stats(batch)
+		+ get_word_hunt_pass_stats(batch)
 	)
 
 
@@ -1638,6 +1705,11 @@ def get_assessment_meta(assessment_type: str):
 		docfield = "activity"
 		fields = ["percentage"]
 		not_attempted = 0
+	elif assessment_type == "LMS Word Hunt Activity":
+		doctype = "LMS Word Hunt Submission"
+		docfield = "activity"
+		fields = ["percentage"]
+		not_attempted = 0
 	elif assessment_type == "LMS Programming Exercise":
 		doctype = "LMS Programming Exercise Submission"
 		docfield = "exercise"
@@ -1663,12 +1735,19 @@ def get_assessment_attempt_details(
 		)
 		if attempt_details.percentage >= passing_percentage:
 			result = "Pass"
+	elif assessment_type == "LMS Word Hunt Activity":
+		result = "Failed"
+		passing_percentage = frappe.db.get_value(
+			"LMS Word Hunt Activity", assessment, "passing_percentage"
+		)
+		if attempt_details.percentage >= passing_percentage:
+			result = "Pass"
 	else:
 		result = attempt_details.status
 	return frappe._dict(
 		{
 			"status": attempt_details.percentage
-			if assessment_type in ["LMS Quiz", "LMS Drag Drop Activity"]
+			if assessment_type in ["LMS Quiz", "LMS Drag Drop Activity", "LMS Word Hunt Activity"]
 			else attempt_details.status,
 			"result": result,
 			"assessment": assessment,

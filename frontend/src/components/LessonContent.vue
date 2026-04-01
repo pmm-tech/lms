@@ -26,6 +26,9 @@
 		<div v-else-if="block.includes('{{ DragDrop')">
 			<DragDrop :activity="getId(block)" />
 		</div>
+		<div v-else-if="block.includes('{{ WordHunt')">
+			<WordHunt :activity="getId(block)" />
+		</div>
 		<div v-else-if="block.includes('{{ Video')">
 			<video
 				controls
@@ -69,6 +72,7 @@
 <script setup>
 import Quiz from '@/components/QuizBlock.vue'
 import DragDrop from '@/components/DragDropBlock.vue'
+import WordHunt from '@/components/WordHuntBlock.vue'
 import MarkdownIt from 'markdown-it'
 import { useScreenSize } from '@/utils/composables'
 

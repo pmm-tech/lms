@@ -585,7 +585,9 @@ const checkQuiz = () => {
 	if (!editor.value && lesson.body) {
 		const quizRegex = /\{\{ Quiz\(".*"\) \}\}/
 		const dragDropRegex = /\{\{ DragDrop\(".*"\) \}\}/
-		hasQuiz.value = quizRegex.test(lesson.body) || dragDropRegex.test(lesson.body)
+		const wordHuntRegex = /\{\{ WordHunt\(".*"\) \}\}/
+		hasQuiz.value =
+			quizRegex.test(lesson.body) || dragDropRegex.test(lesson.body) || wordHuntRegex.test(lesson.body)
 		if (!hasQuiz.value && !zenModeEnabled) {
 			allowDiscussions.value = true
 		} else {

@@ -79,6 +79,18 @@ class CourseLesson(Document):
 						"lesson": self.name,
 					},
 				)
+			if block.get("type") == "wordHunt":
+				activity = block.get("data").get("activity")
+				if not frappe.db.exists("LMS Word Hunt Activity", activity):
+					frappe.throw(_("Invalid Word Hunt Activity ID in content"))
+				frappe.db.set_value(
+					"LMS Word Hunt Activity",
+					activity,
+					{
+						"course": self.course,
+						"lesson": self.name,
+					},
+				)
 
 
 @frappe.whitelist()
@@ -101,6 +113,7 @@ def save_progress(lesson: str, course: str, scorm_details: dict = None):
 
 	quiz_completed = get_quiz_progress(lesson)
 	drag_drop_completed = get_drag_drop_progress(lesson)
+	word_hunt_completed = get_word_hunt_progress(lesson)
 	assignment_completed = get_assignment_progress(lesson)
 
 	if scorm_details:
@@ -110,6 +123,7 @@ def save_progress(lesson: str, course: str, scorm_details: dict = None):
 		not progress_already_exists
 		and quiz_completed
 		and drag_drop_completed
+		and word_hunt_completed
 		and assignment_completed
 		and not scorm_details
 	):
@@ -221,6 +235,37 @@ def get_drag_drop_progress(lesson):
 		)
 		if not frappe.db.exists(
 			"LMS Drag Drop Submission",
+			{
+				"activity": activity,
+				"member": frappe.session.user,
+				"percentage": [">=", passing_percentage],
+			},
+		):
+			return False
+	return True
+
+
+def get_word_hunt_progress(lesson):
+	lesson_details = frappe.db.get_value("Course Lesson", lesson, ["body", "content"], as_dict=1)
+	activities = []
+
+	if lesson_details.content:
+		content = json.loads(lesson_details.content)
+
+		for block in content.get("blocks"):
+			if block.get("type") == "wordHunt":
+				activities.append(block.get("data").get("activity"))
+
+	elif lesson_details.body:
+		macros = find_macros(lesson_details.body)
+		activities = [value for name, value in macros if name == "WordHunt"]
+
+	for activity in activities:
+		passing_percentage = frappe.db.get_value(
+			"LMS Word Hunt Activity", activity, "passing_percentage"
+		)
+		if not frappe.db.exists(
+			"LMS Word Hunt Submission",
 			{
 				"activity": activity,
 				"member": frappe.session.user,

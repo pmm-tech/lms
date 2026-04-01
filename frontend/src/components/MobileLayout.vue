@@ -156,6 +156,7 @@ watch(userResource, () => {
 			addProgrammingExercises()
 			addQuizzes()
 			addDragDropActivities()
+			addWordHuntActivities()
 			addAssignments()
 		}
 	}
@@ -180,6 +181,21 @@ const addDragDropActivities = () => {
 			'DragDropPage',
 			'DragDropSubmissionList',
 			'DragDropSubmission',
+		],
+	})
+}
+
+const addWordHuntActivities = () => {
+	otherLinks.value.push({
+		label: 'Word Hunt Activities',
+		icon: 'Search',
+		to: 'WordHuntActivities',
+		activeFor: [
+			'WordHuntActivities',
+			'WordHuntForm',
+			'WordHuntPage',
+			'WordHuntSubmissionList',
+			'WordHuntSubmission',
 		],
 	})
 }
