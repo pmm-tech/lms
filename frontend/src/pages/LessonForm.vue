@@ -314,6 +314,14 @@ const convertToJSON = (lessonData) => {
 					activity: activity,
 				},
 			})
+		} else if (block.includes('{{ WordHunt')) {
+			let activity = block.match(/\(["']([^"']+?)["']\)/)[1]
+			blocks.push({
+				type: 'wordHunt',
+				data: {
+					activity: activity,
+				},
+			})
 		} else if (block.includes('{{ Video')) {
 			let video = block.match(/\(["']([^"']+?)["']\)/)[1]
 			blocks.push({

@@ -73,9 +73,81 @@
 							{{ __('Clear Selection') }}
 						</Button>
 					</div>
-					<div class="flex items-center gap-2 sm:gap-3">
+					<div class="flex items-center gap-2 sm:hidden">
 						<button
-							v-if="availableAnswerBoxes.length > 3"
+							v-if="answerBankPages.length > 1"
+							type="button"
+							class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-outline-gray-2 bg-surface-white text-lg text-ink-gray-7 shadow-sm transition disabled:cursor-not-allowed disabled:opacity-40"
+							:disabled="!canGoToPreviousAnswerPage"
+							@click="goToPreviousAnswerPage()"
+							:aria-label="__('Show previous answer bank slide')"
+						>
+							‹
+						</button>
+						<div class="min-w-0 flex-1">
+							<div class="grid grid-cols-3 gap-2 pt-1.5 pb-1 pl-1.5 sm:gap-3">
+								<template v-for="answer in currentAnswerPageAnswers" :key="answer.id">
+									<button
+										v-if="answer.answer_type === 'Image'"
+										type="button"
+										:draggable="!isTouchDevice"
+										class="flex h-24 w-full items-center justify-center overflow-hidden rounded-2xl p-0 shadow-sm transition duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 sm:h-32"
+										:style="answerButtonStyle(answer)"
+										:aria-pressed="selectedAnswer?.id === answer.id"
+										:aria-label="__('Select answer {0}').format(answer.label)"
+										@click="selectAnswer(answer)"
+										@dragstart="dragStart(answer)"
+										@dragend="dragEnd"
+									>
+										<img :src="answer.image" class="h-full w-full object-cover transition-transform duration-200 hover:scale-110 pointer-events-none" />
+									</button>
+									<button
+										v-else
+										type="button"
+										:draggable="!isTouchDevice"
+										class="flex h-24 w-full items-center justify-center rounded-2xl px-2 py-2 text-center text-xs font-semibold text-white shadow-sm transition duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 sm:h-32 sm:px-4 sm:py-3 sm:text-sm"
+										:class="{
+											'ring-2 ring-offset-2 scale-[1.02]': selectedAnswer?.id === answer.id,
+											'cursor-grabbing opacity-80 scale-[0.98]': draggedAnswer?.id === answer.id,
+											'cursor-pointer': draggedAnswer?.id !== answer.id,
+										}"
+										:style="answerButtonStyle(answer)"
+										:aria-pressed="selectedAnswer?.id === answer.id"
+										:aria-label="__('Select answer {0}').format(answer.label)"
+										@click="selectAnswer(answer)"
+										@dragstart="dragStart(answer)"
+										@dragend="dragEnd"
+									>
+										<span
+											class="min-w-0 max-w-full whitespace-normal break-all text-center leading-tight"
+											style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;"
+										>
+											{{ answer.label }}
+										</span>
+									</button>
+								</template>
+								<div
+									v-for="placeholderIndex in answerPagePlaceholderCount"
+									:key="`placeholder-${placeholderIndex}`"
+									class="h-24 w-full rounded-2xl border border-dashed border-transparent sm:h-32"
+									aria-hidden="true"
+								/>
+							</div>
+						</div>
+						<button
+							v-if="answerBankPages.length > 1"
+							type="button"
+							class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-outline-gray-2 bg-surface-white text-lg text-ink-gray-7 shadow-sm transition disabled:cursor-not-allowed disabled:opacity-40"
+							:disabled="!canGoToNextAnswerPage"
+							@click="goToNextAnswerPage()"
+							:aria-label="__('Show next answer bank slide')"
+						>
+							›
+						</button>
+					</div>
+					<div class="hidden items-center gap-3 sm:flex">
+						<button
+							v-if="availableAnswers.length > 3"
 							type="button"
 							class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-outline-gray-2 bg-surface-white text-lg text-ink-gray-7 shadow-sm transition disabled:cursor-not-allowed disabled:opacity-40"
 							:disabled="!canScrollAnswerBankLeft"
@@ -86,56 +158,54 @@
 						</button>
 						<div
 							ref="answerBankScroller"
-							class="flex-1 overflow-x-auto scroll-smooth"
+							class="min-w-0 flex-1 overflow-x-auto scroll-smooth"
 							@scroll="syncAnswerBankScrollState"
 						>
-							<div class="flex min-w-max snap-x snap-mandatory gap-3 pt-1.5 pb-1 pl-1.5">
-								<template v-for="(box, bIdx) in availableAnswerBoxes" :key="'box-' + bIdx">
+							<div class="flex min-w-max gap-3 pt-1.5 pb-1 pl-1.5">
+								<template v-for="answer in availableAnswers" :key="`desktop-${answer.id}`">
 									<button
-										v-if="box.type === 'Image' && box.answer"
+										v-if="answer.answer_type === 'Image'"
 										type="button"
 										:draggable="!isTouchDevice"
-										class="flex h-20 w-[calc((100vw-8rem)/3)] min-w-20 max-w-32 snap-start items-center justify-center overflow-hidden rounded-2xl p-0 shadow-sm transition duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 sm:h-32 sm:w-32"
-										:style="answerButtonStyle(box.answer)"
-										:aria-pressed="selectedAnswer?.id === box.answer.id"
-										:aria-label="__('Select answer {0}').format(box.answer.label)"
-										@click="selectAnswer(box.answer)"
-										@dragstart="dragStart(box.answer)"
+										class="flex h-32 w-32 shrink-0 items-center justify-center overflow-hidden rounded-2xl p-0 shadow-sm transition duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2"
+										:style="answerButtonStyle(answer)"
+										:aria-pressed="selectedAnswer?.id === answer.id"
+										:aria-label="__('Select answer {0}').format(answer.label)"
+										@click="selectAnswer(answer)"
+										@dragstart="dragStart(answer)"
 										@dragend="dragEnd"
 									>
-										<img :src="box.answer.image" class="h-full w-full object-cover transition-transform duration-200 hover:scale-110 pointer-events-none" />
+										<img :src="answer.image" class="h-full w-full object-cover transition-transform duration-200 hover:scale-110 pointer-events-none" />
 									</button>
-
-									<div
-										v-else-if="box.type === 'TextGroup' && box.answers.length"
-										class="flex h-20 w-[calc((100vw-8rem)/3)] min-w-20 max-w-32 snap-start flex-col gap-1 sm:h-32 sm:w-32"
+									<button
+										v-else
+										type="button"
+										:draggable="!isTouchDevice"
+										class="flex h-32 w-32 shrink-0 items-center justify-center rounded-2xl px-4 py-3 text-center text-sm font-semibold text-white shadow-sm transition duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2"
+										:class="{
+											'ring-2 ring-offset-2 scale-[1.02]': selectedAnswer?.id === answer.id,
+											'cursor-grabbing opacity-80 scale-[0.98]': draggedAnswer?.id === answer.id,
+											'cursor-pointer': draggedAnswer?.id !== answer.id,
+										}"
+										:style="answerButtonStyle(answer)"
+										:aria-pressed="selectedAnswer?.id === answer.id"
+										:aria-label="__('Select answer {0}').format(answer.label)"
+										@click="selectAnswer(answer)"
+										@dragstart="dragStart(answer)"
+										@dragend="dragEnd"
 									>
-										<button
-											v-for="answer in box.answers"
-											:key="answer.id"
-											type="button"
-											:draggable="!isTouchDevice"
-											class="flex-1 rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-sm transition duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2"
-											:class="{
-												'ring-2 ring-offset-2 scale-[1.02]': selectedAnswer?.id === answer.id,
-												'cursor-grabbing opacity-80 scale-[0.98]': draggedAnswer?.id === answer.id,
-												'cursor-pointer': draggedAnswer?.id !== answer.id,
-											}"
-											:style="answerButtonStyle(answer)"
-											:aria-pressed="selectedAnswer?.id === answer.id"
-											:aria-label="__('Select answer {0}').format(answer.label)"
-											@click="selectAnswer(answer)"
-											@dragstart="dragStart(answer)"
-											@dragend="dragEnd"
+										<span
+											class="min-w-0 max-w-full whitespace-normal break-all text-center leading-tight"
+											style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;"
 										>
 											{{ answer.label }}
-										</button>
-									</div>
+										</span>
+									</button>
 								</template>
 							</div>
 						</div>
 						<button
-							v-if="availableAnswerBoxes.length > 3"
+							v-if="availableAnswers.length > 3"
 							type="button"
 							class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-outline-gray-2 bg-surface-white text-lg text-ink-gray-7 shadow-sm transition disabled:cursor-not-allowed disabled:opacity-40"
 							:disabled="!canScrollAnswerBankRight"
@@ -315,6 +385,8 @@ import { Info } from 'lucide-vue-next'
 import { timeAgo } from '@/utils'
 import ProgressBar from '@/components/ProgressBar.vue'
 
+const ANSWER_BANK_PAGE_SIZE = 6
+
 const user = inject('$user')
 const draggedAnswer = ref(null)
 const selectedAnswer = ref(null)
@@ -326,6 +398,7 @@ const activeDropTarget = ref(null)
 const isTouchDevice = ref(false)
 const isMobileView = ref(false)
 const showMobileHint = ref(false)
+const currentAnswerPage = ref(0)
 const canScrollAnswerBankLeft = ref(false)
 const canScrollAnswerBankRight = ref(false)
 let timerInterval = null
@@ -390,39 +463,41 @@ const availableAnswers = computed(() =>
 	)
 )
 
-const availableAnswerBoxes = computed(() => {
-	const currentAvailableAnswers = availableAnswers.value
-	const items = []
+const answerBankPages = computed(() => {
+	const pages = []
 
-	// Place Image Answers as separate boxes
-	currentAvailableAnswers
-		.filter((a) => a.answer_type === 'Image')
-		.forEach((a) => {
-			items.push({ type: 'Image', answer: a, id: a.id })
-		})
-
-	// Group Text Answers into boxes of 2
-	const texts = currentAvailableAnswers.filter((a) => a.answer_type === 'Text')
-	for (let i = 0; i < texts.length; i += 2) {
-		const chunk = texts.slice(i, i + 2)
-		items.push({ type: 'TextGroup', answers: chunk, id: chunk.map((c) => c.id).join('-') })
+	for (let index = 0; index < availableAnswers.value.length; index += ANSWER_BANK_PAGE_SIZE) {
+		pages.push(availableAnswers.value.slice(index, index + ANSWER_BANK_PAGE_SIZE))
 	}
 
-	// Shuffle boxes if enabled (requires stable shuffle linked to answerBank)
-	if (activity.data?.shuffle_answers) {
-		// Use a predictable pseudo-random shuffle based on IDs to avoid jumping
-		return items.sort((a, b) => {
-			const hashA = a.id.split('').reduce((h, c) => (Math.imul(31, h) + c.charCodeAt(0)) | 0, 0)
-			const hashB = b.id.split('').reduce((h, c) => (Math.imul(31, h) + c.charCodeAt(0)) | 0, 0)
-			return hashA - hashB
-		})
-	}
-	return items
+	return pages
 })
+
+const currentAnswerPageAnswers = computed(() => answerBankPages.value[currentAnswerPage.value] || [])
+
+const answerPagePlaceholderCount = computed(() =>
+	Math.max(ANSWER_BANK_PAGE_SIZE - currentAnswerPageAnswers.value.length, 0)
+)
+
+const canGoToPreviousAnswerPage = computed(() => currentAnswerPage.value > 0)
+
+const canGoToNextAnswerPage = computed(() => currentAnswerPage.value < answerBankPages.value.length - 1)
+
+const goToPreviousAnswerPage = () => {
+	if (canGoToPreviousAnswerPage.value) {
+		currentAnswerPage.value--
+	}
+}
+
+const goToNextAnswerPage = () => {
+	if (canGoToNextAnswerPage.value) {
+		currentAnswerPage.value++
+	}
+}
 
 const syncAnswerBankScrollState = () => {
 	const scroller = answerBankScroller.value
-	if (!scroller) {
+	if (!scroller || isMobileView.value) {
 		canScrollAnswerBankLeft.value = false
 		canScrollAnswerBankRight.value = false
 		return
@@ -437,7 +512,7 @@ const scrollAnswerBank = (direction) => {
 	const scroller = answerBankScroller.value
 	if (!scroller) return
 
-	const scrollAmount = Math.max(scroller.clientWidth * 0.8, 180)
+	const scrollAmount = Math.max(scroller.clientWidth * 0.75, 180)
 	scroller.scrollBy({
 		left: direction === 'right' ? scrollAmount : -scrollAmount,
 		behavior: 'smooth',
@@ -559,8 +634,12 @@ watch(
 )
 
 watch(
-	availableAnswerBoxes,
+	answerBankPages,
 	() => {
+		const lastPageIndex = Math.max(answerBankPages.value.length - 1, 0)
+		if (currentAnswerPage.value > lastPageIndex) {
+			currentAnswerPage.value = lastPageIndex
+		}
 		nextTick(syncAnswerBankScrollState)
 	},
 	{ deep: true }
@@ -579,6 +658,7 @@ const resetAnswerBank = () => {
 		id: `${index}-${answer.label}`,
 		...answer,
 	}))
+	currentAnswerPage.value = 0
 }
 
 const submissionColumns = [

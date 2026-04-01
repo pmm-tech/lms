@@ -162,6 +162,17 @@ const routes = [
 		props: true,
 	},
 	{
+		path: '/word-hunt-activities',
+		name: 'WordHuntActivities',
+		component: () => import('@/pages/WordHunt/WordHuntActivities.vue'),
+	},
+	{
+		path: '/word-hunt-activities/:activityID',
+		name: 'WordHuntForm',
+		component: () => import('@/pages/WordHunt/WordHuntForm.vue'),
+		props: true,
+	},
+	{
 		path: '/quiz/:quizID',
 		name: 'QuizPage',
 		component: () => import('@/pages/QuizPage.vue'),
@@ -171,6 +182,12 @@ const routes = [
 		path: '/drag-drop/:activityID',
 		name: 'DragDropPage',
 		component: () => import('@/pages/DragDrop/DragDropPage.vue'),
+		props: true,
+	},
+	{
+		path: '/word-hunt/:activityID',
+		name: 'WordHuntPage',
+		component: () => import('@/pages/WordHunt/WordHuntPage.vue'),
 		props: true,
 	},
 	{
@@ -186,6 +203,12 @@ const routes = [
 		props: true,
 	},
 	{
+		path: '/word-hunt-submissions/:activityID',
+		name: 'WordHuntSubmissionList',
+		component: () => import('@/pages/WordHunt/WordHuntSubmissionList.vue'),
+		props: true,
+	},
+	{
 		path: '/quiz-submission/:submission',
 		name: 'QuizSubmission',
 		component: () => import('@/pages/QuizSubmission.vue'),
@@ -195,6 +218,12 @@ const routes = [
 		path: '/drag-drop-submission/:submission',
 		name: 'DragDropSubmission',
 		component: () => import('@/pages/DragDrop/DragDropSubmission.vue'),
+		props: true,
+	},
+	{
+		path: '/word-hunt-submission/:submission',
+		name: 'WordHuntSubmission',
+		component: () => import('@/pages/WordHunt/WordHuntSubmission.vue'),
 		props: true,
 	},
 	{

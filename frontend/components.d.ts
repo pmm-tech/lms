@@ -119,6 +119,8 @@ declare module 'vue' {
     UserDropdown: typeof import('./src/components/Sidebar/UserDropdown.vue')['default']
     VideoBlock: typeof import('./src/components/VideoBlock.vue')['default']
     VideoStatistics: typeof import('./src/components/Modals/VideoStatistics.vue')['default']
+    WordHunt: typeof import('./src/components/WordHunt.vue')['default']
+    WordHuntBlock: typeof import('./src/components/WordHuntBlock.vue')['default']
     ZoomAccountModal: typeof import('./src/components/Modals/ZoomAccountModal.vue')['default']
     ZoomSettings: typeof import('./src/components/Settings/ZoomSettings.vue')['default']
   }
