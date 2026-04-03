@@ -155,6 +155,7 @@ watch(userResource, () => {
 		if (isModerator.value || isInstructor.value) {
 			addProgrammingExercises()
 			addQuizzes()
+			addExams()
 			addDragDropActivities()
 			addWordHuntActivities()
 			addAssignments()
@@ -182,6 +183,15 @@ const addDragDropActivities = () => {
 			'DragDropSubmissionList',
 			'DragDropSubmission',
 		],
+	})
+}
+
+const addExams = () => {
+	otherLinks.value.push({
+		label: 'Exams',
+		icon: 'NotebookPen',
+		to: 'Exams',
+		activeFor: ['Exams', 'ExamForm', 'ExamPage', 'ExamSubmissionList', 'ExamSubmission'],
 	})
 }
 

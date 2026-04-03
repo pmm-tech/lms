@@ -213,15 +213,18 @@ watch(show, () => {
 	}
 })
 
+const childQuestionDoctype = () =>
+	quiz.value?.doc?.doctype === 'LMS Exam' ? 'LMS Exam Question' : 'LMS Quiz Question'
+
 const questionRow = createResource({
 	url: 'frappe.client.insert',
 	makeParams(values) {
 		return {
 			doc: {
-				doctype: 'LMS Quiz Question',
+				doctype: childQuestionDoctype(),
 				parent: quiz.value.doc.name,
 				parentfield: 'questions',
-				parenttype: 'LMS Quiz',
+				parenttype: quiz.value.doc.doctype,
 				...values,
 			},
 		}
@@ -311,7 +314,7 @@ const marksUpdate = createResource({
 	auto: false,
 	makeParams(values) {
 		return {
-			doctype: 'LMS Quiz Question',
+			doctype: childQuestionDoctype(),
 			name: props.questionDetail.name,
 			fieldname: {
 				marks: question.marks,

@@ -20,6 +20,7 @@
 - Scheduled automation pattern: reminders, attendance updates, statistics refresh, and evaluation scheduling run through Frappe scheduler hooks.
 - Content extensibility pattern: lessons support embedded exercises, quizzes, videos, assignments, audio, PDF, and SCORM-related flows.
 - Assessment rendering pattern: drag and drop activities now support multiple item presentation modes while keeping one scoring payload shape (`submitted_answer` per row).
+- Assessment specialization pattern: final exams reuse quiz-style question/submission mechanics where practical but live in dedicated DocTypes and routes so they can evolve separate metadata, prerequisite rules, and certification behavior.
 - Container release pattern: the image build sources LMS from the executing repository/ref, while framework dependencies are controlled by explicit upstream refs validated before Docker build.
 
 ## Decisions
@@ -31,3 +32,6 @@
 - 2026-03-21: Treat tap-to-place as the primary mobile interaction model for drag and drop. Rationale: native HTML drag events are unreliable on touch browsers. Impact: mobile UX should emphasize selection state and tappable drop targets rather than relying on drag-only affordances.
 - 2026-03-21: Present drag and drop items one at a time with Previous/Next navigation. Rationale: the stepped flow is easier to use on mobile and less visually overwhelming than rendering every item at once. Impact: placement state must persist independently of the currently visible item.
 - 2026-03-29: Separate LMS release refs from framework dependency refs in the container build pipeline. Rationale: assuming one shared branch name caused failed builds when `version-16` did not exist upstream. Impact: Frappe and Payments refs are now independently configurable and validated before build.
+- 2026-04-04: Model the final exam as a course-level DocType instead of overloading lesson resources or quizzes. Rationale: the exam needs independent prerequisite logic, certification gating, attempt handling, and future exam-only metadata. Impact: exam state now spans dedicated DocTypes, course detail/outline aggregation, and certificate eligibility rules.
+- 2026-04-04: Keep final exams outside normal course progress while making them mandatory for certification when present. Rationale: product wants progress to reach 100% before the exam while still treating the exam as a final gate. Impact: prerequisite checks use normal course progress, and certificate validation now performs an additional exam-pass check.
+- 2026-04-04: Use `frappe.get_doc` instead of `frappe.get_cached_doc` when assembling live exam status for course payloads. Rationale: cached exam docs caused stale `display_chapter` and status output during live verification. Impact: course outline/detail responses now reflect exam edits immediately.

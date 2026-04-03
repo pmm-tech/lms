@@ -20,6 +20,7 @@ from frappe.utils import (
 	get_frappe_version,
 	get_fullname,
 	getdate,
+	now_datetime,
 	nowtime,
 	pretty_date,
 	rounded,
@@ -325,6 +326,166 @@ def get_course_progress(course: str, member: str = None):
 	)
 	precision = cint(frappe.db.get_default("float_precision")) or 3
 	return flt(((completed_lessons / lesson_count) * 100), precision)
+
+
+def get_course_exam(course: str, member: str = None):
+	filters = {"course": course}
+	exam_name = frappe.db.get_value("LMS Exam", filters, "name")
+	if not exam_name:
+		return None
+	return get_exam_status(exam_name, member)
+
+
+def get_exam_attempt_count(exam: str, member: str = None):
+	return frappe.db.count(
+		"LMS Exam Submission",
+		{"exam": exam, "member": member or frappe.session.user},
+	)
+
+
+def has_passed_exam(exam: str, member: str = None):
+	member = member or frappe.session.user
+	passing_percentage = frappe.db.get_value("LMS Exam", exam, "passing_percentage")
+	return frappe.db.exists(
+		"LMS Exam Submission",
+		{
+			"exam": exam,
+			"member": member,
+			"percentage": [">=", passing_percentage],
+		},
+	)
+
+
+def get_exam_prerequisite_status(exam: str, member: str = None):
+	member = member or frappe.session.user
+	exam_doc = frappe.get_doc("LMS Exam", exam)
+	items = []
+	eligible = True
+
+	for row in exam_doc.prerequisites or []:
+		item = {
+			"requirement_type": row.requirement_type,
+			"submission_requirement": row.submission_requirement,
+			"satisfied": False,
+		}
+		if row.requirement_type == "Course Progress":
+			progress = get_course_progress(exam_doc.course, member)
+			item.update(
+				{
+					"label": _("Complete {0}% of the course").format(row.minimum_percentage),
+					"current_value": progress,
+					"minimum_percentage": row.minimum_percentage,
+					"satisfied": flt(progress) >= flt(row.minimum_percentage),
+				}
+			)
+		elif row.requirement_type == "Quiz":
+			title = frappe.db.get_value("LMS Quiz", row.quiz, "title")
+			item["reference"] = row.quiz
+			item["label"] = _("{0}: {1}").format(row.submission_requirement, title)
+			if row.submission_requirement == "Passed":
+				passing_percentage = frappe.db.get_value("LMS Quiz", row.quiz, "passing_percentage")
+				item["satisfied"] = bool(
+					frappe.db.exists(
+						"LMS Quiz Submission",
+						{
+							"quiz": row.quiz,
+							"member": member,
+							"percentage": [">=", passing_percentage],
+						},
+					)
+				)
+			else:
+				item["satisfied"] = bool(
+					frappe.db.exists("LMS Quiz Submission", {"quiz": row.quiz, "member": member})
+				)
+		elif row.requirement_type == "Drag Drop":
+			title = frappe.db.get_value("LMS Drag Drop Activity", row.drag_drop_activity, "title")
+			item["reference"] = row.drag_drop_activity
+			item["label"] = _("{0}: {1}").format(row.submission_requirement, title)
+			if row.submission_requirement == "Passed":
+				passing_percentage = frappe.db.get_value(
+					"LMS Drag Drop Activity", row.drag_drop_activity, "passing_percentage"
+				)
+				item["satisfied"] = bool(
+					frappe.db.exists(
+						"LMS Drag Drop Submission",
+						{
+							"activity": row.drag_drop_activity,
+							"member": member,
+							"percentage": [">=", passing_percentage],
+						},
+					)
+				)
+			else:
+				item["satisfied"] = bool(
+					frappe.db.exists(
+						"LMS Drag Drop Submission",
+						{"activity": row.drag_drop_activity, "member": member},
+					)
+				)
+
+		if not item["satisfied"]:
+			eligible = False
+		items.append(item)
+
+	return {
+		"eligible": eligible,
+		"items": items,
+	}
+
+
+def get_exam_status(exam: str, member: str = None):
+	member = member or frappe.session.user
+	exam_doc = frappe.get_doc("LMS Exam", exam)
+	membership = get_membership(exam_doc.course, member)
+	prerequisites = get_exam_prerequisite_status(exam, member)
+	attempt_count = get_exam_attempt_count(exam, member)
+	max_attempts = cint(exam_doc.max_attempts)
+	now = now_datetime()
+	is_available = True
+	locked_reason = None
+
+	if exam_doc.available_from and get_datetime(exam_doc.available_from) > now:
+		is_available = False
+		locked_reason = _("This exam is not available yet.")
+	elif exam_doc.available_until and get_datetime(exam_doc.available_until) < now:
+		is_available = False
+		locked_reason = _("This exam is no longer available.")
+	elif not membership and not can_modify_course(exam_doc.course):
+		locked_reason = _("You must be enrolled in this course to take the exam.")
+	elif not prerequisites["eligible"]:
+		locked_reason = _("Complete the prerequisites before attempting this exam.")
+	elif max_attempts and attempt_count >= max_attempts:
+		locked_reason = _("You have already used all available attempts for this exam.")
+
+	can_attempt = not locked_reason and is_available
+	last_submission = frappe.get_all(
+		"LMS Exam Submission",
+		fields=["name", "creation", "score", "score_out_of", "percentage"],
+		filters={"member": member, "exam": exam},
+		order_by="creation desc",
+		page_length=1,
+	)
+
+	return {
+		"name": exam_doc.name,
+		"title": exam_doc.title,
+		"course": exam_doc.course,
+		"display_chapter": exam_doc.display_chapter,
+		"is_final_exam": exam_doc.is_final_exam,
+		"attempts_used": attempt_count,
+		"attempts_remaining": max(max_attempts - attempt_count, 0) if max_attempts else None,
+		"max_attempts": max_attempts,
+		"eligible": prerequisites["eligible"],
+		"can_attempt": can_attempt,
+		"locked_reason": locked_reason,
+		"prerequisites": prerequisites["items"],
+		"passed": bool(has_passed_exam(exam, member)),
+		"has_submission": bool(last_submission),
+		"latest_submission": last_submission[0] if last_submission else None,
+		"url": get_lms_route(f"exam/{exam}"),
+		"edit_url": get_lms_route(f"exams/{exam}"),
+	}
 
 
 def is_instructor(course: str) -> bool:
@@ -917,6 +1078,11 @@ def get_course_details(course: str):
 	if course_details.membership and course_details.membership.current_lesson:
 		course_details.current_lesson = get_lesson_index(course_details.membership.current_lesson)
 
+	exam_status = get_course_exam(course, frappe.session.user if frappe.session.user != "Guest" else None)
+	course_details.final_exam = exam_status
+	course_details.final_exam_required = bool(exam_status)
+	course_details.final_exam_passed = exam_status.get("passed") if exam_status else False
+
 	return course_details
 
 
@@ -956,7 +1122,7 @@ def get_categorized_courses(courses: list) -> dict:
 
 
 @frappe.whitelist(allow_guest=True)
-def get_course_outline(course: str, progress: bool = False) -> list:
+def get_course_outline(course: str, progress: bool = False, include_exams: bool = True) -> list:
 	"""Returns the course outline."""
 
 	if not guest_access_allowed():
@@ -964,6 +1130,7 @@ def get_course_outline(course: str, progress: bool = False) -> list:
 
 	outline = []
 	chapters = frappe.get_all("Chapter Reference", {"parent": course}, ["chapter", "idx"], order_by="idx")
+	exam_status = get_course_exam(course, frappe.session.user if frappe.session.user != "Guest" else None)
 	for chapter in chapters:
 		chapter_details = frappe.db.get_value(
 			"Course Chapter",
@@ -973,6 +1140,22 @@ def get_course_outline(course: str, progress: bool = False) -> list:
 		)
 		chapter_details["idx"] = chapter.idx
 		chapter_details.lessons = get_lessons(course, chapter_details, progress=progress)
+
+		if include_exams and exam_status and exam_status.get("display_chapter") == chapter_details.name:
+			chapter_details.lessons.append(
+				frappe._dict(
+					{
+						"name": exam_status["name"],
+						"title": exam_status["title"],
+						"number": f"{chapter.idx}-exam",
+						"icon": "icon-quiz",
+						"is_exam": 1,
+						"is_complete": exam_status["passed"],
+						"is_locked": not exam_status["can_attempt"],
+						"locked_reason": exam_status["locked_reason"],
+					}
+				)
+			)
 
 		if chapter_details.is_scorm_package:
 			chapter_details.scorm_package = frappe.db.get_value(

@@ -13,6 +13,7 @@
 - Root `package.json` delegates frontend development and build commands into the `frontend/` workspace-like folder.
 - Frontend dev server uses Vite with a local `frappe-ui` checkout when available, otherwise the npm package fallback.
 - 2026-03-29: Container image builds are driven by `.github/workflows/build.yml` and now use `FRAPPE_REF` and `PAYMENTS_REF` repository variables, with backward compatibility for the older `FRAPPE_BRANCH` variable.
+- 2026-04-04: Live app verification for new DocTypes is currently most reliable through `docker compose exec frappe ...` with Bench commands against `lms.localhost`; direct host-shell Frappe/Python checks are less trustworthy in this workspace.
 
 ## Constraints
 - The repo mixes Python, Frappe metadata, Vue, Cypress, and generated assets, so changes often need cross-layer validation.
@@ -21,6 +22,7 @@
 - The backend surface is large, with many whitelisted methods in [`lms/lms/api.py`](/Users/purwaren/Projects/frappe/lms/lms/lms/api.py) and [`lms/lms/utils.py`](/Users/purwaren/Projects/frappe/lms/lms/lms/utils.py), so behavioral changes can have wide reach.
 - Docker-backed verification may be more reliable than host-shell verification because node/yarn availability and dependency state differ between the host and the running `frappe` container.
 - 2026-03-29: GitHub Actions build warnings about Node 20 deprecation still remain for the Docker-maintained actions (`docker/build-push-action`, `docker/login-action`, `docker/setup-buildx-action`, `docker/setup-qemu-action`) even after local workflow upgrades; this is currently an upstream action-runtime issue, not a repo-specific misconfiguration.
+- 2026-04-04: Ad hoc Python inside the `frappe` container may need explicit `sites_path` and writable log directories (`/home/frappe/logs`, `/home/frappe/frappe-bench/sites/<site>/logs`) if run outside normal Bench helpers during deep verification.
 
 ## Key Commands
 - `bench start`
@@ -30,5 +32,7 @@
 - `yarn test-local`
 - `ruff check .`
 - `docker compose exec frappe bash -lc 'cd /home/frappe/frappe-bench/apps/lms/frontend && yarn build'`
+- `docker compose exec frappe bash -lc 'cd /home/frappe/frappe-bench && bench --site lms.localhost migrate'`
+- `docker compose exec frappe bash -lc 'cd /home/frappe/frappe-bench && bench --site lms.localhost execute <python.path> --kwargs \"{...}\"'`
 - `git ls-remote --heads https://github.com/frappe/frappe <ref>`
 - `git ls-remote --tags https://github.com/frappe/payments <ref>`

@@ -1,0 +1,164 @@
+{
+ "actions": [],
+ "creation": "2026-04-03 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "exam",
+  "exam_title",
+  "course",
+  "column_break_3",
+  "member",
+  "member_name",
+  "attempt_number",
+  "section_break_dkpn",
+  "score",
+  "score_out_of",
+  "column_break_gkip",
+  "percentage",
+  "passing_percentage",
+  "section_break_6",
+  "result"
+ ],
+ "fields": [
+  {
+   "fieldname": "exam",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Exam",
+   "options": "LMS Exam"
+  },
+  {
+   "fieldname": "result",
+   "fieldtype": "Table",
+   "label": "Result",
+   "options": "LMS Exam Result"
+  },
+  {
+   "fieldname": "score",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Score",
+   "reqd": 1
+  },
+  {
+   "fieldname": "member",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Member",
+   "options": "User"
+  },
+  {
+   "fetch_from": "member.full_name",
+   "fieldname": "member_name",
+   "fieldtype": "Data",
+   "label": "Member Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "exam.course",
+   "fieldname": "course",
+   "fieldtype": "Link",
+   "label": "Course",
+   "options": "LMS Course",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "exam.total_marks",
+   "fieldname": "score_out_of",
+   "fieldtype": "Int",
+   "label": "Score Out Of",
+   "non_negative": 1,
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_dkpn",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_gkip",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "percentage",
+   "fieldtype": "Float",
+   "label": "Percentage",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "passing_percentage",
+   "fieldtype": "Int",
+   "label": "Passing Percentage",
+   "non_negative": 1,
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fetch_from": "exam.title",
+   "fieldname": "exam_title",
+   "fieldtype": "Data",
+   "label": "Exam Title",
+   "read_only": 1
+  },
+  {
+   "fieldname": "attempt_number",
+   "fieldtype": "Int",
+   "label": "Attempt Number",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_6",
+   "fieldtype": "Section Break"
+  }
+ ],
+ "grid_page_length": 50,
+ "in_create": 1,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-04-03 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "LMS",
+ "name": "LMS Exam Submission",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "if_owner": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "LMS Student",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "member_name",
+ "track_changes": 1
+}

@@ -19,5 +19,6 @@
 ## Scope Notes
 - In scope: courses, lessons, batches, quizzes, assignments, programming exercises, certificates, payments, profiles, badges, jobs, programs, search, and statistics.
 - 2026-03-29: Drag and drop activities are now an actively extended assessment surface, including colorful answer banks, mixed text/image prompts, mobile-friendly tap placement, and one-item-at-a-time navigation.
+- 2026-04-04: Final exams are now an in-scope assessment surface. They are modeled separately from quizzes, belong to a course, can be displayed under a chosen chapter, and can gate certification without changing normal course progress.
 - In scope: website delivery under a configurable LMS base path and a Vue SPA mounted inside Frappe.
 - Out of scope: native mobile clients and multi-service deployment orchestration in this repo.

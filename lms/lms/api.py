@@ -36,6 +36,7 @@ from lms.lms.utils import (
 	can_modify_course,
 	get_average_rating,
 	get_batch_details,
+	get_course_exam,
 	get_course_details,
 	get_field_meta,
 	get_instructors,
@@ -1427,11 +1428,13 @@ def get_certification_details(course: str):
 		["name", "template"],
 		as_dict=1,
 	)
+	exam = get_course_exam(course, frappe.session.user)
 
 	return {
 		"membership": membership,
 		"paid_certificate": paid_certificate,
 		"certificate": certificate,
+		"final_exam": exam,
 	}
 
 
@@ -2175,11 +2178,13 @@ def get_course_assessment_progress(course: str, member: str):
 	quizzes = get_course_quiz_progress(course, member)
 	assignments = get_course_assignment_progress(course, member)
 	programming_exercises = get_course_programming_exercise_progress(course, member)
+	exam = get_course_exam(course, member)
 
 	return {
 		"quizzes": quizzes,
 		"assignments": assignments,
 		"exercises": programming_exercises,
+		"exam": exam,
 	}
 
 

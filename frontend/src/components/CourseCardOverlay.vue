@@ -271,7 +271,8 @@ const is_instructor = () => {
 const canGetCertificate = computed(() => {
 	if (
 		props.course.data?.enable_certification &&
-		props.course.data?.membership?.progress == 100
+		props.course.data?.membership?.progress == 100 &&
+		(!props.course.data?.final_exam_required || props.course.data?.final_exam_passed)
 	) {
 		return true
 	}

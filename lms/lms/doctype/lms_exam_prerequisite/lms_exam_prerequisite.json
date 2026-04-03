@@ -1,0 +1,63 @@
+{
+ "actions": [],
+ "creation": "2026-04-03 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "requirement_type",
+  "submission_requirement",
+  "minimum_percentage",
+  "quiz",
+  "drag_drop_activity"
+ ],
+ "fields": [
+  {
+   "fieldname": "requirement_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Requirement Type",
+   "options": "Course Progress\nQuiz\nDrag Drop",
+   "reqd": 1
+  },
+  {
+   "default": "Attempted",
+   "fieldname": "submission_requirement",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Requirement",
+   "options": "Attempted\nPassed"
+  },
+  {
+   "fieldname": "minimum_percentage",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Minimum Percentage"
+  },
+  {
+   "fieldname": "quiz",
+   "fieldtype": "Link",
+   "label": "Quiz",
+   "options": "LMS Quiz"
+  },
+  {
+   "fieldname": "drag_drop_activity",
+   "fieldtype": "Link",
+   "label": "Drag & Drop Activity",
+   "options": "LMS Drag Drop Activity"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-04-03 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "LMS",
+ "name": "LMS Exam Prerequisite",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
