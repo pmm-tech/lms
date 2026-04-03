@@ -123,10 +123,10 @@ const addAssessment = () => {
 		props.type == 'quiz'
 			? quiz.value
 			: props.type == 'dragDrop'
-				? dragDrop.value
-				: props.type == 'wordHunt'
-					? wordHunt.value
-				: assignment.value
+			? dragDrop.value
+			: props.type == 'wordHunt'
+			? wordHunt.value
+			: assignment.value
 	)
 	show.value = false
 }

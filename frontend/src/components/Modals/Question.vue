@@ -214,7 +214,9 @@ watch(show, () => {
 })
 
 const childQuestionDoctype = () =>
-	quiz.value?.doc?.doctype === 'LMS Exam' ? 'LMS Exam Question' : 'LMS Quiz Question'
+	quiz.value?.doc?.doctype === 'LMS Exam'
+		? 'LMS Exam Question'
+		: 'LMS Quiz Question'
 
 const questionRow = createResource({
 	url: 'frappe.client.insert',

@@ -58,7 +58,8 @@ export class Quiz {
 				let attempts = 0
 				const poll = setInterval(() => {
 					try {
-						const height = iframe.contentWindow.document.body.scrollHeight
+						const height =
+							iframe.contentWindow.document.body.scrollHeight
 						if (height === lastHeight || attempts > 20) {
 							clearInterval(poll)
 							if (height > 0) iframe.style.height = height + 'px'
@@ -74,17 +75,21 @@ export class Quiz {
 			this.wrapper.appendChild(iframe)
 
 			setTimeout(() => {
-				iframe.style.height = iframe.contentWindow.document.body.scrollHeight + 'px'
+				iframe.style.height =
+					iframe.contentWindow.document.body.scrollHeight + 'px'
 
 				let lastHeight = 0
 				setInterval(() => {
 					try {
-						const height = iframe.contentWindow.document.body.scrollHeight
+						const height =
+							iframe.contentWindow.document.body.scrollHeight
 						if (height !== lastHeight) {
 							iframe.style.height = height + 'px'
 							lastHeight = height
 						}
-					} catch (e) { }
+					} catch (e) {
+						// Ignore iframe access errors while embedded content is loading.
+					}
 				}, 300)
 			}, 500)
 			return

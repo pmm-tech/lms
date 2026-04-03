@@ -1720,7 +1720,10 @@ def get_drag_drop_pass_stats(batch):
 		.left_join(BatchEnrollment)
 		.on(BatchEnrollment.batch == Assessment.parent)
 		.left_join(Submission)
-		.on((Submission.activity == Assessment.assessment_name) & (Submission.member == BatchEnrollment.member))
+		.on(
+			(Submission.activity == Assessment.assessment_name)
+			& (Submission.member == BatchEnrollment.member)
+		)
 		.where((Assessment.parent == batch) & (Assessment.assessment_type == "LMS Drag Drop Activity"))
 		.groupby(Assessment.assessment_name, Activity.title)
 		.select(
@@ -1747,7 +1750,10 @@ def get_word_hunt_pass_stats(batch):
 		.left_join(BatchEnrollment)
 		.on(BatchEnrollment.batch == Assessment.parent)
 		.left_join(Submission)
-		.on((Submission.activity == Assessment.assessment_name) & (Submission.member == BatchEnrollment.member))
+		.on(
+			(Submission.activity == Assessment.assessment_name)
+			& (Submission.member == BatchEnrollment.member)
+		)
 		.where((Assessment.parent == batch) & (Assessment.assessment_type == "LMS Word Hunt Activity"))
 		.groupby(Assessment.assessment_name, Activity.title)
 		.select(
@@ -1901,6 +1907,7 @@ def get_assessment_meta(assessment_type: str):
 
 	return doctype, docfield, fields, not_attempted
 
+
 def get_assessment_attempt_details(
 	doctype: str, filters: dict, fields: list, assessment_type: str, assessment: str
 ):
@@ -1913,16 +1920,12 @@ def get_assessment_attempt_details(
 			result = "Pass"
 	elif assessment_type == "LMS Drag Drop Activity":
 		result = "Failed"
-		passing_percentage = frappe.db.get_value(
-			"LMS Drag Drop Activity", assessment, "passing_percentage"
-		)
+		passing_percentage = frappe.db.get_value("LMS Drag Drop Activity", assessment, "passing_percentage")
 		if attempt_details.percentage >= passing_percentage:
 			result = "Pass"
 	elif assessment_type == "LMS Word Hunt Activity":
 		result = "Failed"
-		passing_percentage = frappe.db.get_value(
-			"LMS Word Hunt Activity", assessment, "passing_percentage"
-		)
+		passing_percentage = frappe.db.get_value("LMS Word Hunt Activity", assessment, "passing_percentage")
 		if attempt_details.percentage >= passing_percentage:
 			result = "Pass"
 	else:

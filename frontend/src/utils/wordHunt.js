@@ -40,7 +40,9 @@ export class WordHunt {
 
 	renderActivity(activity) {
 		if (this.readOnly) {
-			const activityPath = getLmsRoute(`word-hunt/${activity}?fromLesson=1`)
+			const activityPath = getLmsRoute(
+				`word-hunt/${activity}?fromLesson=1`
+			)
 
 			const iframe = document.createElement('iframe')
 			iframe.src = activityPath
@@ -53,7 +55,8 @@ export class WordHunt {
 				let attempts = 0
 				const poll = setInterval(() => {
 					try {
-						const height = iframe.contentWindow.document.body.scrollHeight
+						const height =
+							iframe.contentWindow.document.body.scrollHeight
 						if (height === lastHeight || attempts > 20) {
 							clearInterval(poll)
 							if (height > 0) iframe.style.height = height + 'px'
@@ -69,17 +72,21 @@ export class WordHunt {
 			this.wrapper.appendChild(iframe)
 
 			setTimeout(() => {
-				iframe.style.height = iframe.contentWindow.document.body.scrollHeight + 'px'
+				iframe.style.height =
+					iframe.contentWindow.document.body.scrollHeight + 'px'
 
 				let lastHeight = 0
 				setInterval(() => {
 					try {
-						const height = iframe.contentWindow.document.body.scrollHeight
+						const height =
+							iframe.contentWindow.document.body.scrollHeight
 						if (height !== lastHeight) {
 							iframe.style.height = height + 'px'
 							lastHeight = height
 						}
-					} catch (e) {}
+					} catch (e) {
+						// Ignore iframe access errors while embedded content is loading.
+					}
 				}, 300)
 			}, 1500)
 			return

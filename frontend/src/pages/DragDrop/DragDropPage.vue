@@ -5,7 +5,10 @@
 	>
 		<Breadcrumbs :items="breadcrumbs" />
 	</header>
-	<div class="md:w-7/12 md:mx-auto mx-4 py-10" :class="{ 'pt-4 md:w-full': fromLesson }">
+	<div
+		class="md:w-7/12 md:mx-auto mx-4 py-10"
+		:class="{ 'pt-4 md:w-full': fromLesson }"
+	>
 		<DragDrop :activityName="activityID" />
 	</div>
 </template>
@@ -47,7 +50,10 @@ const title = createResource({
 	auto: true,
 })
 
-const breadcrumbs = computed(() => [{ label: __('Drag & Drop') }, { label: title.data?.title }])
+const breadcrumbs = computed(() => [
+	{ label: __('Drag & Drop') },
+	{ label: title.data?.title },
+])
 
 usePageMeta(() => ({
 	title: `${title.data?.title}`,

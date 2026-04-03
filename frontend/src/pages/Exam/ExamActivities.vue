@@ -1,5 +1,7 @@
 <template>
-	<header class="sticky top-0 z-10 flex items-center justify-between border-b bg-surface-white px-3 py-2.5 sm:px-5">
+	<header
+		class="sticky top-0 z-10 flex items-center justify-between border-b bg-surface-white px-3 py-2.5 sm:px-5"
+	>
 		<Breadcrumbs :items="breadcrumbs" />
 		<Button v-if="!readOnlyMode" variant="solid" @click="showForm = true">
 			<template #prefix>
@@ -27,8 +29,14 @@
 			:options="{ showTooltip: false, selectable: false }"
 			class="h-[79vh] border-b"
 		>
-			<ListHeader class="mb-2 grid items-center rounded bg-surface-white border-b rounded-none p-2">
-				<ListHeaderItem :item="item" v-for="item in examColumns" :key="item.key" />
+			<ListHeader
+				class="mb-2 grid items-center rounded bg-surface-white border-b rounded-none p-2"
+			>
+				<ListHeaderItem
+					:item="item"
+					v-for="item in examColumns"
+					:key="item.key"
+				/>
 			</ListHeader>
 			<ListRows>
 				<router-link
@@ -42,9 +50,13 @@
 		</ListView>
 		<EmptyState v-else type="Exams" />
 		<div class="flex items-center justify-end space-x-3 mt-3">
-			<Button v-if="exams.hasNextPage" @click="exams.next()">{{ __('Load More') }}</Button>
+			<Button v-if="exams.hasNextPage" @click="exams.next()">{{
+				__('Load More')
+			}}</Button>
 			<div v-if="exams.hasNextPage" class="h-8 border-l"></div>
-			<div class="text-ink-gray-5">{{ exams.data?.length || 0 }} {{ __('of') }} {{ totalExams.data || 0 }}</div>
+			<div class="text-ink-gray-5">
+				{{ exams.data?.length || 0 }} {{ __('of') }} {{ totalExams.data || 0 }}
+			</div>
 		</div>
 	</div>
 	<Dialog
@@ -52,11 +64,24 @@
 		:options="{
 			title: __('Create an Exam'),
 			size: 'sm',
-			actions: [{ label: __('Save'), variant: 'solid', onClick({ close }) { insertExam(close) } }],
+			actions: [
+				{
+					label: __('Save'),
+					variant: 'solid',
+					onClick({ close }) {
+						insertExam(close)
+					},
+				},
+			],
 		}"
 	>
 		<template #body-content>
-			<FormControl v-model="title" :label="__('Title')" type="text" autocomplete="off" />
+			<FormControl
+				v-model="title"
+				:label="__('Title')"
+				type="text"
+				autocomplete="off"
+			/>
 			<FormControl
 				class="mt-4"
 				v-model="course"
@@ -105,7 +130,11 @@ const title = ref('')
 const course = ref('')
 
 onMounted(() => {
-	if (!user.data?.is_moderator && !user.data?.is_instructor && !user.data?.is_evaluator) {
+	if (
+		!user.data?.is_moderator &&
+		!user.data?.is_instructor &&
+		!user.data?.is_evaluator
+	) {
 		router.push({ name: 'Courses' })
 	}
 	if (route.query.new === 'true') showForm.value = true
@@ -121,11 +150,22 @@ watch(search, () => {
 const exams = createListResource({
 	doctype: 'LMS Exam',
 	filters,
-	fields: ['name', 'title', 'course', 'display_chapter', 'passing_percentage', 'max_attempts', 'modified'],
+	fields: [
+		'name',
+		'title',
+		'course',
+		'display_chapter',
+		'passing_percentage',
+		'max_attempts',
+		'modified',
+	],
 	auto: true,
 	orderBy: 'modified desc',
 	transform(data) {
-		return data.map((exam) => ({ ...exam, modified: dayjs(exam.modified).fromNow(true) }))
+		return data.map((exam) => ({
+			...exam,
+			modified: dayjs(exam.modified).fromNow(true),
+		}))
 	},
 })
 
@@ -179,7 +219,12 @@ const insertExam = (close) => {
 const examColumns = computed(() => [
 	{ label: __('Title'), key: 'title', width: 3 },
 	{ label: __('Course'), key: 'course', width: 2 },
-	{ label: __('Passing %'), key: 'passing_percentage', width: 1, align: 'center' },
+	{
+		label: __('Passing %'),
+		key: 'passing_percentage',
+		width: 1,
+		align: 'center',
+	},
 	{ label: __('Modified'), key: 'modified', width: 1, align: 'right' },
 ])
 

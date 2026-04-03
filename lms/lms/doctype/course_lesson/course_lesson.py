@@ -230,9 +230,7 @@ def get_drag_drop_progress(lesson):
 		activities = [value for name, value in macros if name == "DragDrop"]
 
 	for activity in activities:
-		passing_percentage = frappe.db.get_value(
-			"LMS Drag Drop Activity", activity, "passing_percentage"
-		)
+		passing_percentage = frappe.db.get_value("LMS Drag Drop Activity", activity, "passing_percentage")
 		if not frappe.db.exists(
 			"LMS Drag Drop Submission",
 			{
@@ -261,9 +259,7 @@ def get_word_hunt_progress(lesson):
 		activities = [value for name, value in macros if name == "WordHunt"]
 
 	for activity in activities:
-		passing_percentage = frappe.db.get_value(
-			"LMS Word Hunt Activity", activity, "passing_percentage"
-		)
+		passing_percentage = frappe.db.get_value("LMS Word Hunt Activity", activity, "passing_percentage")
 		if not frappe.db.exists(
 			"LMS Word Hunt Submission",
 			{

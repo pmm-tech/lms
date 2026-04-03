@@ -1,12 +1,25 @@
 <template>
-	<header class="sticky top-0 z-10 flex items-center justify-between border-b bg-surface-white px-3 py-2.5 sm:px-5">
+	<header
+		class="sticky top-0 z-10 flex items-center justify-between border-b bg-surface-white px-3 py-2.5 sm:px-5"
+	>
 		<Breadcrumbs :items="breadcrumbs" />
 		<div v-if="!readOnlyMode" class="flex items-center space-x-2">
-			<Badge v-if="examDetails.isDirty" theme="orange">{{ __('Not Saved') }}</Badge>
-			<router-link v-if="examDetails.doc?.name" :to="{ name: 'ExamPage', params: { examID: examDetails.doc.name } }">
+			<Badge v-if="examDetails.isDirty" theme="orange">{{
+				__('Not Saved')
+			}}</Badge>
+			<router-link
+				v-if="examDetails.doc?.name"
+				:to="{ name: 'ExamPage', params: { examID: examDetails.doc.name } }"
+			>
 				<Button>{{ __('Test Exam') }}</Button>
 			</router-link>
-			<router-link v-if="examDetails.doc?.name" :to="{ name: 'ExamSubmissionList', params: { examID: examDetails.doc.name } }">
+			<router-link
+				v-if="examDetails.doc?.name"
+				:to="{
+					name: 'ExamSubmissionList',
+					params: { examID: examDetails.doc.name },
+				}"
+			>
 				<Button>{{ __('Check Submissions') }}</Button>
 			</router-link>
 			<Button variant="solid" @click="submitExam">{{ __('Save') }}</Button>
@@ -14,23 +27,75 @@
 	</header>
 	<div v-if="examDetails.doc" class="py-5">
 		<div class="px-20 pb-5 space-y-5 border-b mb-5">
-			<div class="text-lg text-ink-gray-9 font-semibold mb-4">{{ __('Details') }}</div>
+			<div class="text-lg text-ink-gray-9 font-semibold mb-4">
+				{{ __('Details') }}
+			</div>
 			<div class="grid grid-cols-2 gap-5">
 				<div class="space-y-5">
-					<FormControl v-model="examDetails.doc.title" :label="__('Title')" :required="true" />
-					<FormControl type="select" v-model="examDetails.doc.course" :options="courseOptions" :label="__('Course')" />
-					<FormControl type="select" v-model="examDetails.doc.display_chapter" :options="chapterOptions" :label="__('Display Chapter')" />
-					<FormControl type="number" v-model="examDetails.doc.max_attempts" :label="__('Maximum Attempts')" />
-					<FormControl type="number" v-model="examDetails.doc.duration" :label="__('Duration (in minutes)')" />
-					<FormControl type="datetime-local" v-model="examDetails.doc.available_from" :label="__('Available From')" />
+					<FormControl
+						v-model="examDetails.doc.title"
+						:label="__('Title')"
+						:required="true"
+					/>
+					<FormControl
+						type="select"
+						v-model="examDetails.doc.course"
+						:options="courseOptions"
+						:label="__('Course')"
+					/>
+					<FormControl
+						type="select"
+						v-model="examDetails.doc.display_chapter"
+						:options="chapterOptions"
+						:label="__('Display Chapter')"
+					/>
+					<FormControl
+						type="number"
+						v-model="examDetails.doc.max_attempts"
+						:label="__('Maximum Attempts')"
+					/>
+					<FormControl
+						type="number"
+						v-model="examDetails.doc.duration"
+						:label="__('Duration (in minutes)')"
+					/>
+					<FormControl
+						type="datetime-local"
+						v-model="examDetails.doc.available_from"
+						:label="__('Available From')"
+					/>
 				</div>
 				<div class="space-y-5">
-					<FormControl v-model="examDetails.doc.total_marks" :label="__('Total Marks')" disabled />
-					<FormControl v-model="examDetails.doc.passing_percentage" :label="__('Passing Percentage')" :required="true" />
-					<Switch v-model="examDetails.doc.is_final_exam" size="sm" :label="__('Final Exam')" />
-					<Switch v-model="examDetails.doc.show_answers" size="sm" :label="__('Show Answers')" />
-					<Switch v-model="examDetails.doc.show_submission_history" size="sm" :label="__('Show Submission History')" />
-					<FormControl type="datetime-local" v-model="examDetails.doc.available_until" :label="__('Available Until')" />
+					<FormControl
+						v-model="examDetails.doc.total_marks"
+						:label="__('Total Marks')"
+						disabled
+					/>
+					<FormControl
+						v-model="examDetails.doc.passing_percentage"
+						:label="__('Passing Percentage')"
+						:required="true"
+					/>
+					<Switch
+						v-model="examDetails.doc.is_final_exam"
+						size="sm"
+						:label="__('Final Exam')"
+					/>
+					<Switch
+						v-model="examDetails.doc.show_answers"
+						size="sm"
+						:label="__('Show Answers')"
+					/>
+					<Switch
+						v-model="examDetails.doc.show_submission_history"
+						size="sm"
+						:label="__('Show Submission History')"
+					/>
+					<FormControl
+						type="datetime-local"
+						v-model="examDetails.doc.available_until"
+						:label="__('Available Until')"
+					/>
 				</div>
 			</div>
 			<div>
@@ -46,10 +111,16 @@
 		</div>
 
 		<div class="px-20 pb-5 space-y-5 border-b mb-5">
-			<div class="text-lg text-ink-gray-9 font-semibold mb-4">{{ __('Settings') }}</div>
+			<div class="text-lg text-ink-gray-9 font-semibold mb-4">
+				{{ __('Settings') }}
+			</div>
 			<div class="grid grid-cols-3 gap-5">
 				<div class="flex flex-col space-y-5">
-					<Switch v-model="examDetails.doc.shuffle_questions" size="sm" :label="__('Shuffle Questions')" />
+					<Switch
+						v-model="examDetails.doc.shuffle_questions"
+						size="sm"
+						:label="__('Shuffle Questions')"
+					/>
 					<FormControl
 						v-if="examDetails.doc.shuffle_questions"
 						v-model="examDetails.doc.limit_questions_to"
@@ -70,21 +141,32 @@
 				</div>
 				<div class="flex flex-col space-y-5">
 					<div class="rounded-lg bg-surface-gray-2 p-4 text-sm text-ink-gray-6">
-						{{ __('Prerequisites are checked before every attempt, and passing this exam is required for certification when the course has a final exam attached.') }}
+						{{
+							__(
+								'Prerequisites are checked before every attempt, and passing this exam is required for certification when the course has a final exam attached.'
+							)
+						}}
 					</div>
 				</div>
 			</div>
 		</div>
 
 		<div class="px-20 pb-5 space-y-5 border-b mb-5">
-			<div class="text-lg text-ink-gray-9 font-semibold mb-4">{{ __('Prerequisites') }}</div>
+			<div class="text-lg text-ink-gray-9 font-semibold mb-4">
+				{{ __('Prerequisites') }}
+			</div>
 			<div class="space-y-4">
 				<div
 					v-for="(row, index) in prerequisites"
 					:key="index"
 					class="grid grid-cols-4 gap-4 rounded-lg border p-4"
 				>
-					<FormControl type="select" v-model="row.requirement_type" :options="requirementTypeOptions" :label="__('Type')" />
+					<FormControl
+						type="select"
+						v-model="row.requirement_type"
+						:options="requirementTypeOptions"
+						:label="__('Type')"
+					/>
 					<FormControl
 						v-if="row.requirement_type == 'Course Progress'"
 						type="number"
@@ -113,7 +195,9 @@
 						:label="__('Requirement')"
 					/>
 					<div class="flex items-end">
-						<Button theme="red" @click="removePrerequisite(index)">{{ __('Remove') }}</Button>
+						<Button theme="red" @click="removePrerequisite(index)">{{
+							__('Remove')
+						}}</Button>
 					</div>
 				</div>
 				<Button @click="addPrerequisite">{{ __('Add Prerequisite') }}</Button>
@@ -122,7 +206,9 @@
 
 		<div class="px-20 pb-5 space-y-5 mb-5">
 			<div class="flex items-center justify-between mb-4">
-				<div class="text-lg font-semibold text-ink-gray-9">{{ __('Questions') }}</div>
+				<div class="text-lg font-semibold text-ink-gray-9">
+					{{ __('Questions') }}
+				</div>
 				<Button v-if="!readOnlyMode" @click="openQuestionModal()">
 					<template #prefix>
 						<Plus class="w-4 h-4" />
@@ -130,20 +216,45 @@
 					{{ __('New Question') }}
 				</Button>
 			</div>
-			<ListView v-if="questions.length" :columns="questionColumns" :rows="questions" row-key="question" :options="{ showTooltip: false }">
-				<ListHeader class="mb-2 grid items-center space-x-4 rounded bg-surface-gray-2 p-2">
-					<ListHeaderItem :item="item" v-for="item in questionColumns" :key="item.key" />
+			<ListView
+				v-if="questions.length"
+				:columns="questionColumns"
+				:rows="questions"
+				row-key="question"
+				:options="{ showTooltip: false }"
+			>
+				<ListHeader
+					class="mb-2 grid items-center space-x-4 rounded bg-surface-gray-2 p-2"
+				>
+					<ListHeaderItem
+						:item="item"
+						v-for="item in questionColumns"
+						:key="item.key"
+					/>
 				</ListHeader>
 				<ListRows>
-					<ListRow v-for="row in questions" :key="row.question" :row="row" v-slot="{ column, item }" @click="openQuestionModal(row)" class="cursor-pointer">
+					<ListRow
+						v-for="row in questions"
+						:key="row.question"
+						:row="row"
+						v-slot="{ column, item }"
+						@click="openQuestionModal(row)"
+						class="cursor-pointer"
+					>
 						<ListRowItem :item="item">
-							<div v-if="column.key == 'question_detail'" class="text-xs truncate h-4" v-html="item"></div>
+							<div
+								v-if="column.key == 'question_detail'"
+								class="text-xs truncate h-4"
+								v-html="item"
+							></div>
 							<div v-else class="text-xs">{{ item }}</div>
 						</ListRowItem>
 					</ListRow>
 				</ListRows>
 			</ListView>
-			<div v-else class="text-ink-gray-6 text-sm">{{ __('No questions added yet') }}</div>
+			<div v-else class="text-ink-gray-6 text-sm">
+				{{ __('No questions added yet') }}
+			</div>
 		</div>
 	</div>
 
@@ -174,7 +285,15 @@ import {
 	toast,
 	usePageMeta,
 } from 'frappe-ui'
-import { computed, inject, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import {
+	computed,
+	inject,
+	onBeforeUnmount,
+	onMounted,
+	reactive,
+	ref,
+	watch,
+} from 'vue'
 import { Plus } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import { sessionStore } from '@/stores/session'
@@ -218,7 +337,9 @@ const chapters = createResource({
 		return {
 			doctype: 'Course Chapter',
 			fields: ['name', 'title'],
-			filters: examDetails.doc?.course ? { course: examDetails.doc.course } : {},
+			filters: examDetails.doc?.course
+				? { course: examDetails.doc.course }
+				: {},
 			order_by: 'title asc',
 		}
 	},
@@ -231,7 +352,9 @@ const quizzes = createResource({
 		return {
 			doctype: 'LMS Quiz',
 			fields: ['name', 'title'],
-			filters: examDetails.doc?.course ? { course: examDetails.doc.course } : {},
+			filters: examDetails.doc?.course
+				? { course: examDetails.doc.course }
+				: {},
 			order_by: 'title asc',
 		}
 	},
@@ -244,7 +367,9 @@ const dragDrops = createResource({
 		return {
 			doctype: 'LMS Drag Drop Activity',
 			fields: ['name', 'title'],
-			filters: examDetails.doc?.course ? { course: examDetails.doc.course } : {},
+			filters: examDetails.doc?.course
+				? { course: examDetails.doc.course }
+				: {},
 			order_by: 'title asc',
 		}
 	},
@@ -252,7 +377,8 @@ const dragDrops = createResource({
 })
 
 onMounted(() => {
-	if (!user.data?.is_moderator && !user.data?.is_instructor) router.push({ name: 'Courses' })
+	if (!user.data?.is_moderator && !user.data?.is_instructor)
+		router.push({ name: 'Courses' })
 	window.addEventListener('keydown', keyboardShortcut)
 })
 
@@ -280,10 +406,22 @@ const keyboardShortcut = (e) => {
 
 const questions = computed(() => examDetails.doc?.questions || [])
 const prerequisites = computed(() => examDetails.doc?.prerequisites || [])
-const courseOptions = computed(() => (courses.data || []).map((row) => ({ label: row.title, value: row.name })))
-const chapterOptions = computed(() => [{ label: __('None'), value: '' }, ...(chapters.data || []).map((row) => ({ label: row.title, value: row.name }))])
-const quizOptions = computed(() => (quizzes.data || []).map((row) => ({ label: row.title, value: row.name })))
-const dragDropOptions = computed(() => (dragDrops.data || []).map((row) => ({ label: row.title, value: row.name })))
+const courseOptions = computed(() =>
+	(courses.data || []).map((row) => ({ label: row.title, value: row.name }))
+)
+const chapterOptions = computed(() => [
+	{ label: __('None'), value: '' },
+	...(chapters.data || []).map((row) => ({
+		label: row.title,
+		value: row.name,
+	})),
+])
+const quizOptions = computed(() =>
+	(quizzes.data || []).map((row) => ({ label: row.title, value: row.name }))
+)
+const dragDropOptions = computed(() =>
+	(dragDrops.data || []).map((row) => ({ label: row.title, value: row.name }))
+)
 const requirementTypeOptions = [
 	{ label: __('Course Progress'), value: 'Course Progress' },
 	{ label: __('Quiz'), value: 'Quiz' },
@@ -299,10 +437,18 @@ const validateTitle = () => {
 }
 
 const calculateTotalMarks = () => {
-	if (examDetails.doc?.limit_questions_to && examDetails.doc?.questions.length > 0) {
-		return examDetails.doc.questions[0].marks * examDetails.doc.limit_questions_to
+	if (
+		examDetails.doc?.limit_questions_to &&
+		examDetails.doc?.questions.length > 0
+	) {
+		return (
+			examDetails.doc.questions[0].marks * examDetails.doc.limit_questions_to
+		)
 	}
-	return (examDetails.doc?.questions || []).reduce((sum, question) => sum + parseInt(question.marks || 0), 0)
+	return (examDetails.doc?.questions || []).reduce(
+		(sum, question) => sum + parseInt(question.marks || 0),
+		0
+	)
 }
 
 const submitExam = () => {
@@ -355,5 +501,8 @@ const breadcrumbs = computed(() => [
 	{ label: examDetails.doc?.title || props.examID },
 ])
 
-usePageMeta(() => ({ title: examDetails.doc?.title || __('Exam'), icon: brand.favicon }))
+usePageMeta(() => ({
+	title: examDetails.doc?.title || __('Exam'),
+	icon: brand.favicon,
+}))
 </script>

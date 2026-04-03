@@ -1,25 +1,54 @@
 <template>
-	<header class="sticky top-0 z-10 flex items-center justify-between border-b bg-surface-white px-3 py-2.5 sm:px-5">
+	<header
+		class="sticky top-0 z-10 flex items-center justify-between border-b bg-surface-white px-3 py-2.5 sm:px-5"
+	>
 		<Breadcrumbs v-if="submissionDetails.doc" :items="breadcrumbs" />
 		<div class="space-x-2">
-			<Badge v-if="submissionDetails.isDirty" :label="__('Not Saved')" variant="subtle" theme="orange" />
+			<Badge
+				v-if="submissionDetails.isDirty"
+				:label="__('Not Saved')"
+				variant="subtle"
+				theme="orange"
+			/>
 			<Button variant="solid" @click="saveSubmission">{{ __('Save') }}</Button>
 		</div>
 	</header>
 	<div v-if="submissionDetails.doc" class="w-2/3 border-x mx-auto py-5">
-		<div class="text-xl px-10 font-semibold text-ink-gray-9 mb-5">{{ submissionDetails.doc.member_name }}</div>
+		<div class="text-xl px-10 font-semibold text-ink-gray-9 mb-5">
+			{{ submissionDetails.doc.member_name }}
+		</div>
 		<div class="space-y-4 border-b pb-5 px-10">
 			<div class="grid grid-cols-2 gap-5">
-				<FormControl v-model="submissionDetails.doc.exam_title" :label="__('Exam')" :disabled="true" />
-				<FormControl v-model="submissionDetails.doc.member_name" :label="__('Member')" :disabled="true" />
+				<FormControl
+					v-model="submissionDetails.doc.exam_title"
+					:label="__('Exam')"
+					:disabled="true"
+				/>
+				<FormControl
+					v-model="submissionDetails.doc.member_name"
+					:label="__('Member')"
+					:disabled="true"
+				/>
 			</div>
 			<div class="grid grid-cols-2 gap-5">
-				<FormControl v-model="submissionDetails.doc.score" :label="__('Score')" :disabled="true" />
-				<FormControl v-model="submissionDetails.doc.percentage" :label="__('Percentage')" :disabled="true" />
+				<FormControl
+					v-model="submissionDetails.doc.score"
+					:label="__('Score')"
+					:disabled="true"
+				/>
+				<FormControl
+					v-model="submissionDetails.doc.percentage"
+					:label="__('Percentage')"
+					:disabled="true"
+				/>
 			</div>
 		</div>
 		<div class="divide-y">
-			<div v-for="(row, index) in submissionDetails.doc.result" :key="index" class="py-5 px-10 space-y-4">
+			<div
+				v-for="(row, index) in submissionDetails.doc.result"
+				:key="index"
+				class="py-5 px-10 space-y-4"
+			>
 				<div class="text-ink-gray-9">
 					<span class="font-semibold">{{ __('Question') }}:</span>
 					<span class="leading-5" v-html="row.question"></span>
@@ -30,7 +59,11 @@
 				</div>
 				<div class="grid grid-cols-2 gap-5">
 					<FormControl v-model="row.marks" :label="__('Marks')" />
-					<FormControl v-model="row.marks_out_of" :label="__('Marks out of')" :disabled="true" />
+					<FormControl
+						v-model="row.marks_out_of"
+						:label="__('Marks out of')"
+						:disabled="true"
+					/>
 				</div>
 			</div>
 		</div>
@@ -38,7 +71,15 @@
 </template>
 
 <script setup>
-import { Badge, Breadcrumbs, Button, createDocumentResource, FormControl, toast, usePageMeta } from 'frappe-ui'
+import {
+	Badge,
+	Breadcrumbs,
+	Button,
+	createDocumentResource,
+	FormControl,
+	toast,
+	usePageMeta,
+} from 'frappe-ui'
 import { computed, inject, onBeforeUnmount, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { sessionStore } from '@/stores/session'
@@ -48,7 +89,8 @@ const router = useRouter()
 const user = inject('$user')
 
 onMounted(() => {
-	if (!user.data?.is_instructor && !user.data?.is_moderator) router.push({ name: 'Courses' })
+	if (!user.data?.is_instructor && !user.data?.is_moderator)
+		router.push({ name: 'Courses' })
 	window.addEventListener('keydown', keyboardShortcut)
 })
 
@@ -57,7 +99,11 @@ onBeforeUnmount(() => {
 })
 
 const keyboardShortcut = (e) => {
-	if (e.key === 's' && (e.ctrlKey || e.metaKey) && !e.target.classList.contains('ProseMirror')) {
+	if (
+		e.key === 's' &&
+		(e.ctrlKey || e.metaKey) &&
+		!e.target.classList.contains('ProseMirror')
+	) {
 		saveSubmission()
 		e.preventDefault()
 	}
@@ -79,14 +125,27 @@ const submissionDetails = createDocumentResource({
 const breadcrumbs = computed(() => [
 	{
 		label: __('Exam Submissions'),
-		route: { name: 'ExamSubmissionList', params: { examID: submissionDetails.doc.exam } },
+		route: {
+			name: 'ExamSubmissionList',
+			params: { examID: submissionDetails.doc.exam },
+		},
 	},
 	{ label: submissionDetails.doc.exam_title },
 ])
 
 const saveSubmission = () => {
-	submissionDetails.save.submit({}, { onError(err) { toast.error(err.messages?.[0] || err) } })
+	submissionDetails.save.submit(
+		{},
+		{
+			onError(err) {
+				toast.error(err.messages?.[0] || err)
+			},
+		}
+	)
 }
 
-usePageMeta(() => ({ title: submissionDetails.doc?.exam_title, icon: brand.favicon }))
+usePageMeta(() => ({
+	title: submissionDetails.doc?.exam_title,
+	icon: brand.favicon,
+}))
 </script>

@@ -47,7 +47,11 @@
 					}"
 				>
 					<Button variant="solid">
-						{{ course.data.final_exam.can_attempt ? __('Open Exam') : __('View Exam') }}
+						{{
+							course.data.final_exam.can_attempt
+								? __('Open Exam')
+								: __('View Exam')
+						}}
 					</Button>
 				</router-link>
 			</div>

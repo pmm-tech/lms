@@ -191,7 +191,13 @@ const addExams = () => {
 		label: 'Exams',
 		icon: 'NotebookPen',
 		to: 'Exams',
-		activeFor: ['Exams', 'ExamForm', 'ExamPage', 'ExamSubmissionList', 'ExamSubmission'],
+		activeFor: [
+			'Exams',
+			'ExamForm',
+			'ExamPage',
+			'ExamSubmissionList',
+			'ExamSubmission',
+		],
 	})
 }
 

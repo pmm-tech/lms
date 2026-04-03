@@ -227,9 +227,11 @@ def assignment_renderer(detail):
 
 def drag_drop_renderer(activity_name):
 	if frappe.session.user == "Guest":
-		return " <div class='alert alert-info'>" + _(
-			"Drag and drop activity is not available to Guest users. Please login to continue."
-		) + "</div>"
+		return (
+			" <div class='alert alert-info'>"
+			+ _("Drag and drop activity is not available to Guest users. Please login to continue.")
+			+ "</div>"
+		)
 
 	activity = frappe.db.get_value(
 		"LMS Drag Drop Activity",
@@ -242,9 +244,11 @@ def drag_drop_renderer(activity_name):
 
 def word_hunt_renderer(activity_name):
 	if frappe.session.user == "Guest":
-		return " <div class='alert alert-info'>" + _(
-			"Word hunt activity is not available to Guest users. Please login to continue."
-		) + "</div>"
+		return (
+			" <div class='alert alert-info'>"
+			+ _("Word hunt activity is not available to Guest users. Please login to continue.")
+			+ "</div>"
+		)
 
 	activity = frappe.db.get_value(
 		"LMS Word Hunt Activity",

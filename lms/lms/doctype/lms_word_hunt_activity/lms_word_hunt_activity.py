@@ -9,8 +9,8 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint
 
-from ..course_lesson.course_lesson import save_progress
 from ...utils import generate_slug
+from ..course_lesson.course_lesson import save_progress
 
 BLANK_PATTERN = re.compile(r"_+")
 
@@ -43,9 +43,7 @@ class LMSWordHuntActivity(Document):
 		blank_count = count_blanks(self.passage)
 
 		if not blank_count:
-			frappe.throw(
-				_("Add at least one blank in the passage using underscores like _ or _______.")
-			)
+			frappe.throw(_("Add at least one blank in the passage using underscores like _ or _______."))
 
 		if blank_count != len(self.items):
 			frappe.throw(
@@ -81,8 +79,7 @@ def submit_activity(activity: str, answers: str):
 			(
 				row.get("submitted_answer")
 				for row in answers
-				if row.get("item") == item.name
-				or row.get("idx") == item.idx
+				if row.get("item") == item.name or row.get("idx") == item.idx
 			),
 			"",
 		)

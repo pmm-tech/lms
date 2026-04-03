@@ -100,9 +100,7 @@
 												isActiveLesson(lesson) ? 'bg-surface-white/70' : ''
 											"
 										>
-											<router-link
-												:to="getLessonRoute(lesson)"
-											>
+											<router-link :to="getLessonRoute(lesson)">
 												<div class="flex items-center text-sm leading-5 group">
 													<MonitorPlay
 														v-if="lesson.icon === 'icon-youtube'"
@@ -245,7 +243,9 @@ const props = defineProps({
 	},
 })
 
-const accentColorName = computed(() => (props.accentColor || 'blue').toLowerCase())
+const accentColorName = computed(() =>
+	(props.accentColor || 'blue').toLowerCase()
+)
 
 const hexToRgb = (hex) => {
 	if (!hex) return '37, 99, 235'
@@ -271,7 +271,7 @@ const outlineContainerStyle = computed(() =>
 		? {
 				backgroundColor: alphaColor(0.08),
 				borderColor: alphaColor(0.22),
-			}
+		  }
 		: {}
 )
 

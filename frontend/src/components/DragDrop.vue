@@ -1,6 +1,8 @@
 <template>
 	<div v-if="activity.data">
-		<div class="bg-surface-orange-1 space-y-2 py-2 px-3 mb-4 rounded-md text-sm text-ink-gray-8 leading-5">
+		<div
+			class="bg-surface-orange-1 space-y-2 py-2 px-3 mb-4 rounded-md text-sm text-ink-gray-8 leading-5"
+		>
 			<div>
 				{{ __('Match each answer card to the correct blank.') }}
 			</div>
@@ -8,19 +10,33 @@
 				{{ __('This activity has {0} blanks.').format(items.length) }}
 			</div>
 			<div v-if="activity.data.passing_percentage">
-				{{ __('You need {0}% to pass.').format(activity.data.passing_percentage) }}
+				{{
+					__('You need {0}% to pass.').format(activity.data.passing_percentage)
+				}}
 			</div>
 			<div v-if="activity.data.max_attempts">
-				{{ __('You can attempt this activity {0}.').format(activity.data.max_attempts == 1 ? '1 time' : `${activity.data.max_attempts} times`) }}
+				{{
+					__('You can attempt this activity {0}.').format(
+						activity.data.max_attempts == 1
+							? '1 time'
+							: `${activity.data.max_attempts} times`
+					)
+				}}
 			</div>
 		</div>
 
 		<div v-if="started && !submission.data" class="space-y-6">
-			<div class="overflow-hidden rounded-2xl border border-transparent bg-gradient-to-br from-surface-blue-1 via-surface-orange-1 to-surface-green-1 p-1 shadow-sm">
-				<div class="rounded-[calc(1rem-1px)] bg-surface-white/90 p-4 backdrop-blur-sm">
+			<div
+				class="overflow-hidden rounded-2xl border border-transparent bg-gradient-to-br from-surface-blue-1 via-surface-orange-1 to-surface-green-1 p-1 shadow-sm"
+			>
+				<div
+					class="rounded-[calc(1rem-1px)] bg-surface-white/90 p-4 backdrop-blur-sm"
+				>
 					<div class="mb-2 flex items-start justify-between gap-3">
 						<div class="flex-1 space-y-1">
-							<div class="flex items-center gap-1 text-sm font-semibold text-ink-gray-8">
+							<div
+								class="flex items-center gap-1 text-sm font-semibold text-ink-gray-8"
+							>
 								<button
 									v-if="isMobileView"
 									type="button"
@@ -49,24 +65,38 @@
 						<div
 							v-if="activity.data.duration"
 							class="-mt-1 flex shrink-0 items-center justify-center self-start whitespace-nowrap rounded-md px-1 py-1 text-center text-[11px] font-semibold sm:mt-0 sm:min-w-[124px] sm:rounded-xl sm:px-2 sm:py-2 sm:text-base"
-							style="background-color: #2a2a2a; color: #ffffff;"
+							style="background-color: #2a2a2a; color: #ffffff"
 						>
-							<span class="text-[10px] uppercase tracking-[0.05em] sm:text-xs" style="color: rgba(255, 255, 255, 0.82);">
+							<span
+								class="text-[10px] uppercase tracking-[0.05em] sm:text-xs"
+								style="color: rgba(255, 255, 255, 0.82)"
+							>
 								{{ __('Time') }}
 							</span>
-							<span class="ml-1.5 text-[13px] font-bold sm:ml-2 sm:text-[22px] sm:leading-6" style="color: #ffffff;">
+							<span
+								class="ml-1.5 text-[13px] font-bold sm:ml-2 sm:text-[22px] sm:leading-6"
+								style="color: #ffffff"
+							>
 								{{ formatTimer(timer) }}
 							</span>
 						</div>
 					</div>
-					<ProgressBar v-if="activity.data.duration" :progress="timerProgress" class="mb-2" />
+					<ProgressBar
+						v-if="activity.data.duration"
+						:progress="timerProgress"
+						class="mb-2"
+					/>
 					<div
 						v-if="selectedAnswer"
 						class="mb-4 flex flex-col gap-3 rounded-2xl border border-green-200 bg-surface-green-1 px-4 py-3 text-sm text-ink-gray-8 sm:flex-row sm:items-center sm:justify-between"
 					>
 						<div class="flex items-center gap-2">
 							<span class="font-medium">{{ __('Selected answer:') }}</span>
-							<img v-if="selectedAnswer.answer_type === 'Image'" :src="selectedAnswer.image" class="h-8 w-auto rounded border" />
+							<img
+								v-if="selectedAnswer.answer_type === 'Image'"
+								:src="selectedAnswer.image"
+								class="h-8 w-auto rounded border"
+							/>
 							<span v-else>{{ selectedAnswer.label }}</span>
 						</div>
 						<Button size="sm" @click="clearSelectedAnswer()">
@@ -86,7 +116,10 @@
 						</button>
 						<div class="min-w-0 flex-1">
 							<div class="grid grid-cols-3 gap-2 pt-1.5 pb-1 pl-1.5 sm:gap-3">
-								<template v-for="answer in currentAnswerPageAnswers" :key="answer.id">
+								<template
+									v-for="answer in currentAnswerPageAnswers"
+									:key="answer.id"
+								>
 									<button
 										v-if="answer.answer_type === 'Image'"
 										type="button"
@@ -99,7 +132,10 @@
 										@dragstart="dragStart(answer)"
 										@dragend="dragEnd"
 									>
-										<img :src="answer.image" class="h-full w-full object-cover transition-transform duration-200 hover:scale-110 pointer-events-none" />
+										<img
+											:src="answer.image"
+											class="h-full w-full object-cover transition-transform duration-200 hover:scale-110 pointer-events-none"
+										/>
 									</button>
 									<button
 										v-else
@@ -107,8 +143,10 @@
 										:draggable="!isTouchDevice"
 										class="flex h-24 w-full items-center justify-center rounded-2xl px-2 py-2 text-center text-xs font-semibold text-white shadow-sm transition duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 sm:h-32 sm:px-4 sm:py-3 sm:text-sm"
 										:class="{
-											'ring-2 ring-offset-2 scale-[1.02]': selectedAnswer?.id === answer.id,
-											'cursor-grabbing opacity-80 scale-[0.98]': draggedAnswer?.id === answer.id,
+											'ring-2 ring-offset-2 scale-[1.02]':
+												selectedAnswer?.id === answer.id,
+											'cursor-grabbing opacity-80 scale-[0.98]':
+												draggedAnswer?.id === answer.id,
 											'cursor-pointer': draggedAnswer?.id !== answer.id,
 										}"
 										:style="answerButtonStyle(answer)"
@@ -120,7 +158,12 @@
 									>
 										<span
 											class="min-w-0 max-w-full whitespace-normal break-all text-center leading-tight"
-											style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;"
+											style="
+												display: -webkit-box;
+												-webkit-line-clamp: 3;
+												-webkit-box-orient: vertical;
+												overflow: hidden;
+											"
 										>
 											{{ answer.label }}
 										</span>
@@ -162,7 +205,10 @@
 							@scroll="syncAnswerBankScrollState"
 						>
 							<div class="flex min-w-max gap-3 pt-1.5 pb-1 pl-1.5">
-								<template v-for="answer in availableAnswers" :key="`desktop-${answer.id}`">
+								<template
+									v-for="answer in availableAnswers"
+									:key="`desktop-${answer.id}`"
+								>
 									<button
 										v-if="answer.answer_type === 'Image'"
 										type="button"
@@ -175,7 +221,10 @@
 										@dragstart="dragStart(answer)"
 										@dragend="dragEnd"
 									>
-										<img :src="answer.image" class="h-full w-full object-cover transition-transform duration-200 hover:scale-110 pointer-events-none" />
+										<img
+											:src="answer.image"
+											class="h-full w-full object-cover transition-transform duration-200 hover:scale-110 pointer-events-none"
+										/>
 									</button>
 									<button
 										v-else
@@ -183,8 +232,10 @@
 										:draggable="!isTouchDevice"
 										class="flex h-32 w-32 shrink-0 items-center justify-center rounded-2xl px-4 py-3 text-center text-sm font-semibold text-white shadow-sm transition duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2"
 										:class="{
-											'ring-2 ring-offset-2 scale-[1.02]': selectedAnswer?.id === answer.id,
-											'cursor-grabbing opacity-80 scale-[0.98]': draggedAnswer?.id === answer.id,
+											'ring-2 ring-offset-2 scale-[1.02]':
+												selectedAnswer?.id === answer.id,
+											'cursor-grabbing opacity-80 scale-[0.98]':
+												draggedAnswer?.id === answer.id,
 											'cursor-pointer': draggedAnswer?.id !== answer.id,
 										}"
 										:style="answerButtonStyle(answer)"
@@ -196,7 +247,12 @@
 									>
 										<span
 											class="min-w-0 max-w-full whitespace-normal break-all text-center leading-tight"
-											style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;"
+											style="
+												display: -webkit-box;
+												-webkit-line-clamp: 3;
+												-webkit-box-orient: vertical;
+												overflow: hidden;
+											"
 										>
 											{{ answer.label }}
 										</span>
@@ -218,14 +274,21 @@
 				</div>
 			</div>
 
-			<div class="rounded-xl border border-outline-gray-2 bg-surface-white p-2.5 shadow-sm space-y-1.5 sm:rounded-2xl sm:p-3 sm:space-y-2">
+			<div
+				class="rounded-xl border border-outline-gray-2 bg-surface-white p-2.5 shadow-sm space-y-1.5 sm:rounded-2xl sm:p-3 sm:space-y-2"
+			>
 				<div class="flex items-center justify-between gap-3">
 					<div>
 						<div class="text-xs text-ink-gray-6 sm:text-sm">
 							{{ `${answeredCount} of ${items.length} ${__('answered')}` }}
 						</div>
 					</div>
-					<div class="text-xs sm:text-sm" :class="currentItemAnswered ? 'text-ink-green-3' : 'text-ink-orange-3'">
+					<div
+						class="text-xs sm:text-sm"
+						:class="
+							currentItemAnswered ? 'text-ink-green-3' : 'text-ink-orange-3'
+						"
+					>
 						{{ currentItemAnswered ? __('Answered') : __('Unanswered') }}
 					</div>
 				</div>
@@ -237,15 +300,23 @@
 					:key="currentItem.name"
 					class="rounded-xl border border-outline-gray-2 bg-surface-white p-3 text-ink-gray-9 shadow-sm"
 				>
-					<div v-if="getItemDisplayType(currentItem) === 'Image'" class="space-y-4">
-						<div class="overflow-hidden rounded-2xl border border-outline-gray-2 bg-surface-gray-1">
+					<div
+						v-if="getItemDisplayType(currentItem) === 'Image'"
+						class="space-y-4"
+					>
+						<div
+							class="overflow-hidden rounded-2xl border border-outline-gray-2 bg-surface-gray-1"
+						>
 							<img
 								:src="currentItem.image"
 								:alt="currentItem.correct_answer"
 								class="h-56 w-full object-contain bg-surface-white sm:h-72"
 							/>
 						</div>
-						<div v-if="imagePromptText(currentItem)" class="text-sm leading-6 text-ink-gray-7">
+						<div
+							v-if="imagePromptText(currentItem)"
+							class="text-sm leading-6 text-ink-gray-7"
+						>
 							{{ imagePromptText(currentItem) }}
 						</div>
 						<button
@@ -260,7 +331,11 @@
 							@drop.prevent="dropAnswer(currentItem.name)"
 						>
 							<template v-if="placements[currentItem.name]">
-								<img v-if="placements[currentItem.name].answer_type === 'Image'" :src="placements[currentItem.name].image" class="mx-auto h-24 w-24 object-contain rounded drop-shadow-sm" />
+								<img
+									v-if="placements[currentItem.name].answer_type === 'Image'"
+									:src="placements[currentItem.name].image"
+									class="mx-auto h-24 w-24 object-contain rounded drop-shadow-sm"
+								/>
 								<span v-else>{{ placements[currentItem.name].label }}</span>
 							</template>
 							<span v-else>{{ __('Drop here') }}</span>
@@ -280,7 +355,11 @@
 							@drop.prevent="dropAnswer(currentItem.name)"
 						>
 							<template v-if="placements[currentItem.name]">
-								<img v-if="placements[currentItem.name].answer_type === 'Image'" :src="placements[currentItem.name].image" class="mx-auto h-16 w-16 sm:h-24 sm:w-24 object-cover rounded-xl drop-shadow-md border-2 border-surface-blue-2" />
+								<img
+									v-if="placements[currentItem.name].answer_type === 'Image'"
+									:src="placements[currentItem.name].image"
+									class="mx-auto h-16 w-16 sm:h-24 sm:w-24 object-cover rounded-xl drop-shadow-md border-2 border-surface-blue-2"
+								/>
 								<span v-else>{{ placements[currentItem.name].label }}</span>
 							</template>
 							<span v-else>{{ __('Drop here') }}</span>
@@ -323,16 +402,28 @@
 			</div>
 		</div>
 
-		<div v-else-if="submission.data" class="border rounded-md p-10 text-center space-y-3">
+		<div
+			v-else-if="submission.data"
+			class="border rounded-md p-10 text-center space-y-3"
+		>
 			<div class="text-lg font-semibold text-ink-gray-9">
 				{{ __('Activity Summary') }}
 			</div>
 			<div class="text-ink-gray-7">
-				{{ __('You scored {0} out of {1} ({2}%).').format(submission.data.score, submission.data.score_out_of, Math.ceil(submission.data.percentage)) }}
+				{{
+					__('You scored {0} out of {1} ({2}%).').format(
+						submission.data.score,
+						submission.data.score_out_of,
+						Math.ceil(submission.data.percentage)
+					)
+				}}
 			</div>
 			<div class="space-x-2">
 				<Button
-					v-if="!activity.data.max_attempts || attempts.data?.length < activity.data.max_attempts"
+					v-if="
+						!activity.data.max_attempts ||
+						attempts.data?.length < activity.data.max_attempts
+					"
 					@click="resetActivity()"
 				>
 					{{ __('Try Again') }}
@@ -346,7 +437,10 @@
 			</div>
 			<div class="flex items-center justify-center space-x-2 mt-4">
 				<Button
-					v-if="!activity.data.max_attempts || attempts.data?.length < activity.data.max_attempts"
+					v-if="
+						!activity.data.max_attempts ||
+						attempts.data?.length < activity.data.max_attempts
+					"
 					variant="solid"
 					@click="startActivity"
 				>
@@ -354,15 +448,26 @@
 				</Button>
 			</div>
 			<div
-				v-if="activity.data.max_attempts && attempts.data?.length >= activity.data.max_attempts"
+				v-if="
+					activity.data.max_attempts &&
+					attempts.data?.length >= activity.data.max_attempts
+				"
 				class="leading-5 text-ink-gray-7 mt-3"
 			>
-				{{ __('You have already exceeded the maximum number of attempts allowed for this activity.') }}
+				{{
+					__(
+						'You have already exceeded the maximum number of attempts allowed for this activity.'
+					)
+				}}
 			</div>
 		</div>
 
 		<div
-			v-if="activity.data.show_submission_history && attempts?.data && attempts.data.length > 0"
+			v-if="
+				activity.data.show_submission_history &&
+				attempts?.data &&
+				attempts.data.length > 0
+			"
 			class="mt-10"
 		>
 			<ListView
@@ -380,7 +485,16 @@
 </template>
 <script setup>
 import { Button, createResource, ListView, toast, call } from 'frappe-ui'
-import { computed, inject, nextTick, onMounted, onBeforeUnmount, reactive, ref, watch } from 'vue'
+import {
+	computed,
+	inject,
+	nextTick,
+	onMounted,
+	onBeforeUnmount,
+	reactive,
+	ref,
+	watch,
+} from 'vue'
 import { Info } from 'lucide-vue-next'
 import { timeAgo } from '@/utils'
 import ProgressBar from '@/components/ProgressBar.vue'
@@ -436,7 +550,8 @@ const currentItemIndex = ref(0)
 
 const getItemDisplayType = (item) => item.display_type || 'Text'
 
-const imagePromptText = (item) => [item.prompt_before, item.prompt_after].filter(Boolean).join(' ')
+const imagePromptText = (item) =>
+	[item.prompt_before, item.prompt_after].filter(Boolean).join(' ')
 
 const currentItem = computed(() => items.value[currentItemIndex.value] || null)
 
@@ -448,8 +563,9 @@ const currentItemAnswered = computed(() =>
 
 const isFirstItem = computed(() => currentItemIndex.value === 0)
 
-const isLastItem = computed(() => currentItemIndex.value === Math.max(items.value.length - 1, 0))
-
+const isLastItem = computed(
+	() => currentItemIndex.value === Math.max(items.value.length - 1, 0)
+)
 
 const interactionHint = computed(() => {
 	return isTouchDevice.value
@@ -459,21 +575,30 @@ const interactionHint = computed(() => {
 
 const availableAnswers = computed(() =>
 	answerBank.value.filter(
-		(answer) => !Object.values(placements).some((placed) => placed?.id === answer.id)
+		(answer) =>
+			!Object.values(placements).some((placed) => placed?.id === answer.id)
 	)
 )
 
 const answerBankPages = computed(() => {
 	const pages = []
 
-	for (let index = 0; index < availableAnswers.value.length; index += ANSWER_BANK_PAGE_SIZE) {
-		pages.push(availableAnswers.value.slice(index, index + ANSWER_BANK_PAGE_SIZE))
+	for (
+		let index = 0;
+		index < availableAnswers.value.length;
+		index += ANSWER_BANK_PAGE_SIZE
+	) {
+		pages.push(
+			availableAnswers.value.slice(index, index + ANSWER_BANK_PAGE_SIZE)
+		)
 	}
 
 	return pages
 })
 
-const currentAnswerPageAnswers = computed(() => answerBankPages.value[currentAnswerPage.value] || [])
+const currentAnswerPageAnswers = computed(
+	() => answerBankPages.value[currentAnswerPage.value] || []
+)
 
 const answerPagePlaceholderCount = computed(() =>
 	Math.max(ANSWER_BANK_PAGE_SIZE - currentAnswerPageAnswers.value.length, 0)
@@ -481,7 +606,9 @@ const answerPagePlaceholderCount = computed(() =>
 
 const canGoToPreviousAnswerPage = computed(() => currentAnswerPage.value > 0)
 
-const canGoToNextAnswerPage = computed(() => currentAnswerPage.value < answerBankPages.value.length - 1)
+const canGoToNextAnswerPage = computed(
+	() => currentAnswerPage.value < answerBankPages.value.length - 1
+)
 
 const goToPreviousAnswerPage = () => {
 	if (canGoToPreviousAnswerPage.value) {
@@ -588,7 +715,10 @@ const submission = createResource({
 				items.value.map((item) => ({
 					item: item.name,
 					idx: item.idx,
-					submitted_answer: placements[item.name]?.answer_type === 'Image' ? placements[item.name].image : (placements[item.name]?.label || ''),
+					submitted_answer:
+						placements[item.name]?.answer_type === 'Image'
+							? placements[item.name].image
+							: placements[item.name]?.label || '',
 				}))
 			),
 		}
@@ -784,7 +914,9 @@ const answerButtonStyle = (answer) => {
 		return {
 			background: 'transparent',
 			border: isSelected ? '4px solid #2563eb' : 'none',
-			boxShadow: isSelected ? '0 0 0 4px #93c5fd, 0 20px 25px -5px rgb(0 0 0 / 0.1)' : 'none',
+			boxShadow: isSelected
+				? '0 0 0 4px #93c5fd, 0 20px 25px -5px rgb(0 0 0 / 0.1)'
+				: 'none',
 		}
 	}
 
@@ -830,7 +962,10 @@ const resetActivity = () => {
 }
 
 const submitActivity = () => {
-	if (items.value.length && Object.keys(placements).length !== items.value.length) {
+	if (
+		items.value.length &&
+		Object.keys(placements).length !== items.value.length
+	) {
 		toast.warning(__('Please place all answers before submitting.'))
 		return
 	}

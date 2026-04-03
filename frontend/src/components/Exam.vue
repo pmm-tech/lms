@@ -4,23 +4,47 @@
 			class="bg-surface-blue-2 text-ink-blue-3 space-y-2 p-3 mb-4 rounded-lg leading-5"
 		>
 			<div class="font-medium">
-				{{ __('Please read the following instructions carefully before starting the exam') }}
+				{{
+					__(
+						'Please read the following instructions carefully before starting the exam'
+					)
+				}}
 			</div>
 			<ol class="list-decimal list-inside space-y-2">
 				<li>
-					{{ __('Do not refresh the page or close this window. If you do, the exam will be submitted automatically.') }}
+					{{
+						__(
+							'Do not refresh the page or close this window. If you do, the exam will be submitted automatically.'
+						)
+					}}
 				</li>
 				<li>
-					{{ __('This exam consists of {0} questions.').format(questions.length) }}
+					{{
+						__('This exam consists of {0} questions.').format(questions.length)
+					}}
 				</li>
 				<li v-if="examContext.data.exam.duration">
-					{{ __('Please ensure that you complete all the questions in {0} minutes.').format(examContext.data.exam.duration) }}
+					{{
+						__(
+							'Please ensure that you complete all the questions in {0} minutes.'
+						).format(examContext.data.exam.duration)
+					}}
 				</li>
 				<li v-if="examContext.data.exam.passing_percentage">
-					{{ __('You will have to get {0}% correct answers in order to pass the exam.').format(examContext.data.exam.passing_percentage) }}
+					{{
+						__(
+							'You will have to get {0}% correct answers in order to pass the exam.'
+						).format(examContext.data.exam.passing_percentage)
+					}}
 				</li>
 				<li v-if="examContext.data.status.max_attempts">
-					{{ __('You can attempt this exam {0}.').format(examContext.data.status.max_attempts == 1 ? '1 time' : `${examContext.data.status.max_attempts} times`) }}
+					{{
+						__('You can attempt this exam {0}.').format(
+							examContext.data.status.max_attempts == 1
+								? '1 time'
+								: `${examContext.data.status.max_attempts} times`
+						)
+					}}
 				</li>
 			</ol>
 		</div>
@@ -56,15 +80,26 @@
 			</div>
 		</div>
 
-		<div v-if="examContext.data.exam.duration" class="flex flex-col space-x-1 my-4">
+		<div
+			v-if="examContext.data.exam.duration"
+			class="flex flex-col space-x-1 my-4"
+		>
 			<div class="mb-2">
 				<span class="text-ink-gray-9">{{ __('Time') }}:</span>
-				<span class="font-semibold text-ink-gray-9">{{ formatTimer(timer) }}</span>
+				<span class="font-semibold text-ink-gray-9">{{
+					formatTimer(timer)
+				}}</span>
 			</div>
 			<ProgressBar :progress="timerProgress" />
 		</div>
 
-		<div v-if="activeQuestion == 0 && !examSubmission.data && examContext.data.status.can_attempt">
+		<div
+			v-if="
+				activeQuestion == 0 &&
+				!examSubmission.data &&
+				examContext.data.status.can_attempt
+			"
+		>
 			<div class="border text-center p-20 rounded-md">
 				<div class="font-semibold text-lg text-ink-gray-9">
 					{{ examContext.data.exam.title }}
@@ -73,7 +108,8 @@
 					<Button
 						v-if="
 							!examContext.data.status.max_attempts ||
-							examContext.data.status.attempts_used < examContext.data.status.max_attempts
+							examContext.data.status.attempts_used <
+								examContext.data.status.max_attempts
 						"
 						variant="solid"
 						@click="startExam"
@@ -84,7 +120,9 @@
 			</div>
 		</div>
 
-		<div v-else-if="!examSubmission.data && examContext.data.status.can_attempt">
+		<div
+			v-else-if="!examSubmission.data && examContext.data.status.can_attempt"
+		>
 			<div v-for="(question, qtidx) in questions" :key="question.question">
 				<div
 					v-if="qtidx == activeQuestion - 1 && questionDetails.data"
@@ -96,14 +134,19 @@
 							{{ getInstructions(questionDetails.data) }}
 						</div>
 						<div class="text-ink-gray-9 text-sm font-semibold">
-							{{ question.marks }} {{ question.marks == 1 ? __('Mark') : __('Marks') }}
+							{{ question.marks }}
+							{{ question.marks == 1 ? __('Mark') : __('Marks') }}
 						</div>
 					</div>
 					<div
 						class="text-ink-gray-9 font-semibold mt-2 leading-5 [&_img]:max-h-[400px] [&_img]:w-auto [&_img]:object-contain"
 						v-html="questionDetails.data.question"
 					></div>
-					<div v-if="questionDetails.data.type == 'Choices'" v-for="index in 4" :key="index">
+					<div
+						v-if="questionDetails.data.type == 'Choices'"
+						v-for="index in 4"
+						:key="index"
+					>
 						<label
 							v-if="questionDetails.data[`option_${index}`]"
 							class="flex items-center bg-surface-gray-3 rounded-md p-3 mt-4 w-full cursor-pointer"
@@ -124,15 +167,31 @@
 								@change="markAnswer(index)"
 								:checked="selectedOptions[index - 1]"
 							/>
-							<div v-else-if="examContext.data.exam.show_answers" v-for="(answer, idx) in showAnswers" :key="idx">
+							<div
+								v-else-if="examContext.data.exam.show_answers"
+								v-for="(answer, idx) in showAnswers"
+								:key="idx"
+							>
 								<div v-if="index - 1 == idx">
-									<CheckCircle v-if="answer == 1" class="w-4 h-4 text-ink-green-2" />
-									<MinusCircle v-else-if="answer == 2" class="w-4 h-4 text-ink-green-2" />
-									<XCircle v-else-if="answer == 0" class="w-4 h-4 text-ink-red-3" />
+									<CheckCircle
+										v-if="answer == 1"
+										class="w-4 h-4 text-ink-green-2"
+									/>
+									<MinusCircle
+										v-else-if="answer == 2"
+										class="w-4 h-4 text-ink-green-2"
+									/>
+									<XCircle
+										v-else-if="answer == 0"
+										class="w-4 h-4 text-ink-red-3"
+									/>
 									<MinusCircle v-else class="w-4 h-4" />
 								</div>
 							</div>
-							<span class="ml-2 text-ink-gray-9" v-html="questionDetails.data[`option_${index}`]"></span>
+							<span
+								class="ml-2 text-ink-gray-9"
+								v-html="questionDetails.data[`option_${index}`]"
+							></span>
 						</label>
 						<div
 							v-if="questionDetails.data[`explanation_${index}`]"
@@ -143,7 +202,11 @@
 						</div>
 					</div>
 					<div v-else-if="questionDetails.data.type == 'User Input'">
-						<FormControl v-model="possibleAnswer" type="textarea" class="my-2" />
+						<FormControl
+							v-model="possibleAnswer"
+							type="textarea"
+							class="my-2"
+						/>
 						<div v-if="showAnswers.length">
 							<Badge v-if="showAnswers[0]" :label="__('Correct')" theme="green">
 								<template #prefix>
@@ -174,7 +237,10 @@
 							@change="markForReview($event, activeQuestion)"
 						/>
 						<div class="flex items-center space-x-2">
-							<Button @click="switchQuestion(activeQuestion - 1)" :disabled="activeQuestion == 1">
+							<Button
+								@click="switchQuestion(activeQuestion - 1)"
+								:disabled="activeQuestion == 1"
+							>
 								<template #icon>
 									<ChevronLeft class="size-4 stroke-1.5" />
 								</template>
@@ -185,16 +251,24 @@
 								class="w-6 h-6 rounded-full flex items-center justify-center text-sm"
 								:class="{
 									'cursor-pointer': item !== '...',
-									'bg-surface-gray-4 border border-outline-gray-5 font-medium': activeQuestion == item,
+									'bg-surface-gray-4 border border-outline-gray-5 font-medium':
+										activeQuestion == item,
 									'text-ink-gray-5': item === '...',
-									'bg-surface-blue-3 text-ink-white': attemptedQuestions.includes(item) && activeQuestion != item,
-									'bg-surface-gray-3 text-ink-gray-6': activeQuestion != item && item !== '...' && !attemptedQuestions.includes(item),
+									'bg-surface-blue-3 text-ink-white':
+										attemptedQuestions.includes(item) && activeQuestion != item,
+									'bg-surface-gray-3 text-ink-gray-6':
+										activeQuestion != item &&
+										item !== '...' &&
+										!attemptedQuestions.includes(item),
 								}"
 								@click="item !== '...' && switchQuestion(item)"
 							>
 								{{ item }}
 							</span>
-							<Button @click="switchQuestion(activeQuestion + 1)" :disabled="activeQuestion == questions.length">
+							<Button
+								@click="switchQuestion(activeQuestion + 1)"
+								:disabled="activeQuestion == questions.length"
+							>
 								<template #icon>
 									<ChevronRight class="size-4 stroke-1.5" />
 								</template>
@@ -227,15 +301,29 @@
 			</div>
 		</div>
 
-		<div v-else-if="examSubmission.data" class="border rounded-lg p-20 text-center space-y-2">
+		<div
+			v-else-if="examSubmission.data"
+			class="border rounded-lg p-20 text-center space-y-2"
+		>
 			<div class="text-2xl font-semibold text-ink-gray-9">
-				{{ examSubmission.data.pass ? __('Exam Passed') : __('Exam Submitted') }}
+				{{
+					examSubmission.data.pass ? __('Exam Passed') : __('Exam Submitted')
+				}}
 			</div>
 			<div class="text-ink-gray-7">
-				{{ __('You scored {0} out of {1}.').format(examSubmission.data.score, examSubmission.data.score_out_of) }}
+				{{
+					__('You scored {0} out of {1}.').format(
+						examSubmission.data.score,
+						examSubmission.data.score_out_of
+					)
+				}}
 			</div>
 			<div class="text-ink-gray-7">
-				{{ __('Percentage: {0}%').format(Math.round(examSubmission.data.percentage || 0)) }}
+				{{
+					__('Percentage: {0}%').format(
+						Math.round(examSubmission.data.percentage || 0)
+					)
+				}}
 			</div>
 		</div>
 	</div>
@@ -307,7 +395,14 @@ const attempts = createResource({
 				member: user.data?.name,
 				exam: props.examName,
 			},
-			fields: ['name', 'creation', 'score', 'score_out_of', 'percentage', 'passing_percentage'],
+			fields: [
+				'name',
+				'creation',
+				'score',
+				'score_out_of',
+				'percentage',
+				'passing_percentage',
+			],
 			order_by: 'creation desc',
 		}
 	},
@@ -350,7 +445,9 @@ const storageKey = computed(() => `exam:${props.examName}`)
 
 const populateQuestions = (exam) => {
 	if (!exam) return
-	questions.value = exam.shuffle_questions ? shuffleArray([...(exam.questions || [])]) : exam.questions || []
+	questions.value = exam.shuffle_questions
+		? shuffleArray([...(exam.questions || [])])
+		: exam.questions || []
 	if (exam.shuffle_questions && exam.limit_questions_to) {
 		questions.value = questions.value.slice(0, exam.limit_questions_to)
 	}
@@ -379,8 +476,12 @@ const timerProgress = computed(() => {
 })
 
 const formatTimer = (seconds) => {
-	const hrs = Math.floor(seconds / 3600).toString().padStart(2, '0')
-	const mins = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0')
+	const hrs = Math.floor(seconds / 3600)
+		.toString()
+		.padStart(2, '0')
+	const mins = Math.floor((seconds % 3600) / 60)
+		.toString()
+		.padStart(2, '0')
 	const secs = (seconds % 60).toString().padStart(2, '0')
 	return hrs != '00' ? `${hrs}:${mins}:${secs}` : `${mins}:${secs}`
 }
@@ -422,7 +523,8 @@ const loadSavedAnswers = () => {
 	if (questionDetails.data.type == 'Choices') {
 		localQuestion.answer.forEach((answer) => {
 			for (let i = 1; i <= 4; i++) {
-				if (questionDetails.data[`option_${i}`] == answer) selectedOptions.value[i - 1] = 1
+				if (questionDetails.data[`option_${i}`] == answer)
+					selectedOptions.value[i - 1] = 1
 			}
 		})
 	} else {
@@ -432,7 +534,11 @@ const loadSavedAnswers = () => {
 
 const markAnswer = (index) => {
 	if (!questionDetails.data.multiple) {
-		selectedOptions.value.splice(0, selectedOptions.value.length, ...[0, 0, 0, 0])
+		selectedOptions.value.splice(
+			0,
+			selectedOptions.value.length,
+			...[0, 0, 0, 0]
+		)
 	}
 	selectedOptions.value[index - 1] = selectedOptions.value[index - 1] ? 0 : 1
 }
@@ -456,7 +562,9 @@ const addToLocalStorage = () => {
 		answer: getAnswers(),
 	}
 	if (examData) {
-		let existingQuestion = examData.find((q) => q.question_name == questionData.question_name)
+		let existingQuestion = examData.find(
+			(q) => q.question_name == questionData.question_name
+		)
 		if (existingQuestion) existingQuestion.answer = questionData.answer
 		else examData.push(questionData)
 	} else {
@@ -485,19 +593,29 @@ const resetInputs = () => {
 }
 
 const markForReview = (value, index) => {
-	if (value && !reviewQuestions.value.includes(index)) reviewQuestions.value.push(index)
-	if (!value) reviewQuestions.value = reviewQuestions.value.filter((item) => item !== index)
+	if (value && !reviewQuestions.value.includes(index))
+		reviewQuestions.value.push(index)
+	if (!value)
+		reviewQuestions.value = reviewQuestions.value.filter(
+			(item) => item !== index
+		)
 }
 
 const handleSubmitClick = () => {
-	if (questionDetails.data?.type == 'Open Ended' && examContext.data.exam.show_answers) {
+	if (
+		questionDetails.data?.type == 'Open Ended' &&
+		examContext.data.exam.show_answers
+	) {
 		addToLocalStorage()
 	}
 	submitExam()
 }
 
 const submitExam = () => {
-	if (!examContext.data.exam.show_answers && questionDetails.data?.type == 'Open Ended') {
+	if (
+		!examContext.data.exam.show_answers &&
+		questionDetails.data?.type == 'Open Ended'
+	) {
 		addToLocalStorage()
 	}
 	examSubmission.submit()
@@ -505,7 +623,9 @@ const submitExam = () => {
 
 const getInstructions = (question) => {
 	if (question.type == 'Choices') {
-		return question.multiple ? __('Choose all correct options') : __('Choose the correct option')
+		return question.multiple
+			? __('Choose all correct options')
+			: __('Choose the correct option')
 	}
 	if (question.type == 'User Input') return __('Type your answer')
 	return __('Write your answer')
@@ -582,7 +702,10 @@ const handlePageHide = () => {
 			exam: props.examName,
 			results: localStorage.getItem(storageKey.value),
 		})
-		navigator.sendBeacon('/api/method/lms.lms.doctype.lms_exam.lms_exam.submit_exam?' + params.toString())
+		navigator.sendBeacon(
+			'/api/method/lms.lms.doctype.lms_exam.lms_exam.submit_exam?' +
+				params.toString()
+		)
 	}
 }
 
