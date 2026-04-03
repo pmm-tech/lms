@@ -248,7 +248,6 @@ import {
 	Checkbox,
 	createResource,
 	FormControl,
-	ProgressBar,
 	TextEditor,
 	toast,
 } from 'frappe-ui'
@@ -261,6 +260,7 @@ import {
 } from 'lucide-vue-next'
 import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { timeAgo } from '@/utils'
+import ProgressBar from '@/components/ProgressBar.vue'
 
 const props = defineProps({
 	examName: {
