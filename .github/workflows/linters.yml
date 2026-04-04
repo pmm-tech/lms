@@ -2,18 +2,14 @@ name: Linters
 
 on:
   pull_request:
-  workflow_dispatch:
-  push:
-    branches: [ main ]
 
 permissions:
   contents: read
 
 jobs:
   linters:
-    name: Semgrep Rules
+    name: Pre-commit and Semgrep
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
 
     steps:
       - uses: actions/checkout@v5
