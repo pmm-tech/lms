@@ -88,7 +88,7 @@
 				<div class="flex flex-col space-y-2">
 					<Button
 						v-if="canGoZen()"
-						@click="goFullScreen(); showMobileActions = false"
+						@click="handleMobileZenMode"
 						class="w-full justify-start py-4"
 						variant="ghost"
 					>
@@ -97,7 +97,7 @@
 					</Button>
 					<Button
 						v-if="isAdmin"
-						@click="showVideoStats(); showMobileActions = false"
+						@click="handleMobileVideoStats"
 						class="w-full justify-start py-4"
 						variant="ghost"
 					>
@@ -110,7 +110,7 @@
 					<hr class="my-2 border-outline-gray-2" />
 					<Button
 						v-if="lesson.data.prev"
-						@click="switchLesson('prev'); showMobileActions = false"
+						@click="handleMobilePrevLesson"
 						class="w-full justify-start py-4"
 						variant="ghost"
 					>
@@ -136,7 +136,7 @@
 					</router-link>
 					<Button
 						v-if="lesson.data.next"
-						@click="switchLesson('next'); showMobileActions = false"
+						@click="handleMobileNextLesson"
 						class="w-full justify-start py-4"
 						variant="ghost"
 					>
@@ -727,6 +727,26 @@ const switchLesson = (direction) => {
 			lessonNumber: lessonIndex[1],
 		},
 	})
+}
+
+const handleMobileZenMode = () => {
+	goFullScreen()
+	showMobileActions.value = false
+}
+
+const handleMobileVideoStats = () => {
+	showVideoStats()
+	showMobileActions.value = false
+}
+
+const handleMobilePrevLesson = () => {
+	switchLesson('prev')
+	showMobileActions.value = false
+}
+
+const handleMobileNextLesson = () => {
+	switchLesson('next')
+	showMobileActions.value = false
 }
 
 watch(
