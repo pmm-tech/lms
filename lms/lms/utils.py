@@ -1043,6 +1043,7 @@ def get_course_fields():
 		"rating",
 	]
 
+
 # Public course browsing requires guest access here.
 # nosemgrep: frappe-semgrep-rules.rules.security.guest-whitelisted-method
 @frappe.whitelist(allow_guest=True)
@@ -1126,6 +1127,7 @@ def get_categorized_courses(courses: list) -> dict:
 		"created": created,
 		"under_review": under_review,
 	}
+
 
 # Public course outline browsing requires guest access here.
 # nosemgrep: frappe-semgrep-rules.rules.security.guest-whitelisted-method
