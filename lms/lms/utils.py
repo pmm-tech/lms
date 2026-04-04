@@ -1050,6 +1050,7 @@ def get_course_details(course: str):
 	if not guest_access_allowed():
 		return {}
 
+	is_guest = frappe.session.user == "Guest"
 	is_course_published = frappe.db.get_value("LMS Course", course, "published")
 	membership = get_membership(course)
 	if not is_course_published and not can_modify_course(course) and not membership:
@@ -1072,16 +1073,21 @@ def get_course_details(course: str):
 		)"""
 		course_details.price = fmt_money(course_details.course_price, 0, course_details.currency)
 
-	if frappe.session.user == "Guest":
+	if is_guest:
 		course_details.is_instructor = False
 
 	if course_details.membership and course_details.membership.current_lesson:
 		course_details.current_lesson = get_lesson_index(course_details.membership.current_lesson)
 
-	exam_status = get_course_exam(course, frappe.session.user if frappe.session.user != "Guest" else None)
-	course_details.final_exam = exam_status
-	course_details.final_exam_required = bool(exam_status)
-	course_details.final_exam_passed = exam_status.get("passed") if exam_status else False
+	if not is_guest:
+		exam_status = get_course_exam(course, frappe.session.user)
+		course_details.final_exam = exam_status
+		course_details.final_exam_required = bool(exam_status)
+		course_details.final_exam_passed = exam_status.get("passed") if exam_status else False
+	else:
+		course_details.final_exam = None
+		course_details.final_exam_required = False
+		course_details.final_exam_passed = False
 
 	return course_details
 
@@ -1128,9 +1134,12 @@ def get_course_outline(course: str, progress: bool = False, include_exams: bool 
 	if not guest_access_allowed():
 		return []
 
+	is_guest = frappe.session.user == "Guest"
 	outline = []
 	chapters = frappe.get_all("Chapter Reference", {"parent": course}, ["chapter", "idx"], order_by="idx")
-	exam_status = get_course_exam(course, frappe.session.user if frappe.session.user != "Guest" else None)
+	exam_status = None
+	if include_exams and not is_guest:
+		exam_status = get_course_exam(course, frappe.session.user)
 	for chapter in chapters:
 		chapter_details = frappe.db.get_value(
 			"Course Chapter",
