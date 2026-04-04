@@ -9,6 +9,8 @@ from frappe.model.naming import make_autoname
 from frappe.utils import nowdate
 from frappe.utils.telemetry import capture
 
+from lms.lms.utils import get_course_exam, has_passed_exam
+
 
 class LMSCertificate(Document):
 	def validate(self):
@@ -92,6 +94,12 @@ class LMSCertificate(Document):
 				if progress < 100:
 					frappe.throw(
 						_("Certification cannot be issued as the member has not completed the course.")
+					)
+
+				exam_status = get_course_exam(self.course, self.member)
+				if exam_status and not has_passed_exam(exam_status["name"], self.member):
+					frappe.throw(
+						_("Certification cannot be issued as the member has not passed the final exam.")
 					)
 
 	def validate_duplicate_certificate(self):
@@ -218,6 +226,10 @@ def validate_certification_eligibility(course):
 	)
 	if progress < 100:
 		frappe.throw(_("You have not completed the course yet."))
+
+	exam_status = get_course_exam(course, frappe.session.user)
+	if exam_status and not has_passed_exam(exam_status["name"], frappe.session.user):
+		frappe.throw(_("You must pass the final exam before getting certified."))
 
 
 def has_permission(doc, ptype="read", user=None):

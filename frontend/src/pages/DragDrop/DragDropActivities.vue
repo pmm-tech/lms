@@ -1,5 +1,7 @@
 <template>
-	<header class="sticky top-0 z-10 flex items-center justify-between border-b bg-surface-white px-3 py-2.5 sm:px-5">
+	<header
+		class="sticky top-0 z-10 flex items-center justify-between border-b bg-surface-white px-3 py-2.5 sm:px-5"
+	>
 		<Breadcrumbs :items="breadcrumbs" />
 		<Button v-if="!readOnlyMode" variant="solid" @click="showForm = true">
 			<template #prefix>
@@ -15,11 +17,15 @@
 					totalActivities.loading
 						? __('Loading...')
 						: totalActivities.data
-							? __('{0} Activities').format(totalActivities.data)
-							: __('No Activities')
+						? __('{0} Activities').format(totalActivities.data)
+						: __('No Activities')
 				}}
 			</div>
-			<FormControl v-model="search" type="text" :placeholder="__('Search by title')" />
+			<FormControl
+				v-model="search"
+				type="text"
+				:placeholder="__('Search by title')"
+			/>
 		</div>
 		<div
 			v-if="isInitialLoading"
@@ -38,11 +44,17 @@
 				onRowClick: (row) => openActivity(row.name),
 			}"
 		>
-			<ListHeader class="mb-2 grid items-center space-x-4 rounded bg-surface-gray-2 p-2">
+			<ListHeader
+				class="mb-2 grid items-center space-x-4 rounded bg-surface-gray-2 p-2"
+			>
 				<ListHeaderItem :item="item" v-for="item in columns" />
 			</ListHeader>
 			<ListRows>
-				<ListRow v-for="row in activities.data" :row="row" class="hover:bg-surface-gray-1">
+				<ListRow
+					v-for="row in activities.data"
+					:row="row"
+					class="hover:bg-surface-gray-1"
+				>
 					<template #default="{ column }">
 						<ListRowItem :item="row[column.key]" :align="column.align">
 							<div
@@ -91,7 +103,10 @@
 			</div>
 		</div>
 		<EmptyState v-else type="Drag & Drop Activities" />
-		<div v-if="activities.loading && !isInitialLoading" class="flex items-center justify-center py-5">
+		<div
+			v-if="activities.loading && !isInitialLoading"
+			class="flex items-center justify-center py-5"
+		>
 			<LoadingIndicator class="w-8 h-8 text-gray-400" />
 		</div>
 		<div
@@ -127,11 +142,24 @@
 		:options="{
 			title: __('Create a Drag & Drop Activity'),
 			size: 'sm',
-			actions: [{ label: __('Save'), variant: 'solid', onClick({ close }) { insertActivity(close) } }],
+			actions: [
+				{
+					label: __('Save'),
+					variant: 'solid',
+					onClick({ close }) {
+						insertActivity(close)
+					},
+				},
+			],
 		}"
 	>
 		<template #body-content>
-			<FormControl v-model="title" :label="__('Title')" type="text" @keydown.enter="insertActivity(() => (showForm = false))" />
+			<FormControl
+				v-model="title"
+				:label="__('Title')"
+				type="text"
+				@keydown.enter="insertActivity(() => (showForm = false))"
+			/>
 		</template>
 	</Dialog>
 </template>
@@ -213,7 +241,10 @@ const activities = createListResource({
 	pageLength,
 	start: start.value,
 	transform(data) {
-		return data.map((row) => ({ ...row, modified: dayjs(row.modified).fromNow() }))
+		return data.map((row) => ({
+			...row,
+			modified: dayjs(row.modified).fromNow(),
+		}))
 	},
 })
 
@@ -322,13 +353,28 @@ const insertActivity = (close) => {
 
 const columns = computed(() => [
 	{ label: __('Title'), key: 'title', width: '20rem' },
-	{ label: __('Passing %'), key: 'passing_percentage', align: 'center', width: '8rem' },
-	{ label: __('Total Marks'), key: 'total_marks', align: 'center', width: '8rem' },
+	{
+		label: __('Passing %'),
+		key: 'passing_percentage',
+		align: 'center',
+		width: '8rem',
+	},
+	{
+		label: __('Total Marks'),
+		key: 'total_marks',
+		align: 'center',
+		width: '8rem',
+	},
 	{ label: __('Modified'), key: 'modified', align: 'right', width: '8rem' },
 	{ label: __('Actions'), key: 'actions', align: 'right', width: '12rem' },
 ])
 
-const breadcrumbs = computed(() => [{ label: __('Drag & Drop Activities'), route: { name: 'DragDropActivities' } }])
+const breadcrumbs = computed(() => [
+	{
+		label: __('Drag & Drop Activities'),
+		route: { name: 'DragDropActivities' },
+	},
+])
 
 usePageMeta(() => ({
 	title: __('Drag & Drop Activities'),

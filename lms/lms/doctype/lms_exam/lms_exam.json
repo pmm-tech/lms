@@ -1,0 +1,251 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
+ "creation": "2026-04-03 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "title",
+  "course",
+  "display_chapter",
+  "is_final_exam",
+  "column_break_core",
+  "max_attempts",
+  "show_answers",
+  "show_submission_history",
+  "duration",
+  "section_break_scoring",
+  "total_marks",
+  "passing_percentage",
+  "shuffle_questions",
+  "limit_questions_to",
+  "column_break_scoring",
+  "enable_negative_marking",
+  "marks_to_cut",
+  "available_from",
+  "available_until",
+  "section_break_instructions",
+  "instructions",
+  "section_break_prerequisites",
+  "prerequisites",
+  "section_break_questions",
+  "questions"
+ ],
+ "fields": [
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "course",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Course",
+   "options": "LMS Course",
+   "reqd": 1
+  },
+  {
+   "fieldname": "display_chapter",
+   "fieldtype": "Link",
+   "label": "Display Chapter",
+   "options": "Course Chapter"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_final_exam",
+   "fieldtype": "Check",
+   "label": "Final Exam"
+  },
+  {
+   "fieldname": "column_break_core",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "max_attempts",
+   "fieldtype": "Int",
+   "label": "Max Attempts"
+  },
+  {
+   "default": "1",
+   "fieldname": "show_answers",
+   "fieldtype": "Check",
+   "label": "Show Answers"
+  },
+  {
+   "default": "0",
+   "fieldname": "show_submission_history",
+   "fieldtype": "Check",
+   "label": "Show Submission History"
+  },
+  {
+   "fieldname": "duration",
+   "fieldtype": "Data",
+   "label": "Duration (in minutes)"
+  },
+  {
+   "fieldname": "section_break_scoring",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "total_marks",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Total Marks",
+   "non_negative": 1,
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "default": "100",
+   "fieldname": "passing_percentage",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Passing Percentage",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "shuffle_questions",
+   "fieldtype": "Check",
+   "label": "Shuffle Questions"
+  },
+  {
+   "depends_on": "shuffle_questions",
+   "fieldname": "limit_questions_to",
+   "fieldtype": "Int",
+   "label": "Limit Questions To"
+  },
+  {
+   "fieldname": "column_break_scoring",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_negative_marking",
+   "fieldtype": "Check",
+   "label": "Enable Negative Marking"
+  },
+  {
+   "default": "1",
+   "depends_on": "enable_negative_marking",
+   "fieldname": "marks_to_cut",
+   "fieldtype": "Int",
+   "label": "Marks To Cut"
+  },
+  {
+   "fieldname": "available_from",
+   "fieldtype": "Datetime",
+   "label": "Available From"
+  },
+  {
+   "fieldname": "available_until",
+   "fieldtype": "Datetime",
+   "label": "Available Until"
+  },
+  {
+   "fieldname": "section_break_instructions",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "instructions",
+   "fieldtype": "Text Editor",
+   "label": "Instructions"
+  },
+  {
+   "fieldname": "section_break_prerequisites",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "prerequisites",
+   "fieldtype": "Table",
+   "label": "Prerequisites",
+   "options": "LMS Exam Prerequisite"
+  },
+  {
+   "fieldname": "section_break_questions",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "questions",
+   "fieldtype": "Table",
+   "label": "Questions",
+   "options": "LMS Exam Question"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [
+  {
+   "link_doctype": "LMS Exam Submission",
+   "link_fieldname": "exam"
+  }
+ ],
+ "modified": "2026-04-03 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "LMS",
+ "name": "LMS Exam",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Moderator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Course Creator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "LMS Student",
+   "share": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "title",
+ "track_changes": 1
+}

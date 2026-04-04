@@ -14,7 +14,8 @@
 			certification.data &&
 			certification.data.membership &&
 			certification.data.paid_certificate &&
-			user.data?.is_student
+			user.data?.is_student &&
+			(!certification.data.final_exam || certification.data.final_exam.passed)
 		"
 	>
 		<router-link
@@ -50,6 +51,17 @@
 				{{ __('Get Certified') }}
 			</Button>
 		</router-link>
+	</div>
+	<div
+		v-else-if="
+			certification.data &&
+			certification.data.final_exam &&
+			!certification.data.final_exam.passed &&
+			user.data?.is_student
+		"
+		class="text-sm text-ink-orange-3"
+	>
+		{{ __('Pass the final exam to unlock certification.') }}
 	</div>
 </template>
 <script setup>

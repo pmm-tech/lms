@@ -133,7 +133,7 @@
 						</div>
 					</div>
 					<div
-					class="quiz-question-content text-ink-gray-9 font-semibold mt-2 leading-5 [&_img]:max-h-[400px] [&_img]:w-auto [&_img]:object-contain"
+						class="quiz-question-content text-ink-gray-9 font-semibold mt-2 leading-5 [&_img]:max-h-[400px] [&_img]:w-auto [&_img]:object-contain"
 						v-html="questionDetails.data.question"
 					></div>
 					<div v-if="questionDetails.data.type == 'Choices'" v-for="index in 4">
@@ -317,7 +317,10 @@
 				</div>
 			</div>
 		</div>
-		<div v-else class="quiz-summary border rounded-lg p-20 text-center space-y-2">
+		<div
+			v-else
+			class="quiz-summary border rounded-lg p-20 text-center space-y-2"
+		>
 			<div class="text-lg font-semibold text-ink-gray-9">
 				{{ __('Quiz Summary') }}
 			</div>

@@ -546,6 +546,21 @@ const getSidebarItems = () => {
 					],
 				},
 				{
+					label: 'Exams',
+					icon: 'NotebookPen',
+					to: 'Exams',
+					condition: () => {
+						return isAdmin()
+					},
+					activeFor: [
+						'Exams',
+						'ExamForm',
+						'ExamPage',
+						'ExamSubmissionList',
+						'ExamSubmission',
+					],
+				},
+				{
 					label: 'Drag & Drop Activities',
 					icon: 'Hand',
 					to: 'DragDropActivities',

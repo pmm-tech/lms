@@ -97,19 +97,10 @@
 										<div
 											class="outline-lesson mt-2 rounded-md pl-8 py-2.5 pr-4 text-ink-gray-9 transition-colors"
 											:class="
-												isActiveLesson(lesson.number) ? 'bg-surface-white/70' : ''
+												isActiveLesson(lesson) ? 'bg-surface-white/70' : ''
 											"
 										>
-											<router-link
-												:to="{
-													name: allowEdit ? 'LessonForm' : 'Lesson',
-													params: {
-														courseName: courseName,
-														chapterNumber: lesson.number.split('-')[0],
-														lessonNumber: lesson.number.split('-')[1],
-													},
-												}"
-											>
+											<router-link :to="getLessonRoute(lesson)">
 												<div class="flex items-center text-sm leading-5 group">
 													<MonitorPlay
 														v-if="lesson.icon === 'icon-youtube'"
@@ -132,8 +123,20 @@
 														class="h-4 w-4 text-ink-gray-9 stroke-1 mr-2"
 													/>
 													{{ lesson.title }}
+													<span
+														v-if="lesson.is_exam"
+														class="ml-2 rounded-full bg-surface-blue-2 px-2 py-0.5 text-[11px] font-medium text-ink-blue-3"
+													>
+														{{ __('Exam') }}
+													</span>
+													<span
+														v-if="lesson.is_exam && lesson.is_locked"
+														class="ml-2 rounded-full bg-surface-orange-1 px-2 py-0.5 text-[11px] font-medium text-ink-orange-3"
+													>
+														{{ __('Locked') }}
+													</span>
 													<Trash2
-														v-if="allowEdit"
+														v-if="allowEdit && !lesson.is_exam"
 														@click.prevent="
 															trashLesson(lesson.name, chapter.name)
 														"
@@ -240,7 +243,9 @@ const props = defineProps({
 	},
 })
 
-const accentColorName = computed(() => (props.accentColor || 'blue').toLowerCase())
+const accentColorName = computed(() =>
+	(props.accentColor || 'blue').toLowerCase()
+)
 
 const hexToRgb = (hex) => {
 	if (!hex) return '37, 99, 235'
@@ -266,17 +271,18 @@ const outlineContainerStyle = computed(() =>
 		? {
 				backgroundColor: alphaColor(0.08),
 				borderColor: alphaColor(0.22),
-			}
+		  }
 		: {}
 )
 
 const outline = createResource({
 	url: 'lms.lms.utils.get_course_outline',
-	cache: ['course_outline', props.courseName],
+	cache: ['course_outline', props.courseName, !props.allowEdit],
 	makeParams() {
 		return {
 			course: props.courseName,
 			progress: props.getProgress,
+			include_exams: !props.allowEdit,
 		}
 	},
 	auto: true,
@@ -447,10 +453,32 @@ const isScormChapterComplete = (chapter) => {
 	return chapter.lessons?.length && chapter.lessons.every((l) => l.is_complete)
 }
 
-const isActiveLesson = (lessonNumber) => {
+const getLessonRoute = (lesson) => {
+	if (lesson.is_exam) {
+		return {
+			name: props.allowEdit ? 'ExamForm' : 'ExamPage',
+			params: {
+				examID: lesson.name,
+			},
+		}
+	}
+	return {
+		name: props.allowEdit ? 'LessonForm' : 'Lesson',
+		params: {
+			courseName: props.courseName,
+			chapterNumber: lesson.number.split('-')[0],
+			lessonNumber: lesson.number.split('-')[1],
+		},
+	}
+}
+
+const isActiveLesson = (lesson) => {
+	if (lesson.is_exam) {
+		return route.name === 'ExamPage' && route.params.examID === lesson.name
+	}
 	return (
-		route.params.chapterNumber == lessonNumber.split('-')[0] &&
-		route.params.lessonNumber == lessonNumber.split('-')[1]
+		route.params.chapterNumber == lesson.number.split('-')[0] &&
+		route.params.lessonNumber == lesson.number.split('-')[1]
 	)
 }
 </script>

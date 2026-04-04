@@ -4,7 +4,13 @@
 frappe.ui.form.on("LMS Batch", {
 	onload: function (frm) {
 		frm.set_query("reference_doctype", "timetable", function () {
-			let doctypes = ["Course Lesson", "LMS Quiz", "LMS Assignment", "LMS Drag Drop Activity", "LMS Word Hunt Activity"];
+			let doctypes = [
+				"Course Lesson",
+				"LMS Quiz",
+				"LMS Assignment",
+				"LMS Drag Drop Activity",
+				"LMS Word Hunt Activity",
+			];
 			return {
 				filters: {
 					name: ["in", doctypes],
@@ -21,7 +27,12 @@ frappe.ui.form.on("LMS Batch", {
 		});
 
 		frm.set_query("assessment_type", "assessment", function () {
-			let doctypes = ["LMS Quiz", "LMS Assignment", "LMS Drag Drop Activity", "LMS Word Hunt Activity"];
+			let doctypes = [
+				"LMS Quiz",
+				"LMS Assignment",
+				"LMS Drag Drop Activity",
+				"LMS Word Hunt Activity",
+			];
 			return {
 				filters: {
 					name: ["in", doctypes],
@@ -30,7 +41,13 @@ frappe.ui.form.on("LMS Batch", {
 		});
 
 		frm.set_query("reference_doctype", "timetable_legends", function () {
-			let doctypes = ["Course Lesson", "LMS Quiz", "LMS Assignment", "LMS Drag Drop Activity", "LMS Word Hunt Activity"];
+			let doctypes = [
+				"Course Lesson",
+				"LMS Quiz",
+				"LMS Assignment",
+				"LMS Drag Drop Activity",
+				"LMS Word Hunt Activity",
+			];
 			return {
 				filters: {
 					name: ["in", doctypes],

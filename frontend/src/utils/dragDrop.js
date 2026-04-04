@@ -40,7 +40,9 @@ export class DragDrop {
 
 	renderActivity(activity) {
 		if (this.readOnly) {
-			const activityPath = getLmsRoute(`drag-drop/${activity}?fromLesson=1`)
+			const activityPath = getLmsRoute(
+				`drag-drop/${activity}?fromLesson=1`
+			)
 
 			const iframe = document.createElement('iframe')
 			iframe.src = activityPath
@@ -82,7 +84,9 @@ export class DragDrop {
 							iframe.style.height = height + 'px'
 							lastHeight = height
 						}
-					} catch (e) {}
+					} catch (e) {
+						// Ignore iframe access errors while embedded content is loading.
+					}
 				}, 300)
 			}, 1500)
 			return

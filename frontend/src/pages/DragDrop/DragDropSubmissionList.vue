@@ -1,13 +1,22 @@
 <template>
-	<header class="sticky top-0 z-10 flex items-center justify-between border-b bg-surface-white px-3 py-2.5 sm:px-5">
+	<header
+		class="sticky top-0 z-10 flex items-center justify-between border-b bg-surface-white px-3 py-2.5 sm:px-5"
+	>
 		<Breadcrumbs :items="breadcrumbs" />
 	</header>
 	<div v-if="submissions.data?.length" class="md:w-3/4 md:mx-auto py-5 mx-5">
 		<div class="text-xl font-semibold mb-5 text-ink-gray-9">
 			{{ submissions.data[0].activity_title }}
 		</div>
-		<ListView :columns="columns" :rows="submissions.data" row-key="name" :options="{ showTooltip: false, selectable: false }">
-			<ListHeader class="mb-2 grid items-center space-x-4 rounded bg-surface-gray-2 p-2">
+		<ListView
+			:columns="columns"
+			:rows="submissions.data"
+			row-key="name"
+			:options="{ showTooltip: false, selectable: false }"
+		>
+			<ListHeader
+				class="mb-2 grid items-center space-x-4 rounded bg-surface-gray-2 p-2"
+			>
 				<ListHeaderItem :item="item" v-for="item in columns" />
 			</ListHeader>
 			<ListRows>

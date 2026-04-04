@@ -4,16 +4,21 @@
 			class="lesson-header sticky top-0 z-20 flex items-center justify-between border-b bg-surface-white px-3 py-2.5 sm:px-5"
 		>
 			<Breadcrumbs class="h-7 min-w-0 truncate" :items="breadcrumbs" />
-			
+
 			<div class="sm:hidden flex items-center">
 				<Button @click="showMobileActions = !showMobileActions" variant="ghost">
 					<template #icon>
-						<component :is="showMobileActions ? X : Menu" class="size-6 text-ink-gray-9" />
+						<component
+							:is="showMobileActions ? X : Menu"
+							class="size-6 text-ink-gray-9"
+						/>
 					</template>
 				</Button>
 			</div>
 
-			<div class="lesson-header-actions hidden sm:flex items-center space-x-2 flex-shrink-0">
+			<div
+				class="lesson-header-actions hidden sm:flex items-center space-x-2 flex-shrink-0"
+			>
 				<Tooltip v-if="canGoZen()" :text="__('Zen Mode')">
 					<Button @click="goFullScreen()">
 						<template #icon>
@@ -76,13 +81,26 @@
 				</router-link>
 			</div>
 
-			<div v-if="showMobileActions" class="sm:hidden fixed inset-x-0 top-[57px] bottom-0 bg-white z-50 p-4 shadow-xl border-t">
+			<div
+				v-if="showMobileActions"
+				class="sm:hidden fixed inset-x-0 top-[57px] bottom-0 bg-white z-50 p-4 shadow-xl border-t"
+			>
 				<div class="flex flex-col space-y-2">
-					<Button v-if="canGoZen()" @click="goFullScreen(); showMobileActions = false" class="w-full justify-start py-4" variant="ghost">
+					<Button
+						v-if="canGoZen()"
+						@click="handleMobileZenMode"
+						class="w-full justify-start py-4"
+						variant="ghost"
+					>
 						<template #prefix><Focus class="size-5 mr-2" /></template>
 						{{ __('Zen Mode') }}
 					</Button>
-					<Button v-if="isAdmin" @click="showVideoStats(); showMobileActions = false" class="w-full justify-start py-4" variant="ghost">
+					<Button
+						v-if="isAdmin"
+						@click="handleMobileVideoStats"
+						class="w-full justify-start py-4"
+						variant="ghost"
+					>
 						<template #prefix><TrendingUp class="size-5 mr-2" /></template>
 						{{ __('Video Statistics') }}
 					</Button>
@@ -90,7 +108,12 @@
 						<CertificationLinks :courseName="courseName" />
 					</div>
 					<hr class="my-2 border-outline-gray-2" />
-					<Button v-if="lesson.data.prev" @click="switchLesson('prev'); showMobileActions = false" class="w-full justify-start py-4" variant="ghost">
+					<Button
+						v-if="lesson.data.prev"
+						@click="handleMobilePrevLesson"
+						class="w-full justify-start py-4"
+						variant="ghost"
+					>
 						<template #prefix><ChevronLeft class="size-5 mr-2" /></template>
 						{{ __('Previous Lesson') }}
 					</Button>
@@ -111,7 +134,12 @@
 							{{ __('Edit Lesson') }}
 						</Button>
 					</router-link>
-					<Button v-if="lesson.data.next" @click="switchLesson('next'); showMobileActions = false" class="w-full justify-start py-4" variant="ghost">
+					<Button
+						v-if="lesson.data.next"
+						@click="handleMobileNextLesson"
+						class="w-full justify-start py-4"
+						variant="ghost"
+					>
 						<template #prefix><ChevronRight class="size-5 mr-2" /></template>
 						{{ __('Next Lesson') }}
 					</Button>
@@ -189,7 +217,9 @@
 							class="lesson-title-section flex items-center justify-between gap-4"
 						>
 							<div class="flex flex-col min-w-0 flex-1">
-								<div class="lesson-title text-3xl font-semibold text-ink-gray-9 truncate">
+								<div
+									class="lesson-title text-3xl font-semibold text-ink-gray-9 truncate"
+								>
 									{{ lesson.data.title }}
 								</div>
 
@@ -261,17 +291,23 @@
 										}"
 									>
 										<Button>
-											<span class="hidden sm:inline">{{ __('Back to Course') }}</span>
+											<span class="hidden sm:inline">{{
+												__('Back to Course')
+											}}</span>
 											<span class="sm:hidden">{{ __('Back') }}</span>
 										</Button>
 									</router-link>
 								</div>
 
-								<div v-if="!zenModeEnabled" class="lesson-author sm:hidden flex items-center">
+								<div
+									v-if="!zenModeEnabled"
+									class="lesson-author sm:hidden flex items-center"
+								>
 									<span
 										class="h-6 mr-1"
 										:class="{
-											'avatar-group overlap': lesson.data.instructors?.length > 1,
+											'avatar-group overlap':
+												lesson.data.instructors?.length > 1,
 										}"
 									>
 										<UserAvatar
@@ -287,7 +323,10 @@
 							</div>
 						</div>
 
-						<div v-if="!zenModeEnabled" class="lesson-author hidden sm:flex items-center mt-4 md:mt-2">
+						<div
+							v-if="!zenModeEnabled"
+							class="lesson-author hidden sm:flex items-center mt-4 md:mt-2"
+						>
 							<span
 								class="h-6 mr-1"
 								:class="{
@@ -587,7 +626,9 @@ const checkQuiz = () => {
 		const dragDropRegex = /\{\{ DragDrop\(".*"\) \}\}/
 		const wordHuntRegex = /\{\{ WordHunt\(".*"\) \}\}/
 		hasQuiz.value =
-			quizRegex.test(lesson.body) || dragDropRegex.test(lesson.body) || wordHuntRegex.test(lesson.body)
+			quizRegex.test(lesson.body) ||
+			dragDropRegex.test(lesson.body) ||
+			wordHuntRegex.test(lesson.body)
 		if (!hasQuiz.value && !zenModeEnabled) {
 			allowDiscussions.value = true
 		} else {
@@ -686,6 +727,26 @@ const switchLesson = (direction) => {
 			lessonNumber: lessonIndex[1],
 		},
 	})
+}
+
+const handleMobileZenMode = () => {
+	goFullScreen()
+	showMobileActions.value = false
+}
+
+const handleMobileVideoStats = () => {
+	showVideoStats()
+	showMobileActions.value = false
+}
+
+const handleMobilePrevLesson = () => {
+	switchLesson('prev')
+	showMobileActions.value = false
+}
+
+const handleMobileNextLesson = () => {
+	switchLesson('next')
+	showMobileActions.value = false
 }
 
 watch(

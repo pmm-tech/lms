@@ -94,11 +94,17 @@
 				class="space-y-3 rounded-xl border px-4 py-4"
 				:style="courseHighlightsStyle"
 			>
-				<div class="font-medium text-ink-gray-9" :style="courseHighlightsHeadingStyle">
+				<div
+					class="font-medium text-ink-gray-9"
+					:style="courseHighlightsHeadingStyle"
+				>
 					{{ __('This course has:') }}
 				</div>
 				<div class="flex items-center text-ink-gray-9">
-					<BookOpen class="h-4 w-4 stroke-1.5" :style="courseHighlightIconStyle" />
+					<BookOpen
+						class="h-4 w-4 stroke-1.5"
+						:style="courseHighlightIconStyle"
+					/>
 					<span class="ml-2">
 						{{ course.data.lessons }}
 						{{ course.data.lessons > 1 ? __('lessons') : __('lesson') }}
@@ -128,7 +134,10 @@
 					v-if="course.data.enable_certification"
 					class="flex items-center font-semibold text-ink-gray-9"
 				>
-					<GraduationCap class="h-4 w-4 stroke-2" :style="courseHighlightIconStyle" />
+					<GraduationCap
+						class="h-4 w-4 stroke-2"
+						:style="courseHighlightIconStyle"
+					/>
 					<span class="ml-2">
 						{{ __('Certificate of Completion') }}
 					</span>
@@ -137,7 +146,10 @@
 					v-if="course.data.paid_certificate"
 					class="flex items-center font-semibold text-ink-gray-9"
 				>
-					<GraduationCap class="h-4 w-4 stroke-2" :style="courseHighlightIconStyle" />
+					<GraduationCap
+						class="h-4 w-4 stroke-2"
+						:style="courseHighlightIconStyle"
+					/>
 					<span class="ml-2">
 						{{ __('Paid Certificate after Evaluation') }}
 					</span>
@@ -271,7 +283,9 @@ const is_instructor = () => {
 const canGetCertificate = computed(() => {
 	if (
 		props.course.data?.enable_certification &&
-		props.course.data?.membership?.progress == 100
+		props.course.data?.membership?.progress == 100 &&
+		(!props.course.data?.final_exam_required ||
+			props.course.data?.final_exam_passed)
 	) {
 		return true
 	}

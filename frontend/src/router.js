@@ -145,6 +145,17 @@ const routes = [
 		component: () => import('@/pages/Quizzes.vue'),
 	},
 	{
+		path: '/exams',
+		name: 'Exams',
+		component: () => import('@/pages/Exam/ExamActivities.vue'),
+	},
+	{
+		path: '/exams/:examID',
+		name: 'ExamForm',
+		component: () => import('@/pages/Exam/ExamForm.vue'),
+		props: true,
+	},
+	{
 		path: '/quizzes/:quizID',
 		name: 'QuizForm',
 		component: () => import('@/pages/QuizForm.vue'),
@@ -179,6 +190,12 @@ const routes = [
 		props: true,
 	},
 	{
+		path: '/exam/:examID',
+		name: 'ExamPage',
+		component: () => import('@/pages/Exam/ExamPage.vue'),
+		props: true,
+	},
+	{
 		path: '/drag-drop/:activityID',
 		name: 'DragDropPage',
 		component: () => import('@/pages/DragDrop/DragDropPage.vue'),
@@ -197,6 +214,12 @@ const routes = [
 		props: true,
 	},
 	{
+		path: '/exam-submissions/:examID',
+		name: 'ExamSubmissionList',
+		component: () => import('@/pages/Exam/ExamSubmissionList.vue'),
+		props: true,
+	},
+	{
 		path: '/drag-drop-submissions/:activityID',
 		name: 'DragDropSubmissionList',
 		component: () => import('@/pages/DragDrop/DragDropSubmissionList.vue'),
@@ -212,6 +235,12 @@ const routes = [
 		path: '/quiz-submission/:submission',
 		name: 'QuizSubmission',
 		component: () => import('@/pages/QuizSubmission.vue'),
+		props: true,
+	},
+	{
+		path: '/exam-submission/:submission',
+		name: 'ExamSubmission',
+		component: () => import('@/pages/Exam/ExamSubmission.vue'),
 		props: true,
 	},
 	{

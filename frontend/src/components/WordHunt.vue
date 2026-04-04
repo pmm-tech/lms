@@ -1,26 +1,44 @@
 <template>
 	<div v-if="activity.data">
-		<div class="bg-surface-orange-1 space-y-2 py-2 px-3 mb-4 rounded-md text-sm text-ink-gray-8 leading-5">
+		<div
+			class="bg-surface-orange-1 space-y-2 py-2 px-3 mb-4 rounded-md text-sm text-ink-gray-8 leading-5"
+		>
 			<div>
-				{{ __('Read the full passage and place each word in the correct blank.') }}
+				{{
+					__('Read the full passage and place each word in the correct blank.')
+				}}
 			</div>
 			<div>
 				{{ __('This activity has {0} blanks.').format(items.length) }}
 			</div>
 			<div v-if="activity.data.passing_percentage">
-				{{ __('You need {0}% to pass.').format(activity.data.passing_percentage) }}
+				{{
+					__('You need {0}% to pass.').format(activity.data.passing_percentage)
+				}}
 			</div>
 			<div v-if="activity.data.max_attempts">
-				{{ __('You can attempt this activity {0}.').format(activity.data.max_attempts == 1 ? '1 time' : `${activity.data.max_attempts} times`) }}
+				{{
+					__('You can attempt this activity {0}.').format(
+						activity.data.max_attempts == 1
+							? '1 time'
+							: `${activity.data.max_attempts} times`
+					)
+				}}
 			</div>
 		</div>
 
 		<div v-if="started && !submission.data" class="space-y-6">
-			<div class="overflow-hidden rounded-2xl border border-transparent bg-gradient-to-br from-surface-blue-1 via-surface-orange-1 to-surface-green-1 p-1 shadow-sm">
-				<div class="rounded-[calc(1rem-1px)] bg-surface-white/90 p-4 backdrop-blur-sm">
+			<div
+				class="overflow-hidden rounded-2xl border border-transparent bg-gradient-to-br from-surface-blue-1 via-surface-orange-1 to-surface-green-1 p-1 shadow-sm"
+			>
+				<div
+					class="rounded-[calc(1rem-1px)] bg-surface-white/90 p-4 backdrop-blur-sm"
+				>
 					<div class="mb-2 flex items-start justify-between gap-3">
 						<div class="flex-1 space-y-1">
-							<div class="flex items-center gap-1 text-sm font-semibold text-ink-gray-8">
+							<div
+								class="flex items-center gap-1 text-sm font-semibold text-ink-gray-8"
+							>
 								<button
 									v-if="isMobileView"
 									type="button"
@@ -49,17 +67,27 @@
 						<div
 							v-if="activity.data.duration"
 							class="-mt-1 flex shrink-0 items-center justify-center self-start whitespace-nowrap rounded-md px-1 py-1 text-center text-[11px] font-semibold sm:mt-0 sm:min-w-[124px] sm:rounded-xl sm:px-2 sm:py-2 sm:text-base"
-							style="background-color: #2a2a2a; color: #ffffff;"
+							style="background-color: #2a2a2a; color: #ffffff"
 						>
-							<span class="text-[10px] uppercase tracking-[0.05em] sm:text-xs" style="color: rgba(255, 255, 255, 0.82);">
+							<span
+								class="text-[10px] uppercase tracking-[0.05em] sm:text-xs"
+								style="color: rgba(255, 255, 255, 0.82)"
+							>
 								{{ __('Time') }}
 							</span>
-							<span class="ml-1.5 text-[13px] font-bold sm:ml-2 sm:text-[22px] sm:leading-6" style="color: #ffffff;">
+							<span
+								class="ml-1.5 text-[13px] font-bold sm:ml-2 sm:text-[22px] sm:leading-6"
+								style="color: #ffffff"
+							>
 								{{ formatTimer(timer) }}
 							</span>
 						</div>
 					</div>
-					<ProgressBar v-if="activity.data.duration" :progress="timerProgress" class="mb-2" />
+					<ProgressBar
+						v-if="activity.data.duration"
+						:progress="timerProgress"
+						class="mb-2"
+					/>
 					<div
 						v-if="selectedAnswer"
 						class="mb-4 flex flex-col gap-3 rounded-2xl border border-green-200 bg-surface-green-1 px-4 py-3 text-sm text-ink-gray-8 sm:flex-row sm:items-center sm:justify-between"
@@ -80,8 +108,10 @@
 							:draggable="!isTouchDevice"
 							class="flex min-h-14 min-w-28 max-w-full items-center justify-center rounded-2xl px-4 py-3 text-center text-sm font-semibold text-white shadow-sm transition duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2"
 							:class="{
-								'ring-2 ring-offset-2 scale-[1.02]': selectedAnswer?.id === answer.id,
-								'cursor-grabbing opacity-80 scale-[0.98]': draggedAnswer?.id === answer.id,
+								'ring-2 ring-offset-2 scale-[1.02]':
+									selectedAnswer?.id === answer.id,
+								'cursor-grabbing opacity-80 scale-[0.98]':
+									draggedAnswer?.id === answer.id,
 								'cursor-pointer': draggedAnswer?.id !== answer.id,
 							}"
 							:style="answerButtonStyle(answer)"
@@ -91,7 +121,9 @@
 							@dragstart="dragStart(answer)"
 							@dragend="dragEnd"
 						>
-							<span class="min-w-0 max-w-full whitespace-normal break-all text-center leading-tight">
+							<span
+								class="min-w-0 max-w-full whitespace-normal break-all text-center leading-tight"
+							>
 								{{ answer.label }}
 							</span>
 						</button>
@@ -105,24 +137,39 @@
 				</div>
 			</div>
 
-			<div class="rounded-xl border border-outline-gray-2 bg-surface-white p-3 shadow-sm sm:rounded-2xl sm:p-4">
+			<div
+				class="rounded-xl border border-outline-gray-2 bg-surface-white p-3 shadow-sm sm:rounded-2xl sm:p-4"
+			>
 				<div class="flex items-center justify-between gap-3">
 					<div class="text-xs text-ink-gray-6 sm:text-sm">
 						{{ `${answeredCount} of ${items.length} ${__('answered')}` }}
 					</div>
-					<div class="text-xs sm:text-sm" :class="isReadyToSubmit ? 'text-ink-green-3' : 'text-ink-orange-3'">
-						{{ isReadyToSubmit ? __('Ready to submit') : __('Complete all blanks') }}
+					<div
+						class="text-xs sm:text-sm"
+						:class="isReadyToSubmit ? 'text-ink-green-3' : 'text-ink-orange-3'"
+					>
+						{{
+							isReadyToSubmit
+								? __('Ready to submit')
+								: __('Complete all blanks')
+						}}
 					</div>
 				</div>
 				<ProgressBar class="mt-2" :progress="itemProgress" />
 			</div>
 
-			<div class="rounded-2xl border border-outline-gray-2 bg-surface-white p-4 text-ink-gray-9 shadow-sm sm:p-6">
+			<div
+				class="rounded-2xl border border-outline-gray-2 bg-surface-white p-4 text-ink-gray-9 shadow-sm sm:p-6"
+			>
 				<div class="mb-4 text-sm font-semibold text-ink-gray-8">
 					{{ __('Passage') }}
 				</div>
 				<div class="space-y-4 text-sm leading-8 sm:text-base">
-					<div v-for="(segments, lineIndex) in renderedPassageLines" :key="`line-${lineIndex}`" class="flex flex-wrap items-center gap-2">
+					<div
+						v-for="(segments, lineIndex) in renderedPassageLines"
+						:key="`line-${lineIndex}`"
+						class="flex flex-wrap items-center gap-2"
+					>
 						<template v-for="segment in segments" :key="segment.key">
 							<span v-if="segment.type === 'text'" class="whitespace-pre-wrap">
 								{{ segment.value }}
@@ -165,23 +212,39 @@
 					</Button>
 				</div>
 				<div>
-					<Button variant="solid" :disabled="!isReadyToSubmit" @click="submitActivity()">
+					<Button
+						variant="solid"
+						:disabled="!isReadyToSubmit"
+						@click="submitActivity()"
+					>
 						{{ __('Submit') }}
 					</Button>
 				</div>
 			</div>
 		</div>
 
-		<div v-else-if="submission.data" class="border rounded-md p-10 text-center space-y-3">
+		<div
+			v-else-if="submission.data"
+			class="border rounded-md p-10 text-center space-y-3"
+		>
 			<div class="text-lg font-semibold text-ink-gray-9">
 				{{ __('Activity Summary') }}
 			</div>
 			<div class="text-ink-gray-7">
-				{{ __('You scored {0} out of {1} ({2}%).').format(submission.data.score, submission.data.score_out_of, Math.ceil(submission.data.percentage)) }}
+				{{
+					__('You scored {0} out of {1} ({2}%).').format(
+						submission.data.score,
+						submission.data.score_out_of,
+						Math.ceil(submission.data.percentage)
+					)
+				}}
 			</div>
 			<div class="space-x-2">
 				<Button
-					v-if="!activity.data.max_attempts || attempts.data?.length < activity.data.max_attempts"
+					v-if="
+						!activity.data.max_attempts ||
+						attempts.data?.length < activity.data.max_attempts
+					"
 					@click="resetActivity()"
 				>
 					{{ __('Try Again') }}
@@ -198,7 +261,10 @@
 			</div>
 			<div class="flex items-center justify-center space-x-2 mt-4">
 				<Button
-					v-if="!activity.data.max_attempts || attempts.data?.length < activity.data.max_attempts"
+					v-if="
+						!activity.data.max_attempts ||
+						attempts.data?.length < activity.data.max_attempts
+					"
 					variant="solid"
 					@click="startActivity"
 				>
@@ -206,15 +272,26 @@
 				</Button>
 			</div>
 			<div
-				v-if="activity.data.max_attempts && attempts.data?.length >= activity.data.max_attempts"
+				v-if="
+					activity.data.max_attempts &&
+					attempts.data?.length >= activity.data.max_attempts
+				"
 				class="leading-5 text-ink-gray-7 mt-3"
 			>
-				{{ __('You have already exceeded the maximum number of attempts allowed for this activity.') }}
+				{{
+					__(
+						'You have already exceeded the maximum number of attempts allowed for this activity.'
+					)
+				}}
 			</div>
 		</div>
 
 		<div
-			v-if="activity.data.show_submission_history && attempts?.data && attempts.data.length > 0"
+			v-if="
+				activity.data.show_submission_history &&
+				attempts?.data &&
+				attempts.data.length > 0
+			"
 			class="mt-10"
 		>
 			<ListView
@@ -232,7 +309,15 @@
 </template>
 <script setup>
 import { Button, createResource, ListView, toast, call } from 'frappe-ui'
-import { computed, inject, onMounted, onBeforeUnmount, reactive, ref, watch } from 'vue'
+import {
+	computed,
+	inject,
+	onMounted,
+	onBeforeUnmount,
+	reactive,
+	ref,
+	watch,
+} from 'vue'
 import { Info } from 'lucide-vue-next'
 import { timeAgo } from '@/utils'
 import ProgressBar from '@/components/ProgressBar.vue'
@@ -284,30 +369,36 @@ const renderedPassageLines = computed(() => {
 	let blankIndex = 0
 	return passage.split('\n').map((line, lineIndex) => {
 		const parts = line.split(/(_+)/g).filter((value) => value !== '')
-		return parts.map((part, partIndex) => {
-			const isBlank = /^_+$/.test(part)
-			if (!isBlank) {
-				return {
-					key: `text-${lineIndex}-${partIndex}`,
-					type: 'text',
-					value: part,
+		return parts
+			.map((part, partIndex) => {
+				const isBlank = /^_+$/.test(part)
+				if (!isBlank) {
+					return {
+						key: `text-${lineIndex}-${partIndex}`,
+						type: 'text',
+						value: part,
+					}
 				}
-			}
 
-			const item = items.value[blankIndex]
-			blankIndex++
-			return {
-				key: `blank-${lineIndex}-${partIndex}-${blankIndex}`,
-				type: 'blank',
-				item,
-			}
-		}).filter((segment) => segment.type === 'text' || segment.item)
+				const item = items.value[blankIndex]
+				blankIndex++
+				return {
+					key: `blank-${lineIndex}-${partIndex}-${blankIndex}`,
+					type: 'blank',
+					item,
+				}
+			})
+			.filter((segment) => segment.type === 'text' || segment.item)
 	})
 })
 
 const answeredCount = computed(() => Object.keys(placements).length)
-const isReadyToSubmit = computed(() => items.value.length > 0 && answeredCount.value === items.value.length)
-const itemProgress = computed(() => (items.value.length ? (answeredCount.value / items.value.length) * 100 : 0))
+const isReadyToSubmit = computed(
+	() => items.value.length > 0 && answeredCount.value === items.value.length
+)
+const itemProgress = computed(() =>
+	items.value.length ? (answeredCount.value / items.value.length) * 100 : 0
+)
 
 const interactionHint = computed(() => {
 	return isTouchDevice.value
@@ -317,7 +408,8 @@ const interactionHint = computed(() => {
 
 const availableAnswers = computed(() =>
 	answerBank.value.filter(
-		(answer) => !Object.values(placements).some((placed) => placed?.id === answer.id)
+		(answer) =>
+			!Object.values(placements).some((placed) => placed?.id === answer.id)
 	)
 )
 
@@ -468,7 +560,9 @@ const formatTimer = (seconds) => {
 	const mins = Math.floor((seconds % 3600) / 60)
 		.toString()
 		.padStart(2, '0')
-	const secs = Math.max(seconds % 60, 0).toString().padStart(2, '0')
+	const secs = Math.max(seconds % 60, 0)
+		.toString()
+		.padStart(2, '0')
 	return `${mins}:${secs}`
 }
 
@@ -480,7 +574,11 @@ const startTimer = () => {
 			if (isReadyToSubmit.value) {
 				submitActivity()
 			} else {
-				toast.warning(__('Time is up. Please start again and complete all blanks before submitting.'))
+				toast.warning(
+					__(
+						'Time is up. Please start again and complete all blanks before submitting.'
+					)
+				)
 				resetActivity()
 			}
 		}
