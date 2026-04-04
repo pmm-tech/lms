@@ -88,10 +88,7 @@
 				<div class="flex flex-col space-y-2">
 					<Button
 						v-if="canGoZen()"
-						@click="
-							goFullScreen()
-							showMobileActions = false
-						"
+						@click="goFullScreen(); showMobileActions = false"
 						class="w-full justify-start py-4"
 						variant="ghost"
 					>
@@ -100,10 +97,7 @@
 					</Button>
 					<Button
 						v-if="isAdmin"
-						@click="
-							showVideoStats()
-							showMobileActions = false
-						"
+						@click="showVideoStats(); showMobileActions = false"
 						class="w-full justify-start py-4"
 						variant="ghost"
 					>
@@ -116,10 +110,7 @@
 					<hr class="my-2 border-outline-gray-2" />
 					<Button
 						v-if="lesson.data.prev"
-						@click="
-							switchLesson('prev')
-							showMobileActions = false
-						"
+						@click="switchLesson('prev'); showMobileActions = false"
 						class="w-full justify-start py-4"
 						variant="ghost"
 					>
@@ -145,10 +136,7 @@
 					</router-link>
 					<Button
 						v-if="lesson.data.next"
-						@click="
-							switchLesson('next')
-							showMobileActions = false
-						"
+						@click="switchLesson('next'); showMobileActions = false"
 						class="w-full justify-start py-4"
 						variant="ghost"
 					>
