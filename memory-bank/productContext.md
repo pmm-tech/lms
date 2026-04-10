@@ -21,6 +21,7 @@
 - 2026-03-29: Drag and drop assessment flows should avoid overwhelming learners; the current UX direction is one prompt at a time with Previous/Next navigation.
 - 2026-04-04: Final exams should feel like a first-class assessment type with a standalone authoring/library flow, a learner-facing locked/unlocked state, and prerequisite explanations that tell learners exactly what is missing.
 - 2026-04-04: If a course has a final exam, learners should still be able to reach normal 100% course progress while clearly seeing that certification remains blocked until the final exam is passed.
+- 2026-04-04: Public course browsing should remain guest-accessible, but final-exam metadata and placement should only be enriched for authenticated learners so public discovery stays lightweight and safer.
 
 ## Acceptance Signals
 - Public course browsing, enrollment, and lesson consumption are available from website routes under the LMS base path.

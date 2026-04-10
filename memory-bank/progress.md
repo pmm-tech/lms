@@ -22,17 +22,20 @@
 - 2026-04-04: Added certification gating so courses with a final exam require an exam pass before certificate issuance.
 - 2026-04-04: Live-verified exam migrations, course detail/outline payloads, smoke submission, learner-specific prerequisite status, and final-exam certification blocking inside the running Dockerized Frappe site.
 - 2026-04-04: Fixed stale exam status rendering by removing cached exam document reads from the live exam aggregation path.
+- 2026-04-04: Simplified GitHub Actions around this fork's current needs by keeping PR lint/tests, tag-based builds, manual UI tests, and removing unused repo-local release automation workflows.
+- 2026-04-04: Removed the unused Codecov upload job from `ci.yml`; coverage generation remains possible without a Codecov integration.
+- 2026-04-04: Kept public course detail/outline endpoints guest-accessible while stripping final-exam enrichment for guests and documenting the reviewed exception with `nosemgrep` suppressions.
+- 2026-04-04: Brought the local quality gates back to green: `python3 -m pre_commit run --all-files` passes inside the `frappe` container, and container-side `yarn build` now succeeds after fixing the exam import and lesson mobile action handlers.
 
 ## In Progress
 - Manual browser verification for the exam module is still pending because only Docker + Bench runtime verification was completed in this session.
-- Frontend verification for the drag and drop refresh is still in progress because the containerized `yarn build` does not complete after entering the Vite transform/build phase.
 - Workflow observation is still in progress for the remaining Node 20 deprecation warning emitted by Docker-maintained GitHub Actions.
+- Drag-and-drop learner UI/UX review is in progress to identify the next round of interaction improvements.
 
 ## Todo
 - Keep the memory bank current as future feature work, fixes, and design decisions land.
 - Add deeper historical notes when specific subsystems are modified or reviewed in detail.
 - Run a browser-level exam QA pass covering authoring, learner lock states, unlocked attempts, course outline placement, and certificate button behavior.
-- Diagnose why `docker compose exec frappe bash -lc 'cd /home/frappe/frappe-bench/apps/lms/frontend && yarn build'` hangs during `vite build`.
 - Review whether the remaining PR semantic action should also be pinned or replaced with a more stable dependency reference.
 - Run targeted app-level tests or manual QA for drag and drop sidebar access, mobile/touch placement, and stepped item navigation once the local/container runtime is ready.
 - Revisit Docker GitHub Actions versions when upstream publishes Node 24-ready runtime updates.
@@ -42,7 +45,6 @@
 - Route, auth, and guest-access behavior can regress if server rules and SPA assumptions diverge.
 - Existing memory bank content can go stale quickly unless updated after each substantial task.
 - Host-only frontend tooling can mislead verification because the canonical runtime in this workspace is the Dockerized `frappe` container.
-- Long-running or stuck container builds can leave background `vite build` processes behind if verification attempts are not cleaned up.
 - Some release jobs may still reveal hidden permission gaps once they run against GitHub, especially where branch pushes, PR creation, or release mutation depend on repository settings beyond workflow YAML.
 - The remaining Docker-action Node 20 warnings can create alert fatigue even though the build currently succeeds, and they depend on upstream action runtime updates rather than repo-local YAML alone.
 - The new exam feature crosses assessments, course aggregation, and certification logic, so regressions can appear in user flows that are not obviously “exam” screens.

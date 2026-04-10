@@ -1,9 +1,9 @@
 # Active Context
 
 ## Current Focus
-- 2026-04-04: Commit and checkpoint the new exam module after backend/runtime verification.
-- 2026-04-04: Keep the memory bank aligned with the new final-exam architecture, certification rule, and Docker-based verification workflow.
+- 2026-04-04: Keep the memory bank aligned with the new final-exam architecture, simplified CI workflow set, and Docker-based verification workflow.
 - 2026-04-04: Preserve the remaining manual browser QA gap for the exam UI and course integration views.
+- 2026-04-04: Review drag-and-drop learner interaction for remaining UI/UX friction after the one-at-a-time and touch-friendly changes.
 
 ## Recent Changes
 - 2026-03-18: Reviewed repository docs, packaging files, hooks, auth layer, SPA router, frontend bootstrap, and test/CI surface.
@@ -24,16 +24,18 @@
 - 2026-04-04: Added prerequisite evaluation for course progress, selected quizzes, and selected drag-and-drop activities with AND-only semantics and `Attempted` / `Passed` requirement modes.
 - 2026-04-04: Live-verified the exam module inside the running `frappe` container with `bench migrate`, course detail/outline payload checks, a successful smoke exam submission path, member-specific prerequisite status checks, and certification gating checks.
 - 2026-04-04: Fixed stale exam output during live verification by replacing cached exam loads with uncached `frappe.get_doc` calls in exam status helpers.
+- 2026-04-04: Simplified the GitHub Actions footprint so PR validation centers on `ci.yml` and `linters.yml`, release images build from tags in `build.yml`, and UI tests are manual-only for now.
+- 2026-04-04: Removed the local-repo Codecov upload path from `ci.yml`; coverage can still be generated without relying on a Codecov integration.
+- 2026-04-04: Fixed the remaining local quality gates for the exam branch: Semgrep-reviewed guest endpoint suppressions are formatted cleanly, `pre_commit --all-files` passes in the `frappe` container, and container `yarn build` succeeds after moving problematic mobile lesson actions into named handlers.
 
 ## Next Actions
 - Run a manual browser pass for the new exam UI on `/lms/exams`, `/lms/exams/:examID`, `/lms/exam/:examID`, and the course overview/outline exam surfaces.
 - Decide whether to add editor-side chapter actions for attaching exams or keep chapter placement solely on the exam form for now.
 - Continue frontend verification from the parent compose project using `docker compose exec frappe ...` instead of host-shell builds.
-- Monitor GitHub Actions release runs to confirm the new `FRAPPE_REF` / `PAYMENTS_REF` validation produces clear failures when refs are wrong and that successful builds keep pushing to GHCR.
+- Review drag-and-drop learner interaction for remaining friction in answer-bank focus, mobile paging, and step-by-step progression.
 - Revisit the remaining Node 20 deprecation warning only when Docker publishes Node 24-ready action runtimes or when a test branch is ready to opt into forced Node 24 execution.
 
 ## Blockers
 - Host-shell frontend validation is misleading in this workspace because the app is meant to run inside Docker.
-- Container-side frontend validation currently hangs in `vite build` when run as `docker compose exec frappe bash -lc 'cd /home/frappe/frappe-bench/apps/lms/frontend && yarn build'`.
 - Remaining Node 20 deprecation warnings cannot be fully removed from the build workflow until Docker updates the affected GitHub Actions runtimes upstream.
 - Playwright/browser automation is not available in this session, so exam verification is currently limited to Docker + Bench runtime checks plus any manual browser QA the user performs.
