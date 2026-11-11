@@ -1066,6 +1066,7 @@ def get_course_fields():
 		"currency",
 		"amount_usd",
 		"enable_certification",
+		"minimum_progress_for_certificate",
 		"lessons",
 		"enrollments",
 		"rating",
