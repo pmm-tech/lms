@@ -227,8 +227,11 @@ def process_results(results: list, exam_doc: LMSExam):
 
 
 def create_submission(exam_doc: LMSExam, results: list, score_out_of: int, passing_percentage: float):
+	# One source for the member: the count and the row it numbers must agree, and
+	# they cannot drift if they read the same variable.
+	member = frappe.session.user
 	submission = frappe.new_doc("LMS Exam Submission")
-	attempt_number = get_exam_attempt_count(exam_doc.name) + 1
+	attempt_number = get_exam_attempt_count(exam_doc.name, member) + 1
 	submission.update(
 		{
 			"doctype": "LMS Exam Submission",
@@ -236,7 +239,7 @@ def create_submission(exam_doc: LMSExam, results: list, score_out_of: int, passi
 			"result": results,
 			"score": 0,
 			"score_out_of": score_out_of,
-			"member": frappe.session.user,
+			"member": member,
 			"percentage": 0,
 			"passing_percentage": passing_percentage,
 			"attempt_number": attempt_number,

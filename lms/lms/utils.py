@@ -364,10 +364,17 @@ def get_course_exam(course: str, member: str = None):
 	return get_exam_status(exam_name, member)
 
 
-def get_exam_attempt_count(exam: str, member: str = None):
+def get_exam_attempt_count(exam: str, member: str):
+	"""How many submissions `member` has made for `exam`.
+
+	`member` is required on purpose. It used to default to
+	`frappe.session.user`, which made an omitted argument look correct whenever
+	the session happened to *be* the student — and silently wrong the moment it
+	was not. Two call sites had already omitted it.
+	"""
 	return frappe.db.count(
 		"LMS Exam Submission",
-		{"exam": exam, "member": member or frappe.session.user},
+		{"exam": exam, "member": member},
 	)
 
 
