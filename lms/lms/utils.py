@@ -320,12 +320,40 @@ def get_course_progress(course: str, member: str = None):
 	lesson_count = get_lessons(course, get_details=False)
 	if not lesson_count:
 		return 0
-	completed_lessons = frappe.db.count(
-		"LMS Course Progress",
-		{"course": course, "member": member or frappe.session.user, "status": "Complete"},
+
+	# Count *distinct* lessons that the course actually references. Counting rows
+	# let a duplicate or stray `LMS Course Progress` row take a course past 100 —
+	# production's 101.613% student is one extra row over an otherwise complete
+	# course. An unreferenced lesson is not in the denominator, so it must not be
+	# in the numerator either.
+	chapter_names = [chapter.get("name") for chapter in get_chapters(course)]
+	referenced_lessons = set(
+		frappe.get_all(
+			"Lesson Reference",
+			filters={"parent": ["in", chapter_names], "parenttype": "Course Chapter"},
+			pluck="lesson",
+		)
 	)
+	completed_lessons = len(
+		set(
+			frappe.get_all(
+				"LMS Course Progress",
+				filters={
+					"course": course,
+					"member": member or frappe.session.user,
+					"status": "Complete",
+				},
+				pluck="lesson",
+			)
+		)
+		& referenced_lessons
+	)
+
 	precision = cint(frappe.db.get_default("float_precision")) or 3
-	return flt(((completed_lessons / lesson_count) * 100), precision)
+	progress = flt(((completed_lessons / lesson_count) * 100), precision)
+	# The clamp is belt and braces: duplicate Lesson Reference rows would make the
+	# denominator smaller than the numerator.
+	return min(progress, 100.0)
 
 
 def get_course_exam(course: str, member: str = None):
