@@ -7,7 +7,7 @@ import re
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import cint, comma_and, cstr, get_datetime, now_datetime
+from frappe.utils import add_to_date, cint, comma_and, cstr, get_datetime, now_datetime
 
 from lms.lms.doctype.lms_quiz.lms_quiz import _save_file, get_corrupted_image_msg, verify_answer
 from lms.lms.utils import (
@@ -171,6 +171,24 @@ def submit_exam(exam: str, results: str):
 	score_out_of = exam_doc.total_marks
 	percentage = (score / score_out_of) * 100 if score_out_of else 0
 
+	# A `pagehide` beacon re-posts the same sitting — it fires on tab close,
+	# reload and navigation, and it is the one submit path with no client-side
+	# guard. `can_attempt` covers attempt limits and prerequisites, not
+	# idempotency, and with `max_attempts = 0` there is nothing else to stop it,
+	# so the server has to. A second submit inside this window is the same
+	# sitting re-sent; outside it, an ordinary retake.
+	existing = get_recent_submission(exam, frappe.session.user)
+	if existing:
+		return {
+			"score": existing.score,
+			"score_out_of": existing.score_out_of,
+			"submission": existing.name,
+			"pass": existing.percentage >= exam_doc.passing_percentage,
+			"percentage": existing.percentage,
+			"is_open_ended": is_open_ended,
+			"status": get_exam_status(exam),
+		}
+
 	submission = create_submission(exam_doc, results, score_out_of, exam_doc.passing_percentage)
 	return {
 		"score": score,
@@ -224,6 +242,35 @@ def process_results(results: list, exam_doc: LMSExam):
 		"score": score,
 		"is_open_ended": is_open_ended,
 	}
+
+
+# A second submit inside this window is the same sitting re-sent, not a retake.
+# Comfortably longer than a beacon round-trip, and far shorter than sitting the
+# exam. Tune here rather than at the call site.
+DUPLICATE_SUBMISSION_WINDOW_SECONDS = 60
+
+
+def get_recent_submission(exam: str, member: str):
+	"""The member's submission for `exam`, if one was created moments ago.
+
+	Returns None once the last submission is older than the window, so a genuine
+	retake is unaffected.
+	"""
+	submissions = frappe.get_all(
+		"LMS Exam Submission",
+		filters={
+			"exam": exam,
+			"member": member,
+			"creation": (
+				">",
+				add_to_date(now_datetime(), seconds=-DUPLICATE_SUBMISSION_WINDOW_SECONDS),
+			),
+		},
+		fields=["name", "score", "score_out_of", "percentage"],
+		order_by="creation desc",
+		limit_page_length=1,
+	)
+	return submissions[0] if submissions else None
 
 
 def create_submission(exam_doc: LMSExam, results: list, score_out_of: int, passing_percentage: float):
