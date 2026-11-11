@@ -1656,7 +1656,7 @@ def get_course_completion_stats(batch: str) -> list:
 		.groupby(BatchCourse.course, BatchCourse.title)
 		.select(
 			BatchCourse.title,
-			fn.Count(Case().when(Enrollment.progress == 100, Enrollment.member)).distinct().as_("completed"),
+			fn.Count(Case().when(Enrollment.progress >= 100, Enrollment.member)).distinct().as_("completed"),
 		)
 	).run(as_dict=True)
 

@@ -65,6 +65,11 @@ class TestCertificateEligibility(BaseTestUtils):
 			}
 		)
 		exam.save(ignore_permissions=True)
+		# `calculate_total_marks` forces an exam with no questions to 100%, so
+		# the mark we asked for has to be pinned after save. Building a real
+		# question set here would test exam construction, not the certificate
+		# gate, and a question needs the naming-series workaround besides.
+		exam.db_set("passing_percentage", passing_percentage)
 		self.cleanup_items.append(("LMS Exam", exam.name))
 		return exam
 
