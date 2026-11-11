@@ -53,16 +53,102 @@ class TestCertificateEligibility(BaseTestUtils):
 		)
 		frappe.db.set_value("LMS Enrollment", name, "progress", value)
 
+	def _create_exam(self, passing_percentage=80):
+		"""A final exam attached to the course, so `get_course_exam` returns a status."""
+		exam = frappe.new_doc("LMS Exam")
+		exam.update(
+			{
+				"title": "Eligibility Boundary Exam",
+				"course": self.course.name,
+				"is_final_exam": 1,
+				"passing_percentage": passing_percentage,
+			}
+		)
+		exam.save(ignore_permissions=True)
+		self.cleanup_items.append(("LMS Exam", exam.name))
+		return exam
+
+	def _record_submission(self, exam, percentage):
+		"""A submission row is all `has_passed_exam` reads — no question plumbing."""
+		submission = frappe.new_doc("LMS Exam Submission")
+		submission.update(
+			{
+				"exam": exam.name,
+				"member": self.student.email,
+				"percentage": percentage,
+				"passing_percentage": exam.passing_percentage,
+				"score": percentage,
+				"score_out_of": 100,
+			}
+		)
+		submission.insert(ignore_permissions=True)
+		self.cleanup_items.append(("LMS Exam Submission", submission.name))
+		return submission
+
+	def _assert_eligible(self):
+		"""The gate must not throw. Reported as a failure, not an error."""
+		try:
+			validate_certification_eligibility(self.course.name)
+		except frappe.exceptions.ValidationError as error:
+			self.fail(f"expected eligible, but was refused: {error}")
+
 	def test_api_eligibility_accepts_over_100(self):
 		"""`lms_certificate.py:227` already accepts >100. Guards against a `>=` edit."""
 		self._set_progress(101.613)
-		validate_certification_eligibility(self.course.name)  # must not throw
+		self._assert_eligible()
 
-	def test_api_eligibility_still_refuses_below_100(self):
-		"""The gate must still hold below 100 until D1 decides the real threshold."""
-		self._set_progress(99.0)
-		with self.assertRaises(frappe.exceptions.ValidationError):
+	# --- D1: the threshold is 80, not 100 ---------------------------------
+	#
+	# D1 settled the rule as ">=80% progress AND a passed final exam". These
+	# four pin that boundary. The first, third and fourth are RED until T2.2
+	# replaces the hard-coded 100 with a configurable threshold.
+
+	def test_exactly_80_with_a_passed_final_is_eligible(self):
+		"""D1: exactly 80 plus a passed final must certify.
+
+		Fails today: `lms_certificate.py:227` is `if progress < 100`, so 80 is
+		refused with "You have not completed the course yet."
+		"""
+		exam = self._create_exam()
+		self._record_submission(exam, 90)
+		self._set_progress(80)
+		self._assert_eligible()
+
+	def test_79_9_with_a_passed_final_is_not_eligible(self):
+		"""D1: 79.9 is below the threshold and must still be refused.
+
+		Passes today and must keep passing. Asserting the message keeps it
+		honest — it has to fail on *progress*, not slide through the exam gate.
+		"""
+		exam = self._create_exam()
+		self._record_submission(exam, 90)
+		self._set_progress(79.9)
+		with self.assertRaises(frappe.exceptions.ValidationError) as caught:
 			validate_certification_eligibility(self.course.name)
+		self.assertIn("not completed", str(caught.exception))
+
+	def test_over_80_with_a_failed_final_is_not_eligible(self):
+		"""D1: progress alone is not enough; the final exam must be passed.
+
+		Fails today, and diagnostically so: the throw is about progress, so the
+		message says "not completed" rather than "final exam". Once the
+		threshold is 80 this student clears progress and is stopped by the exam
+		gate instead.
+		"""
+		self._create_exam()
+		self._set_progress(90)
+		with self.assertRaises(frappe.exceptions.ValidationError) as caught:
+			validate_certification_eligibility(self.course.name)
+		self.assertIn("final exam", str(caught.exception))
+
+	def test_over_80_with_no_final_required_is_eligible(self):
+		"""D1: a course with no final exam certifies on progress alone.
+
+		Fails today: the course has no `LMS Exam`, so the exam gate is skipped
+		and the only thing refusing this student is the hard-coded 100.
+		"""
+		self._set_progress(90)
+		self._assert_eligible()
 
 	def test_doctype_accepts_over_100(self):
 		"""`lms_certificate.py:94` already accepts >100, so a manual issue works."""
