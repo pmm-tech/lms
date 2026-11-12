@@ -244,9 +244,7 @@ def get_minimum_progress_for_certificate(course):
 	for a column that was never set, and `flt(None)` would silently certify
 	everyone.
 	"""
-	value = frappe.db.get_value(
-		"LMS Course", course, "minimum_progress_for_certificate"
-	)
+	value = frappe.db.get_value("LMS Course", course, "minimum_progress_for_certificate")
 	if value is None:
 		return DEFAULT_MINIMUM_PROGRESS_FOR_CERTIFICATE
 	return flt(value)

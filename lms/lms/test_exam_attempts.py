@@ -132,9 +132,7 @@ class TestExamAttemptBookkeeping(BaseTestUtils):
 		second = submit_exam(self.exam.name, self._full_marks_results())
 		self._track(second)
 
-		count = frappe.db.count(
-			"LMS Exam Submission", {"exam": self.exam.name, "member": self.student.email}
-		)
+		count = frappe.db.count("LMS Exam Submission", {"exam": self.exam.name, "member": self.student.email})
 		self.assertEqual(count, 1, "a duplicate pagehide re-post must not create a second submission")
 		self.assertEqual(second.get("submission"), first.get("submission"))
 

@@ -132,9 +132,7 @@ def submit_quiz(quiz: str, results: str):
 	# Same guard as `submit_exam`, for the same reason: `Quiz.vue` sends the
 	# submit beacon on `pagehide` with no client-side guard, so one sitting can
 	# arrive twice. Without this the quiz path inserts a second submission.
-	existing = get_recent_submission(
-		"LMS Quiz Submission", {"quiz": quiz, "member": frappe.session.user}
-	)
+	existing = get_recent_submission("LMS Quiz Submission", {"quiz": quiz, "member": frappe.session.user})
 	if existing:
 		return {
 			"score": existing.score,

@@ -178,9 +178,7 @@ def submit_exam(exam: str, results: str):
 	# idempotency, and with `max_attempts = 0` there is nothing else to stop it,
 	# so the server has to. A second submit inside this window is the same
 	# sitting re-sent; outside it, an ordinary retake.
-	existing = get_recent_submission(
-		"LMS Exam Submission", {"exam": exam, "member": frappe.session.user}
-	)
+	existing = get_recent_submission("LMS Exam Submission", {"exam": exam, "member": frappe.session.user})
 	if existing:
 		return {
 			"score": existing.score,

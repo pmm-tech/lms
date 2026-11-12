@@ -23,9 +23,7 @@ from lms.lms.utils import recalculate_course_progress
 class TestProgressRecalculation(BaseTestUtils):
 	def setUp(self):
 		super().setUp()
-		self.student = self._create_user(
-			"recalc-student@example.com", "Recalc", "Student", ["LMS Student"]
-		)
+		self.student = self._create_user("recalc-student@example.com", "Recalc", "Student", ["LMS Student"])
 
 		self.course = self._create_course("Recalculation Course")
 		self._create_enrollment(self.student.email, self.course.name)
@@ -35,9 +33,7 @@ class TestProgressRecalculation(BaseTestUtils):
 
 		self.lessons = []
 		for index in (1, 2):
-			lesson = self._create_lesson(
-				f"Recalc Lesson {index}", self.chapter.name, self.course.name
-			)
+			lesson = self._create_lesson(f"Recalc Lesson {index}", self.chapter.name, self.course.name)
 			self._create_lesson_reference(self.chapter.name, lesson.name)
 			self.lessons.append(lesson)
 

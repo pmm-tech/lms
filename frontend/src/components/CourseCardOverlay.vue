@@ -291,7 +291,7 @@ const canGetCertificate = computed(() => {
 	const progress = Number(props.course.data?.membership?.progress ?? 0)
 	const minimumProgress = Number(
 		props.course.data?.minimum_progress_for_certificate ??
-			CERTIFICATE_MINIMUM_PROGRESS_FALLBACK,
+			CERTIFICATE_MINIMUM_PROGRESS_FALLBACK
 	)
 
 	if (

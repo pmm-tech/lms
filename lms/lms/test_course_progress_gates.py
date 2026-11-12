@@ -34,9 +34,7 @@ class TestCourseProgressGates(BaseTestUtils):
 		self._create_chapter_reference(self.course.name, self.chapter.name)
 		self.lessons = []
 		for index in (1, 2):
-			lesson = self._create_lesson(
-				f"Gate Lesson {index}", self.chapter.name, self.course.name
-			)
+			lesson = self._create_lesson(f"Gate Lesson {index}", self.chapter.name, self.course.name)
 			self._create_lesson_reference(self.chapter.name, lesson.name)
 			self.lessons.append(lesson)
 

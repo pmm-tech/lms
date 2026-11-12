@@ -23,9 +23,7 @@ from lms.lms.test_helpers import BaseTestUtils
 class TestQuizSubmissionIdempotency(BaseTestUtils):
 	def setUp(self):
 		super().setUp()
-		self.student = self._create_user(
-			"quiz-student@example.com", "Quiz", "Student", ["LMS Student"]
-		)
+		self.student = self._create_user("quiz-student@example.com", "Quiz", "Student", ["LMS Student"])
 
 		self.course = self._create_course("Quiz Idempotency Course")
 		self._create_enrollment(self.student.email, self.course.name)
@@ -63,8 +61,6 @@ class TestQuizSubmissionIdempotency(BaseTestUtils):
 		second = submit_quiz(self.quiz.name, self._full_marks_results())
 		self._track(second)
 
-		count = frappe.db.count(
-			"LMS Quiz Submission", {"quiz": self.quiz.name, "member": self.student.email}
-		)
+		count = frappe.db.count("LMS Quiz Submission", {"quiz": self.quiz.name, "member": self.student.email})
 		self.assertEqual(count, 1, "a duplicate pagehide re-post must not create a second submission")
 		self.assertEqual(second.get("submission"), first.get("submission"))

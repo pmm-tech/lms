@@ -180,9 +180,7 @@ class TestCertificateEligibility(BaseTestUtils):
 		self.cleanup_items.append(("LMS Certificate", certificate.name))
 		self.assertTrue(certificate)
 		self.assertTrue(
-			frappe.db.exists(
-				"LMS Certificate", {"course": self.course.name, "member": self.student.email}
-			)
+			frappe.db.exists("LMS Certificate", {"course": self.course.name, "member": self.student.email})
 		)
 
 	# --- T2.7: the enrolment -> certificate link --------------------------
