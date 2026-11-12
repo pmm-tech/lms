@@ -209,3 +209,26 @@ class TestCertificateEligibility(BaseTestUtils):
 			),
 			certificate.name,
 		)
+
+	# --- T2.8: the inert autoname Property Setter -------------------------
+
+	def test_certificate_names_are_hashes_not_a_property_setter_series(self):
+		"""T2.8: the `autoname = ####` Property Setter is inert.
+
+		`LMS Certificate.autoname()` is a controller *method*, and frappe's
+		`set_new_name` runs a declared method before it ever consults the
+		DocType's `autoname` property — so the setter never executes and live
+		names are 10-character hashes.
+
+		This one is a safety net rather than a reproducer: it passes before the
+		setter is removed, and its job is to still pass afterwards, proving the
+		removal changed nothing. Deleting stale configuration without that check
+		is how naming silently changes.
+		"""
+		self._set_progress(101.613)
+
+		certificate = create_certificate(self.course.name)
+		self.cleanup_items.append(("LMS Certificate", certificate.name))
+
+		self.assertRegex(certificate.name, r"^[a-z0-9]{10}$")
+		self.assertNotRegex(certificate.name, r"^\d+$")
