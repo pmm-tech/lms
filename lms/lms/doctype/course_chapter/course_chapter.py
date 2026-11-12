@@ -67,6 +67,11 @@ class CourseChapter(Document):
 			method=recalculate_progress_for_enrollments,
 			queue="long",
 			is_async=True,
+			# Without this the job can reach a worker before the chapter's own
+			# transaction commits, so it would recompute against the lesson set
+			# as it was *before* the edit. frappe-semgrep-rules flags the omission
+			# and is right to.
+			enqueue_after_commit=True,
 			now=frappe.flags.in_test,
 			course=self.course,
 			enrollments=enrollments,
