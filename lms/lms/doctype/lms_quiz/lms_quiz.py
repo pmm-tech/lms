@@ -16,6 +16,7 @@ from fuzzywuzzy import fuzz
 from lms.lms.doctype.course_lesson.course_lesson import save_progress
 from lms.lms.utils import (
 	generate_slug,
+	get_recent_submission,
 )
 
 
@@ -127,6 +128,21 @@ def submit_quiz(quiz: str, results: str):
 
 	score_out_of = quiz_details.total_marks
 	percentage = (score / score_out_of) * 100 if score_out_of else 0
+
+	# Same guard as `submit_exam`, for the same reason: `Quiz.vue` sends the
+	# submit beacon on `pagehide` with no client-side guard, so one sitting can
+	# arrive twice. Without this the quiz path inserts a second submission.
+	existing = get_recent_submission("LMS Quiz Submission", {"quiz": quiz, "member": frappe.session.user})
+	if existing:
+		return {
+			"score": existing.score,
+			"score_out_of": existing.score_out_of,
+			"submission": existing.name,
+			"pass": existing.percentage >= quiz_details.passing_percentage,
+			"percentage": existing.percentage,
+			"is_open_ended": is_open_ended,
+		}
+
 	submission = create_submission(quiz, results, score_out_of, quiz_details.passing_percentage)
 	save_progress_after_quiz(quiz_details, percentage)
 

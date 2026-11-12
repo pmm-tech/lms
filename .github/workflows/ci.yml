@@ -70,6 +70,20 @@ jobs:
     - name: create bench site
       working-directory: /home/runner/frappe-bench
       run: bench new-site --mariadb-root-password root --admin-password admin frappe.local
+    - name: pin setuptools for pkg_resources
+      # The payments app pulls in `razorpay`, whose SDK imports pkg_resources --
+      # removed in setuptools 81. Without this, `install-app lms` dies while
+      # importing the Razorpay Settings module, before a single test runs, and
+      # the failure names Razorpay rather than setuptools.
+      #
+      # This job last passed on 2026-04-10; the breakage is drift in the runner
+      # image, not in this repository. Setuptools' own warning is the guidance
+      # followed here: "Refrain from using this package or pin to Setuptools<81".
+      #
+      # The payments app is not removable to dodge this: `lms/hooks.py` declares
+      # `required_apps = ["frappe/payments"]`, and production runs it.
+      working-directory: /home/runner/frappe-bench
+      run: ./env/bin/pip install 'setuptools<81'
     - name: install lms app
       working-directory: /home/runner/frappe-bench
       run: bench --site frappe.local install-app lms

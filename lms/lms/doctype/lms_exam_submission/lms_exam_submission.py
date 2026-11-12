@@ -41,7 +41,7 @@ class LMSExamSubmission(Document):
 	def set_attempt_number(self):
 		if self.attempt_number:
 			return
-		self.attempt_number = get_exam_attempt_count(self.exam) + 1
+		self.attempt_number = get_exam_attempt_count(self.exam, self.member) + 1
 
 
 class MaximumExamAttemptsExceededError(frappe.DuplicateEntryError):

@@ -280,10 +280,23 @@ const is_instructor = () => {
 	return user_is_instructor
 }
 
+// Must match DEFAULT_MINIMUM_PROGRESS_FOR_CERTIFICATE in lms_certificate.py, and
+// covers a course that predates the field.
+const CERTIFICATE_MINIMUM_PROGRESS_FALLBACK = 80
+
 const canGetCertificate = computed(() => {
+	// Numeric coercion matters: the API serialises Decimal as a string often
+	// enough that `"101.613" >= "80"` would compare lexicographically and be
+	// false — hiding the button from exactly the student it is meant to reach.
+	const progress = Number(props.course.data?.membership?.progress ?? 0)
+	const minimumProgress = Number(
+		props.course.data?.minimum_progress_for_certificate ??
+			CERTIFICATE_MINIMUM_PROGRESS_FALLBACK
+	)
+
 	if (
 		props.course.data?.enable_certification &&
-		props.course.data?.membership?.progress == 100 &&
+		progress >= minimumProgress &&
 		(!props.course.data?.final_exam_required ||
 			props.course.data?.final_exam_passed)
 	) {

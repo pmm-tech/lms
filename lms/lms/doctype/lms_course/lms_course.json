@@ -37,6 +37,7 @@
   "paid_certificate",
   "column_break_acoj",
   "enable_certification",
+  "minimum_progress_for_certificate",
   "section_break_vqbh",
   "course_price",
   "currency",
@@ -136,6 +137,14 @@
    "fieldname": "enable_certification",
    "fieldtype": "Check",
    "label": "Completion Certificate"
+  },
+  {
+   "default": "80",
+   "description": "Minimum course progress percentage required to issue a certificate.",
+   "fieldname": "minimum_progress_for_certificate",
+   "fieldtype": "Float",
+   "label": "Minimum Progress for Certificate",
+   "precision": "3"
   },
   {
    "fieldname": "related_courses",

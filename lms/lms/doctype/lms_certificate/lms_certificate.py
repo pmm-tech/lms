@@ -6,7 +6,7 @@ from frappe import _
 from frappe.email.doctype.email_template.email_template import get_email_template
 from frappe.model.document import Document
 from frappe.model.naming import make_autoname
-from frappe.utils import nowdate
+from frappe.utils import flt, nowdate
 from frappe.utils.telemetry import capture
 
 from lms.lms.utils import get_course_exam, has_passed_exam
@@ -22,7 +22,26 @@ class LMSCertificate(Document):
 
 	def after_insert(self):
 		capture("certificate_issued", "lms")
+		self.link_to_enrollment()
 		self.send_certification_email()
+
+	def link_to_enrollment(self):
+		"""Point the member's enrolment at the certificate just issued.
+
+		`LMS Enrollment.certificate` exists but nothing ever wrote it, so it is
+		NULL for every row and any "who is certified" query joining on it
+		under-reports — including the check that T3.6's backfill depends on.
+		"""
+		if not self.course or not self.member:
+			return
+
+		enrollment = frappe.db.get_value(
+			"LMS Enrollment",
+			{"course": self.course, "member": self.member},
+			"name",
+		)
+		if enrollment:
+			frappe.db.set_value("LMS Enrollment", enrollment, "certificate", self.name)
 
 	def send_certification_email(self):
 		outgoing_email_account = frappe.get_cached_value(
@@ -91,7 +110,7 @@ class LMSCertificate(Document):
 				progress = frappe.db.get_value(
 					"LMS Enrollment", {"course": self.course, "member": self.member}, "progress"
 				)
-				if progress < 100:
+				if progress < get_minimum_progress_for_certificate(self.course):
 					frappe.throw(
 						_("Certification cannot be issued as the member has not completed the course.")
 					)
@@ -214,6 +233,23 @@ def get_default_certificate_template():
 	return default_certificate_template
 
 
+DEFAULT_MINIMUM_PROGRESS_FOR_CERTIFICATE = 80
+
+
+def get_minimum_progress_for_certificate(course):
+	"""Progress a member must reach before a certificate may be issued.
+
+	Courses created before this field existed have no value stored, so NULL
+	falls back to 80 rather than to zero — `frappe.db.get_value` returns None
+	for a column that was never set, and `flt(None)` would silently certify
+	everyone.
+	"""
+	value = frappe.db.get_value("LMS Course", course, "minimum_progress_for_certificate")
+	if value is None:
+		return DEFAULT_MINIMUM_PROGRESS_FOR_CERTIFICATE
+	return flt(value)
+
+
 def validate_certification_eligibility(course):
 	if not frappe.db.exists("LMS Enrollment", {"course": course, "member": frappe.session.user}):
 		frappe.throw(_("You are not enrolled in this course."))
@@ -224,7 +260,7 @@ def validate_certification_eligibility(course):
 	progress = frappe.db.get_value(
 		"LMS Enrollment", {"course": course, "member": frappe.session.user}, "progress"
 	)
-	if progress < 100:
+	if progress < get_minimum_progress_for_certificate(course):
 		frappe.throw(_("You have not completed the course yet."))
 
 	exam_status = get_course_exam(course, frappe.session.user)

@@ -12,6 +12,7 @@ from frappe.model.document import Document
 from frappe.rate_limiter import rate_limit
 from frappe.utils import (
 	add_months,
+	add_to_date,
 	cint,
 	flt,
 	fmt_money,
@@ -320,12 +321,40 @@ def get_course_progress(course: str, member: str = None):
 	lesson_count = get_lessons(course, get_details=False)
 	if not lesson_count:
 		return 0
-	completed_lessons = frappe.db.count(
-		"LMS Course Progress",
-		{"course": course, "member": member or frappe.session.user, "status": "Complete"},
+
+	# Count *distinct* lessons that the course actually references. Counting rows
+	# let a duplicate or stray `LMS Course Progress` row take a course past 100 —
+	# production's 101.613% student is one extra row over an otherwise complete
+	# course. An unreferenced lesson is not in the denominator, so it must not be
+	# in the numerator either.
+	chapter_names = [chapter.get("name") for chapter in get_chapters(course)]
+	referenced_lessons = set(
+		frappe.get_all(
+			"Lesson Reference",
+			filters={"parent": ["in", chapter_names], "parenttype": "Course Chapter"},
+			pluck="lesson",
+		)
 	)
+	completed_lessons = len(
+		set(
+			frappe.get_all(
+				"LMS Course Progress",
+				filters={
+					"course": course,
+					"member": member or frappe.session.user,
+					"status": "Complete",
+				},
+				pluck="lesson",
+			)
+		)
+		& referenced_lessons
+	)
+
 	precision = cint(frappe.db.get_default("float_precision")) or 3
-	return flt(((completed_lessons / lesson_count) * 100), precision)
+	progress = flt(((completed_lessons / lesson_count) * 100), precision)
+	# The clamp is belt and braces: duplicate Lesson Reference rows would make the
+	# denominator smaller than the numerator.
+	return min(progress, 100.0)
 
 
 def get_course_exam(course: str, member: str = None):
@@ -336,11 +365,48 @@ def get_course_exam(course: str, member: str = None):
 	return get_exam_status(exam_name, member)
 
 
-def get_exam_attempt_count(exam: str, member: str = None):
+def get_exam_attempt_count(exam: str, member: str):
+	"""How many submissions `member` has made for `exam`.
+
+	`member` is required on purpose. It used to default to
+	`frappe.session.user`, which made an omitted argument look correct whenever
+	the session happened to *be* the student — and silently wrong the moment it
+	was not. Two call sites had already omitted it.
+	"""
 	return frappe.db.count(
 		"LMS Exam Submission",
-		{"exam": exam, "member": member or frappe.session.user},
+		{"exam": exam, "member": member},
 	)
+
+
+# A second submit inside this window is the same sitting re-sent, not a retake.
+# Comfortably longer than a beacon round-trip, and far shorter than sitting the
+# assessment. Shared by the exam and quiz paths so the two cannot drift.
+DUPLICATE_SUBMISSION_WINDOW_SECONDS = 60
+
+
+def get_recent_submission(doctype: str, filters: dict):
+	"""A submission matching `filters` created moments ago, or None.
+
+	Both `Exam.vue` and `Quiz.vue` send a submit beacon on `pagehide` — tab
+	close, reload, navigation — and neither has a client-side guard, so one
+	sitting can arrive twice. Returns None once the last match is older than the
+	window, so a genuine retake is unaffected.
+	"""
+	submissions = frappe.get_all(
+		doctype,
+		filters={
+			**filters,
+			"creation": (
+				">",
+				add_to_date(now_datetime(), seconds=-DUPLICATE_SUBMISSION_WINDOW_SECONDS),
+			),
+		},
+		fields=["name", "score", "score_out_of", "percentage"],
+		order_by="creation desc",
+		limit_page_length=1,
+	)
+	return submissions[0] if submissions else None
 
 
 def has_passed_exam(exam: str, member: str = None):
@@ -1038,6 +1104,7 @@ def get_course_fields():
 		"currency",
 		"amount_usd",
 		"enable_certification",
+		"minimum_progress_for_certificate",
 		"lessons",
 		"enrollments",
 		"rating",
@@ -1656,7 +1723,7 @@ def get_course_completion_stats(batch: str) -> list:
 		.groupby(BatchCourse.course, BatchCourse.title)
 		.select(
 			BatchCourse.title,
-			fn.Count(Case().when(Enrollment.progress == 100, Enrollment.member)).distinct().as_("completed"),
+			fn.Count(Case().when(Enrollment.progress >= 100, Enrollment.member)).distinct().as_("completed"),
 		)
 	).run(as_dict=True)
 

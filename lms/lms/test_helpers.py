@@ -1,14 +1,14 @@
 import json
 
 import frappe
-from frappe.tests import UnitTestCase
+from frappe.tests.utils import FrappeTestCase
 from frappe.utils import add_days, nowdate
 
 from lms.lms.doctype.lms_certificate.lms_certificate import get_default_certificate_template
 from lms.lms.doctype.lms_quiz.lms_quiz import submit_quiz
 
 
-class BaseTestUtils(UnitTestCase):
+class BaseTestUtils(FrappeTestCase):
 	"""
 	Base class with helper methods for creating test data.
 	Subclasses should call super().setUp() and super().tearDown().
@@ -46,6 +46,8 @@ class BaseTestUtils(UnitTestCase):
 		return user
 
 	def _create_course(self, title="Utility Course", instructor="frappe@example.com"):
+		if not frappe.db.exists("User", instructor):
+			self._create_user(instructor, "Frappe", "Test", ["Course Creator"])
 		existing = frappe.db.exists("LMS Course", {"title": title})
 		if existing:
 			return frappe.get_doc("LMS Course", existing)
@@ -181,6 +183,10 @@ class BaseTestUtils(UnitTestCase):
 		title="Utility Training",
 		evaluator="frappe@example.com",
 	):
+		if not frappe.db.exists("User", instructor):
+			self._create_user(instructor, "Frappe", "Test", ["Course Creator"])
+		if not frappe.db.exists("Course Evaluator", evaluator):
+			self._create_evaluator(evaluator)
 		existing = frappe.db.exists("LMS Batch", {"title": title})
 		if existing:
 			return frappe.get_doc("LMS Batch", existing)

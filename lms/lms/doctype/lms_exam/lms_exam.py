@@ -14,6 +14,7 @@ from lms.lms.utils import (
 	generate_slug,
 	get_exam_attempt_count,
 	get_exam_status,
+	get_recent_submission,
 )
 
 
@@ -171,6 +172,24 @@ def submit_exam(exam: str, results: str):
 	score_out_of = exam_doc.total_marks
 	percentage = (score / score_out_of) * 100 if score_out_of else 0
 
+	# A `pagehide` beacon re-posts the same sitting — it fires on tab close,
+	# reload and navigation, and it is the one submit path with no client-side
+	# guard. `can_attempt` covers attempt limits and prerequisites, not
+	# idempotency, and with `max_attempts = 0` there is nothing else to stop it,
+	# so the server has to. A second submit inside this window is the same
+	# sitting re-sent; outside it, an ordinary retake.
+	existing = get_recent_submission("LMS Exam Submission", {"exam": exam, "member": frappe.session.user})
+	if existing:
+		return {
+			"score": existing.score,
+			"score_out_of": existing.score_out_of,
+			"submission": existing.name,
+			"pass": existing.percentage >= exam_doc.passing_percentage,
+			"percentage": existing.percentage,
+			"is_open_ended": is_open_ended,
+			"status": get_exam_status(exam),
+		}
+
 	submission = create_submission(exam_doc, results, score_out_of, exam_doc.passing_percentage)
 	return {
 		"score": score,
@@ -227,8 +246,11 @@ def process_results(results: list, exam_doc: LMSExam):
 
 
 def create_submission(exam_doc: LMSExam, results: list, score_out_of: int, passing_percentage: float):
+	# One source for the member: the count and the row it numbers must agree, and
+	# they cannot drift if they read the same variable.
+	member = frappe.session.user
 	submission = frappe.new_doc("LMS Exam Submission")
-	attempt_number = get_exam_attempt_count(exam_doc.name) + 1
+	attempt_number = get_exam_attempt_count(exam_doc.name, member) + 1
 	submission.update(
 		{
 			"doctype": "LMS Exam Submission",
@@ -236,7 +258,7 @@ def create_submission(exam_doc: LMSExam, results: list, score_out_of: int, passi
 			"result": results,
 			"score": 0,
 			"score_out_of": score_out_of,
-			"member": frappe.session.user,
+			"member": member,
 			"percentage": 0,
 			"passing_percentage": passing_percentage,
 			"attempt_number": attempt_number,
