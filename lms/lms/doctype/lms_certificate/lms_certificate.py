@@ -22,7 +22,26 @@ class LMSCertificate(Document):
 
 	def after_insert(self):
 		capture("certificate_issued", "lms")
+		self.link_to_enrollment()
 		self.send_certification_email()
+
+	def link_to_enrollment(self):
+		"""Point the member's enrolment at the certificate just issued.
+
+		`LMS Enrollment.certificate` exists but nothing ever wrote it, so it is
+		NULL for every row and any "who is certified" query joining on it
+		under-reports — including the check that T3.6's backfill depends on.
+		"""
+		if not self.course or not self.member:
+			return
+
+		enrollment = frappe.db.get_value(
+			"LMS Enrollment",
+			{"course": self.course, "member": self.member},
+			"name",
+		)
+		if enrollment:
+			frappe.db.set_value("LMS Enrollment", enrollment, "certificate", self.name)
 
 	def send_certification_email(self):
 		outgoing_email_account = frappe.get_cached_value(

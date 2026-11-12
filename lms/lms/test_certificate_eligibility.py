@@ -184,3 +184,28 @@ class TestCertificateEligibility(BaseTestUtils):
 				"LMS Certificate", {"course": self.course.name, "member": self.student.email}
 			)
 		)
+
+	# --- T2.7: the enrolment -> certificate link --------------------------
+
+	def test_issuing_a_certificate_links_it_from_the_enrolment(self):
+		"""T2.7: `LMS Enrollment.certificate` must point at the issued certificate.
+
+		The field exists and is NULL for every row — nothing has ever written it,
+		so any "who is certified" query that joins on it under-reports. That
+		matters before T3.6 issues certificates in bulk.
+
+		Fails today: the link stays empty.
+		"""
+		self._set_progress(101.613)
+
+		certificate = create_certificate(self.course.name)
+		self.cleanup_items.append(("LMS Certificate", certificate.name))
+
+		self.assertEqual(
+			frappe.db.get_value(
+				"LMS Enrollment",
+				{"course": self.course.name, "member": self.student.email},
+				"certificate",
+			),
+			certificate.name,
+		)
