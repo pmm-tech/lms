@@ -14,6 +14,7 @@
 - Frontend dev server uses Vite with a local `frappe-ui` checkout when available, otherwise the npm package fallback.
 - 2026-03-29: Container image builds are driven by `.github/workflows/build.yml` and now use `FRAPPE_REF` and `PAYMENTS_REF` repository variables, with backward compatibility for the older `FRAPPE_BRANCH` variable.
 - 2026-04-04: Live app verification for new DocTypes is currently most reliable through `docker compose exec frappe ...` with Bench commands against `lms.localhost`; direct host-shell Frappe/Python checks are less trustworthy in this workspace.
+- 2026-04-04: The active GitHub workflow set is intentionally small: `build.yml`, `ci.yml`, `linters.yml`, `release_notes.yml`, and `ui-tests.yml`. This fork does not currently maintain a Codecov upload path.
 
 ## Constraints
 - The repo mixes Python, Frappe metadata, Vue, Cypress, and generated assets, so changes often need cross-layer validation.
@@ -23,6 +24,7 @@
 - Docker-backed verification may be more reliable than host-shell verification because node/yarn availability and dependency state differ between the host and the running `frappe` container.
 - 2026-03-29: GitHub Actions build warnings about Node 20 deprecation still remain for the Docker-maintained actions (`docker/build-push-action`, `docker/login-action`, `docker/setup-buildx-action`, `docker/setup-qemu-action`) even after local workflow upgrades; this is currently an upstream action-runtime issue, not a repo-specific misconfiguration.
 - 2026-04-04: Ad hoc Python inside the `frappe` container may need explicit `sites_path` and writable log directories (`/home/frappe/logs`, `/home/frappe/frappe-bench/sites/<site>/logs`) if run outside normal Bench helpers during deep verification.
+- 2026-04-04: Local workflow reproduction should prefer the container. `python3 -m pre_commit run --all-files` and `yarn build` are both currently green inside the `frappe` service, while host-shell results can be misleading.
 
 ## Key Commands
 - `bench start`
@@ -32,6 +34,7 @@
 - `yarn test-local`
 - `ruff check .`
 - `docker compose exec frappe bash -lc 'cd /home/frappe/frappe-bench/apps/lms/frontend && yarn build'`
+- `docker compose exec frappe bash -lc 'cd /home/frappe/frappe-bench/apps/lms && python3 -m pre_commit run --show-diff-on-failure --color=always --all-files'`
 - `docker compose exec frappe bash -lc 'cd /home/frappe/frappe-bench && bench --site lms.localhost migrate'`
 - `docker compose exec frappe bash -lc 'cd /home/frappe/frappe-bench && bench --site lms.localhost execute <python.path> --kwargs \"{...}\"'`
 - `git ls-remote --heads https://github.com/frappe/frappe <ref>`
