@@ -12,6 +12,7 @@ from frappe.model.document import Document
 from frappe.rate_limiter import rate_limit
 from frappe.utils import (
 	add_months,
+	add_to_date,
 	cint,
 	flt,
 	fmt_money,
@@ -376,6 +377,36 @@ def get_exam_attempt_count(exam: str, member: str):
 		"LMS Exam Submission",
 		{"exam": exam, "member": member},
 	)
+
+
+# A second submit inside this window is the same sitting re-sent, not a retake.
+# Comfortably longer than a beacon round-trip, and far shorter than sitting the
+# assessment. Shared by the exam and quiz paths so the two cannot drift.
+DUPLICATE_SUBMISSION_WINDOW_SECONDS = 60
+
+
+def get_recent_submission(doctype: str, filters: dict):
+	"""A submission matching `filters` created moments ago, or None.
+
+	Both `Exam.vue` and `Quiz.vue` send a submit beacon on `pagehide` — tab
+	close, reload, navigation — and neither has a client-side guard, so one
+	sitting can arrive twice. Returns None once the last match is older than the
+	window, so a genuine retake is unaffected.
+	"""
+	submissions = frappe.get_all(
+		doctype,
+		filters={
+			**filters,
+			"creation": (
+				">",
+				add_to_date(now_datetime(), seconds=-DUPLICATE_SUBMISSION_WINDOW_SECONDS),
+			),
+		},
+		fields=["name", "score", "score_out_of", "percentage"],
+		order_by="creation desc",
+		limit_page_length=1,
+	)
+	return submissions[0] if submissions else None
 
 
 def has_passed_exam(exam: str, member: str = None):
