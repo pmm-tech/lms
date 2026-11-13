@@ -13,6 +13,7 @@ Run with:
 """
 
 import json
+from pathlib import Path
 
 import frappe
 
@@ -153,17 +154,38 @@ class TestExamAttemptBookkeeping(BaseTestUtils):
 	# --- T3.4: the index the submission list needs ------------------------
 
 	def test_exam_submission_has_an_exam_member_index(self):
-		"""T3.4: `(exam, member)` must be indexed.
+		"""T3.4: the migration is registered, and creates `(exam, member)`.
 
 		The submission list filters by `exam` alone, and the per-student lookups
 		constrain both `exam` and `member`; the table carried only `PRIMARY` and
 		`modified`, so every per-student lookup was a full scan that grows with
 		every attempt ever recorded.
 
-		Column *order* is asserted, not just membership: `(member, exam)` would
-		serve the per-student lookups but not the list's exam-only filter, and an
-		index that only partly covers the query would look like a pass.
+		Asserted in two parts, and the second part is why this is written the way
+		it is. Asserting only that the index *exists* makes the test a statement
+		about the environment: it passes wherever migrations have run and fails
+		wherever they have not, which says nothing about the code. That is exactly
+		what happened in CI — a fresh `install-app` neither runs `patches.txt` nor
+		leaves the patch pending, so the index was absent and migrate skipped it.
+
+		So: assert the patch is registered (a regression there would silently
+		never run), then run it and assert the effect. Column *order* is checked,
+		not just membership — `(member, exam)` would serve the per-student lookups
+		but not the list's exam-only filter, and would look like a pass.
 		"""
+		from lms.patches.v2_0.add_exam_submission_member_exam_index import execute
+
+		registered = (Path(frappe.get_app_path("lms")) / "patches.txt").read_text()
+		self.assertIn(
+			"lms.patches.v2_0.add_exam_submission_member_exam_index",
+			registered,
+			"the index migration is not registered in patches.txt, so it would never run",
+		)
+
+		# Idempotent (`has_index` guard plus `ADD INDEX IF NOT EXISTS`), so this is
+		# safe whether or not the environment has already migrated.
+		execute()
+
 		rows = frappe.db.sql("SHOW INDEX FROM `tabLMS Exam Submission`", as_dict=True)
 		by_index = {}
 		for row in rows:
