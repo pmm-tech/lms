@@ -149,3 +149,33 @@ class TestExamAttemptBookkeeping(BaseTestUtils):
 		name = (result or {}).get("submission")
 		if name:
 			self.cleanup_items.append(("LMS Exam Submission", name))
+
+	# --- T3.4: the index the submission list needs ------------------------
+
+	def test_exam_submission_has_a_member_exam_index(self):
+		"""T3.4: `(member, exam)` must be indexed.
+
+		The submission list filters and groups by exactly this pair, and the table
+		carried only `PRIMARY` and `modified` — so every per-student lookup was a
+		full scan that grows with every attempt ever recorded.
+
+		Column *order* is asserted, not just membership: `(exam, member)` would
+		serve the list's filter but not its grouping, and an index that only
+		partly covers the query would look like a pass.
+		"""
+		rows = frappe.db.sql("SHOW INDEX FROM `tabLMS Exam Submission`", as_dict=True)
+		by_index = {}
+		for row in rows:
+			by_index.setdefault(row["Key_name"], []).append(
+				(row["Seq_in_index"], row["Column_name"])
+			)
+
+		leading_pairs = [
+			tuple(column for _, column in sorted(columns))[:2] for columns in by_index.values()
+		]
+
+		self.assertIn(
+			("member", "exam"),
+			leading_pairs,
+			f"no (member, exam) index; found: {sorted(by_index)}",
+		)
