@@ -13,12 +13,39 @@
 		     so a reader comparing a stored score against a stored pass mark is
 		     comparing against a rule that no longer applies. -->
 		<div class="text-sm text-ink-gray-6 mb-5">
-			{{ __('Pass mark') }}: {{ exam.data?.passing_percentage ?? '—' }}%
+			{{ __('Pass mark') }}: {{ passMark }}
 			<span class="text-ink-gray-5">
 				({{
 					__('each attempt also records the pass mark in force at the time')
 				}})
 			</span>
+		</div>
+
+		<!-- Grouping happens in the browser over a single page of submissions, so
+		     a page boundary silently corrupts every number below: a student outside
+		     the window disappears, and everyone else's attempt count, best and last
+		     are computed from a partial set. Saying so is the least this can do --
+		     silently wrong per-student statistics are worse than a visible caveat. -->
+		<div
+			v-if="truncated"
+			class="mb-4 rounded border border-outline-amber-2 bg-surface-amber-1 p-3 text-sm text-ink-amber-8"
+		>
+			{{
+				__(
+					'Showing the {0} most recent submissions only. Counts and best scores below cover just those, not the whole exam.',
+					[submissions.data.length]
+				)
+			}}
+		</div>
+
+		<div
+			class="grid grid-cols-[2fr_1fr_1fr_1fr_auto] items-center gap-4 px-3 pb-1 text-xs font-medium text-ink-gray-5"
+		>
+			<span>{{ __('Student') }}</span>
+			<span class="text-center">{{ __('Attempts') }}</span>
+			<span class="text-center">{{ __('Best') }}</span>
+			<span class="text-center">{{ __('Last attempt') }}</span>
+			<span></span>
 		</div>
 
 		<div class="space-y-2">
@@ -60,6 +87,14 @@
 					class="border-t border-outline-gray-1"
 				>
 					<div
+						class="grid grid-cols-[2fr_1fr_1fr_1fr_auto] items-center gap-4 px-3 pt-2 text-xs font-medium text-ink-gray-5"
+					>
+						<span class="col-span-2">{{ __('Attempt') }}</span>
+						<span class="text-center">{{ __('Score') }}</span>
+						<span class="text-center">{{ __('Percentage') }}</span>
+						<span class="text-right">{{ __('Pass mark') }}</span>
+					</div>
+					<div
 						v-for="attempt in group.attempts"
 						:key="attempt.name"
 						data-testid="exam-submission-attempt"
@@ -70,16 +105,15 @@
 								name: 'ExamSubmission',
 								params: { submission: attempt.name },
 							}"
-							class="truncate text-ink-gray-6 underline"
+							class="col-span-2 truncate text-ink-gray-6 underline"
 						>
 							{{ __('Attempt') }} {{ attempt.attempt_number }}
 						</router-link>
-						<span class="text-center text-ink-gray-5"></span>
 						<span class="text-center text-ink-gray-6">{{ attempt.score }}</span>
 						<span class="text-center text-ink-gray-6"
 							>{{ attempt.percentage }}%</span
 						>
-						<span class="text-ink-gray-4"
+						<span class="text-right text-ink-gray-4"
 							>{{ attempt.passing_percentage }}%</span
 						>
 					</div>
@@ -133,8 +167,18 @@ const submissions = createListResource({
 		'creation',
 	],
 	orderBy: 'creation desc',
+	// Explicit, not the frappe-ui default of 20 that this previously inherited by
+	// accident. `0` cannot mean "all" -- the source reads `options.pageLength || 20`,
+	// so a falsy value falls back to 20. The bound is raised to cover every exam
+	// this site has (A1 carries ~12 submissions) and is *surfaced* when reached
+	// rather than trusted.
+	pageLength: 500,
 	auto: true,
 })
+
+// True when the page is full, which means the exam has at least this many
+// submissions and the numbers below are computed over a subset.
+const truncated = computed(() => (submissions.data?.length ?? 0) >= 500)
 
 const exam = createResource({
 	url: 'frappe.client.get_value',
@@ -145,6 +189,12 @@ const exam = createResource({
 	}),
 	auto: true,
 })
+
+const passMark = computed(() =>
+	exam.data?.passing_percentage != null
+		? `${exam.data.passing_percentage}%`
+		: '—'
+)
 
 const expanded = ref(new Set())
 
