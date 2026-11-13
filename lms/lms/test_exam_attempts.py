@@ -152,16 +152,17 @@ class TestExamAttemptBookkeeping(BaseTestUtils):
 
 	# --- T3.4: the index the submission list needs ------------------------
 
-	def test_exam_submission_has_a_member_exam_index(self):
-		"""T3.4: `(member, exam)` must be indexed.
+	def test_exam_submission_has_an_exam_member_index(self):
+		"""T3.4: `(exam, member)` must be indexed.
 
-		The submission list filters and groups by exactly this pair, and the table
-		carried only `PRIMARY` and `modified` — so every per-student lookup was a
-		full scan that grows with every attempt ever recorded.
+		The submission list filters by `exam` alone, and the per-student lookups
+		constrain both `exam` and `member`; the table carried only `PRIMARY` and
+		`modified`, so every per-student lookup was a full scan that grows with
+		every attempt ever recorded.
 
-		Column *order* is asserted, not just membership: `(exam, member)` would
-		serve the list's filter but not its grouping, and an index that only
-		partly covers the query would look like a pass.
+		Column *order* is asserted, not just membership: `(member, exam)` would
+		serve the per-student lookups but not the list's exam-only filter, and an
+		index that only partly covers the query would look like a pass.
 		"""
 		rows = frappe.db.sql("SHOW INDEX FROM `tabLMS Exam Submission`", as_dict=True)
 		by_index = {}
@@ -171,7 +172,7 @@ class TestExamAttemptBookkeeping(BaseTestUtils):
 		leading_pairs = [tuple(column for _, column in sorted(columns))[:2] for columns in by_index.values()]
 
 		self.assertIn(
-			("member", "exam"),
+			("exam", "member"),
 			leading_pairs,
-			f"no (member, exam) index; found: {sorted(by_index)}",
+			f"no (exam, member) index; found: {sorted(by_index)}",
 		)
