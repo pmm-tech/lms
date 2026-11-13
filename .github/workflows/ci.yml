@@ -99,6 +99,15 @@ jobs:
     - name: bench build
       working-directory: /home/runner/frappe-bench
       run: bench --site frappe.local build
+    - name: migrate
+      # Not optional, and its absence was a real gap rather than a nicety.
+      # `install-app` does not run `patches.txt` -- only `migrate` does -- so
+      # this job has never executed a single patch in this fork's history, and
+      # has therefore been testing an un-migrated system. That is not what any
+      # deployment produces, and it is why an index added by a patch was absent
+      # here while present on every migrated site.
+      working-directory: /home/runner/frappe-bench
+      run: bench --site frappe.local migrate
     - name: run tests
       working-directory: /home/runner/frappe-bench
       run: bench --site frappe.local run-tests --app lms --coverage
