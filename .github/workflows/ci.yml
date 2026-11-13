@@ -99,6 +99,30 @@ jobs:
     - name: bench build
       working-directory: /home/runner/frappe-bench
       run: bench --site frappe.local build
+    # A `migrate` step was added here on 2026-11-13 and removed the same day.
+    #
+    # It was added because this job never runs a single patch -- `install-app`
+    # neither runs `patches.txt` nor leaves patches pending, so patches are
+    # marked applied without ever executing. That is a real gap, and it is why
+    # an index added by a patch was absent here.
+    #
+    # It was removed again the same day, but NOT for the reason first recorded
+    # here. That commit claimed `migrate` introduced 15 errors in unrelated
+    # tests. Re-running after the revert showed the same 15 errors, so that
+    # attribution was wrong -- and the local reproduction differs anyway: the
+    # same module fails with `PermissionError not raised` locally and errors on
+    # CI, which points at the environment rather than at `migrate`.
+    #
+    # It was removed because it does not do what it was added for: on a fresh
+    # site `install-app` appears to mark patches applied without running them,
+    # so `migrate` afterwards finds nothing pending. The index test no longer
+    # needs it -- that test runs the patch itself and asserts the effect, so it
+    # holds on a migrated and an un-migrated site alike.
+    #
+    # Two gaps remain, both pre-existing and neither fixed here:
+    #   * the 15 errors in course_evaluator / lms_course / lms_live_class;
+    #   * 16 fork test modules that import `frappe.tests.UnitTestCase`, a v16
+    #     class absent from every v15, so they cannot be collected at all.
     - name: run tests
       working-directory: /home/runner/frappe-bench
       run: bench --site frappe.local run-tests --app lms --coverage

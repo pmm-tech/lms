@@ -13,6 +13,7 @@ Run with:
 """
 
 import json
+from pathlib import Path
 
 import frappe
 
@@ -149,3 +150,137 @@ class TestExamAttemptBookkeeping(BaseTestUtils):
 		name = (result or {}).get("submission")
 		if name:
 			self.cleanup_items.append(("LMS Exam Submission", name))
+
+	# --- T3.4: the index the submission list needs ------------------------
+
+	def test_exam_submission_has_an_exam_member_index(self):
+		"""T3.4: the migration is registered, and creates `(exam, member)`.
+
+		The submission list filters by `exam` alone, and the per-student lookups
+		constrain both `exam` and `member`; the table carried only `PRIMARY` and
+		`modified`, so every per-student lookup was a full scan that grows with
+		every attempt ever recorded.
+
+		Asserted in two parts, and the second part is why this is written the way
+		it is. Asserting only that the index *exists* makes the test a statement
+		about the environment: it passes wherever migrations have run and fails
+		wherever they have not, which says nothing about the code. That is exactly
+		what happened in CI — a fresh `install-app` neither runs `patches.txt` nor
+		leaves the patch pending, so the index was absent and migrate skipped it.
+
+		So: assert the patch is registered (a regression there would silently
+		never run), then run it and assert the effect. Column *order* is checked,
+		not just membership — `(member, exam)` would serve the per-student lookups
+		but not the list's exam-only filter, and would look like a pass.
+		"""
+		from lms.patches.v2_0.add_exam_submission_member_exam_index import execute
+
+		registered = (Path(frappe.get_app_path("lms")) / "patches.txt").read_text()
+		self.assertIn(
+			"lms.patches.v2_0.add_exam_submission_member_exam_index",
+			registered,
+			"the index migration is not registered in patches.txt, so it would never run",
+		)
+
+		# Idempotent (`has_index` guard plus `ADD INDEX IF NOT EXISTS`), so this is
+		# safe whether or not the environment has already migrated.
+		execute()
+
+		rows = frappe.db.sql("SHOW INDEX FROM `tabLMS Exam Submission`", as_dict=True)
+		by_index = {}
+		for row in rows:
+			by_index.setdefault(row["Key_name"], []).append((row["Seq_in_index"], row["Column_name"]))
+
+		leading_pairs = [tuple(column for _, column in sorted(columns))[:2] for columns in by_index.values()]
+
+		self.assertIn(
+			("exam", "member"),
+			leading_pairs,
+			f"no (exam, member) index; found: {sorted(by_index)}",
+		)
+
+	# --- T3.4: grouping must be server-side -------------------------------
+
+	def test_exam_submission_groups_are_not_truncated_by_a_page_boundary(self):
+		"""T3.4: every student appears, however many submissions exist.
+
+		The component grouped in the browser over a single page of submissions,
+		and frappe-ui's list resource defaults to **20** rows. Past that, a student
+		vanished from the list entirely and everyone else's attempt count and best
+		were computed from a partial set — silently wrong numbers, which is worse
+		than a missing row.
+
+		The fixture deliberately exceeds the page boundary. An earlier spec used
+		three submissions and passed happily, which is exactly why it could not
+		have caught this.
+		"""
+		from lms.lms.api import get_exam_submission_groups
+
+		# 25 students, one attempt each — past the 20-row page the client used.
+		students = []
+		for index in range(25):
+			member = self._create_user(
+				f"bulk-student-{index}@example.com", "Bulk", f"Student{index}", ["LMS Student"]
+			)
+			students.append(member.email)
+			submission = frappe.new_doc("LMS Exam Submission")
+			submission.update(
+				{
+					"exam": self.exam.name,
+					"member": member.email,
+					"score": index,
+					"score_out_of": self.exam.total_marks,
+					"passing_percentage": self.exam.passing_percentage,
+					"percentage": index * 3,
+				}
+			)
+			submission.insert(ignore_permissions=True)
+			# See the note in the aggregate test: `score` is recomputed from the
+			# result rows on validate, so `percentage` is forced after insert.
+			frappe.db.set_value("LMS Exam Submission", submission.name, "percentage", index * 3)
+			self.cleanup_items.append(("LMS Exam Submission", submission.name))
+
+		groups = get_exam_submission_groups(self.exam.name)
+
+		self.assertEqual(
+			len(groups),
+			25,
+			f"expected one row per student; got {len(groups)}",
+		)
+		self.assertEqual({row["member"] for row in groups}, set(students))
+
+	def test_exam_submission_groups_aggregate_count_best_and_last(self):
+		"""T3.4: the aggregate is one row per student, not one per attempt.
+
+		Count, best and last must all describe the student's whole history — the
+		three things the truncated version got wrong.
+		"""
+		from lms.lms.api import get_exam_submission_groups
+
+		for percentage in (60.0, 90.0):
+			submission = frappe.new_doc("LMS Exam Submission")
+			submission.update(
+				{
+					"exam": self.exam.name,
+					"member": self.student.email,
+					"score": percentage,
+					"score_out_of": self.exam.total_marks,
+					"passing_percentage": self.exam.passing_percentage,
+					"percentage": percentage,
+				}
+			)
+			submission.insert(ignore_permissions=True)
+			# `validate_marks` recomputes `score` from the `result` child rows, so a
+			# score set before insert is discarded — and with no result rows it
+			# becomes 0, which is what `set_percentage` then divides. Forced after
+			# insert instead: the aggregation reads `percentage`, not `score`, and
+			# this test is about the aggregate rather than about submission scoring.
+			frappe.db.set_value("LMS Exam Submission", submission.name, "percentage", percentage)
+			self.cleanup_items.append(("LMS Exam Submission", submission.name))
+
+		groups = get_exam_submission_groups(self.exam.name)
+		row = next(group for group in groups if group["member"] == self.student.email)
+
+		self.assertEqual(row["attempts"], 2)
+		self.assertEqual(float(row["best"]), 90.0)
+		self.assertEqual(float(row["last_percentage"]), 90.0)
