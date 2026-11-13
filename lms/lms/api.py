@@ -2370,3 +2370,45 @@ def search_users_by_role(txt: str = "", roles: str | list | None = None, page_le
 		{"value": r.name, "description": r.full_name or r.name, "label": r.full_name or r.name}
 		for r in results
 	]
+
+
+@frappe.whitelist()
+def get_exam_submission_groups(exam: str):
+	"""One row per student for an exam, aggregated on the server.
+
+	The submission list must show a row per *student*, and it used to group in
+	the browser over a single page of submissions. frappe-ui's list resource
+	defaults to 20 rows, so past that boundary a student disappeared from the
+	list entirely and everyone else's attempt count, best and last were computed
+	from a partial set — silently wrong per-student numbers, which is worse than
+	a missing row.
+
+	Aggregating here bounds the payload by the number of *students* rather than
+	the number of submissions, which `max_attempts = 0` lets grow without limit.
+	Individual attempts are fetched per student when a row is expanded.
+	"""
+	frappe.only_for(["Moderator", "Course Creator", "Batch Evaluator"])
+
+	# `last_percentage` needs the row the latest attempt belongs to, not `MAX()` of
+	# the percentage column — the best score and the latest one are different
+	# questions and a student can have either in any order.
+	return frappe.db.sql(
+		"""
+		SELECT
+			s.member,
+			MAX(s.member_name) AS member_name,
+			COUNT(*) AS attempts,
+			MAX(s.percentage) AS best,
+			(
+				SELECT x.percentage FROM `tabLMS Exam Submission` x
+				WHERE x.exam = s.exam AND x.member = s.member
+				ORDER BY x.creation DESC LIMIT 1
+			) AS last_percentage
+		FROM `tabLMS Exam Submission` s
+		WHERE s.exam = %(exam)s
+		GROUP BY s.member
+		ORDER BY best DESC
+		""",
+		{"exam": exam},
+		as_dict=True,
+	)
