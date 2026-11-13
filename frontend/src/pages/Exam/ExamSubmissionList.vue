@@ -13,10 +13,11 @@
 		     so a reader comparing a stored score against a stored pass mark is
 		     comparing against a rule that no longer applies. -->
 		<div class="text-sm text-ink-gray-6 mb-5">
-			{{ __('Pass mark') }}:
-			{{ exam.data?.passing_percentage ?? '—' }}%
+			{{ __('Pass mark') }}: {{ exam.data?.passing_percentage ?? '—' }}%
 			<span class="text-ink-gray-5">
-				({{ __('each attempt also records the pass mark in force at the time') }})
+				({{
+					__('each attempt also records the pass mark in force at the time')
+				}})
 			</span>
 		</div>
 
@@ -42,15 +43,22 @@
 					<span class="truncate font-medium text-ink-gray-9">
 						{{ group.member_name || group.member }}
 					</span>
-					<span class="text-center text-ink-gray-7">{{ group.attempts.length }}</span>
+					<span class="text-center text-ink-gray-7">{{
+						group.attempts.length
+					}}</span>
 					<span class="text-center text-ink-gray-7">{{ group.best }}%</span>
-					<span class="text-center text-ink-gray-7">{{ group.last.percentage }}%</span>
+					<span class="text-center text-ink-gray-7"
+						>{{ group.last.percentage }}%</span
+					>
 					<span class="text-ink-gray-5">
 						{{ expanded.has(group.member) ? '−' : '+' }}
 					</span>
 				</button>
 
-				<div v-if="expanded.has(group.member)" class="border-t border-outline-gray-1">
+				<div
+					v-if="expanded.has(group.member)"
+					class="border-t border-outline-gray-1"
+				>
 					<div
 						v-for="attempt in group.attempts"
 						:key="attempt.name"
@@ -58,15 +66,22 @@
 						class="grid grid-cols-[2fr_1fr_1fr_1fr_auto] items-center gap-4 px-3 py-2 text-sm"
 					>
 						<router-link
-							:to="{ name: 'ExamSubmission', params: { submission: attempt.name } }"
+							:to="{
+								name: 'ExamSubmission',
+								params: { submission: attempt.name },
+							}"
 							class="truncate text-ink-gray-6 underline"
 						>
 							{{ __('Attempt') }} {{ attempt.attempt_number }}
 						</router-link>
 						<span class="text-center text-ink-gray-5"></span>
 						<span class="text-center text-ink-gray-6">{{ attempt.score }}</span>
-						<span class="text-center text-ink-gray-6">{{ attempt.percentage }}%</span>
-						<span class="text-ink-gray-4">{{ attempt.passing_percentage }}%</span>
+						<span class="text-center text-ink-gray-6"
+							>{{ attempt.percentage }}%</span
+						>
+						<span class="text-ink-gray-4"
+							>{{ attempt.passing_percentage }}%</span
+						>
 					</div>
 				</div>
 			</div>
@@ -76,7 +91,12 @@
 </template>
 
 <script setup>
-import { Breadcrumbs, createListResource, createResource, usePageMeta } from 'frappe-ui'
+import {
+	Breadcrumbs,
+	createListResource,
+	createResource,
+	usePageMeta,
+} from 'frappe-ui'
 import { computed, inject, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { sessionStore } from '@/stores/session'
@@ -148,7 +168,7 @@ const groups = computed(() => {
 			// `orderBy: creation desc` already, but sorting here keeps the values
 			// correct if that ever changes upstream.
 			const ordered = [...attempts].sort((a, b) =>
-				String(b.creation).localeCompare(String(a.creation)),
+				String(b.creation).localeCompare(String(a.creation))
 			)
 			return {
 				member,

@@ -166,13 +166,9 @@ class TestExamAttemptBookkeeping(BaseTestUtils):
 		rows = frappe.db.sql("SHOW INDEX FROM `tabLMS Exam Submission`", as_dict=True)
 		by_index = {}
 		for row in rows:
-			by_index.setdefault(row["Key_name"], []).append(
-				(row["Seq_in_index"], row["Column_name"])
-			)
+			by_index.setdefault(row["Key_name"], []).append((row["Seq_in_index"], row["Column_name"]))
 
-		leading_pairs = [
-			tuple(column for _, column in sorted(columns))[:2] for columns in by_index.values()
-		]
+		leading_pairs = [tuple(column for _, column in sorted(columns))[:2] for columns in by_index.values()]
 
 		self.assertIn(
 			("member", "exam"),
