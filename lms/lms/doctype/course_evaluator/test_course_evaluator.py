@@ -117,7 +117,21 @@ class TestEvaluatorRoleCRUD(BaseTestUtils):
 		frappe.set_user("Administrator")
 
 	def test_non_moderator_cannot_save_role(self):
-		"""[A non-moderator user should not be able to assign roles.]"""
+		"""[A non-moderator user should not be able to assign roles.]
+
+		`frappe.only_for` opens with `if local.flags.in_test: return` -- it is a
+		**no-op inside tests**. Asserting the PermissionError while that flag is set
+		therefore tests nothing: the guard cannot fire, whatever the user's roles
+		are, and this test failed with "PermissionError not raised" in isolation as
+		well as in the suite. The flag is cleared for the duration of the call so
+		the guard is genuinely exercised, and restored afterwards so no other test
+		inherits the change.
+		"""
 		frappe.set_user(self.test_user.email)
-		self.assertRaises(frappe.PermissionError, save_role, self.test_user.email, "Course Creator", 1)
-		frappe.set_user("Administrator")
+		original = frappe.flags.in_test
+		frappe.flags.in_test = False
+		try:
+			self.assertRaises(frappe.PermissionError, save_role, self.test_user.email, "Course Creator", 1)
+		finally:
+			frappe.flags.in_test = original
+			frappe.set_user("Administrator")

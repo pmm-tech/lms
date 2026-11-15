@@ -11,7 +11,7 @@ class TestLMSWordHuntActivity(unittest.TestCase):
 		activity = frappe.get_doc(
 			{
 				"doctype": "LMS Word Hunt Activity",
-				"title": "Word Hunt Marks Activity",
+				"title": f"Word Hunt Marks Activity {frappe.generate_hash(length=8)}",
 				"passing_percentage": 100,
 				"passage": "I _______ to school and _______ lunch there.",
 				"items": [
@@ -35,7 +35,7 @@ class TestLMSWordHuntActivity(unittest.TestCase):
 		activity = frappe.get_doc(
 			{
 				"doctype": "LMS Word Hunt Activity",
-				"title": "Mismatched Blank Count Activity",
+				"title": f"Mismatched Blank Count Activity {frappe.generate_hash(length=8)}",
 				"passing_percentage": 100,
 				"passage": "I _______ to school and _______ lunch there.",
 				"items": [
@@ -55,7 +55,7 @@ class TestLMSWordHuntActivity(unittest.TestCase):
 		activity = frappe.get_doc(
 			{
 				"doctype": "LMS Word Hunt Activity",
-				"title": "Invalid Passage Activity",
+				"title": f"Invalid Passage Activity {frappe.generate_hash(length=8)}",
 				"passing_percentage": 100,
 				"passage": "This passage has no blanks.",
 				"items": [
@@ -75,7 +75,7 @@ class TestLMSWordHuntActivity(unittest.TestCase):
 		activity = frappe.get_doc(
 			{
 				"doctype": "LMS Word Hunt Activity",
-				"title": "Single Underscore Activity",
+				"title": f"Single Underscore Activity {frappe.generate_hash(length=8)}",
 				"passing_percentage": 100,
 				"passage": "I _ to school.",
 				"items": [
