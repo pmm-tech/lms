@@ -11,7 +11,7 @@ class TestLMSDragDropActivity(unittest.TestCase):
 		activity = frappe.get_doc(
 			{
 				"doctype": "LMS Drag Drop Activity",
-				"title": "Marks Activity",
+				"title": f"Marks Activity {frappe.generate_hash(length=8)}",
 				"passing_percentage": 100,
 				"items": [
 					{
@@ -38,7 +38,7 @@ class TestLMSDragDropActivity(unittest.TestCase):
 		activity = frappe.get_doc(
 			{
 				"doctype": "LMS Drag Drop Activity",
-				"title": "Image Activity",
+				"title": f"Image Activity {frappe.generate_hash(length=8)}",
 				"passing_percentage": 100,
 				"items": [
 					{
@@ -58,7 +58,7 @@ class TestLMSDragDropActivity(unittest.TestCase):
 		activity = frappe.get_doc(
 			{
 				"doctype": "LMS Drag Drop Activity",
-				"title": "Invalid Text Activity",
+				"title": f"Invalid Text Activity {frappe.generate_hash(length=8)}",
 				"passing_percentage": 100,
 				"items": [
 					{
@@ -78,7 +78,7 @@ class TestLMSDragDropActivity(unittest.TestCase):
 		activity = frappe.get_doc(
 			{
 				"doctype": "LMS Drag Drop Activity",
-				"title": "Invalid Image Activity",
+				"title": f"Invalid Image Activity {frappe.generate_hash(length=8)}",
 				"passing_percentage": 100,
 				"items": [
 					{

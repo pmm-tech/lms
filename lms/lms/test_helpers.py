@@ -27,7 +27,21 @@ class BaseTestUtils(FrappeTestCase):
 
 	def _create_user(self, email, first_name, last_name, roles, user_type="Website User"):
 		if frappe.db.exists("User", email):
-			return frappe.get_doc("User", email)
+			user = frappe.get_doc("User", email)
+			# Add any role this caller needs but the existing user lacks.
+			#
+			# Returning the user untouched made a test's outcome depend on which
+			# helper ran first: several helpers create `frappe@example.com` with
+			# different role sets, so `test_has_moderator_role` passed or failed
+			# according to whether some earlier fixture had already created that
+			# email with fewer roles. A fixture should provision what it asks for.
+			existing = {row.role for row in user.roles}
+			missing = [role for role in roles if role not in existing]
+			if missing:
+				for role in missing:
+					user.append("roles", {"role": role})
+				user.save(ignore_permissions=True)
+			return user
 
 		user = frappe.new_doc("User")
 		user.update(
